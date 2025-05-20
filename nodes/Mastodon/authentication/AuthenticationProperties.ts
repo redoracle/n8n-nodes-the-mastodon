@@ -1,0 +1,121 @@
+import { INodeProperties } from 'n8n-workflow';
+
+export const authenticationOperations = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: { show: { resource: ['authentication'] } },
+		options: [
+			{
+				name: 'Register Application',
+				value: 'registerApp',
+				description: 'Register a new OAuth application',
+				action: 'Register application',
+			},
+			{
+				name: 'Obtain Token',
+				value: 'obtainToken',
+				description: 'Exchange authorization code for access token',
+				action: 'Obtain access token',
+			},
+			{
+				name: 'Revoke Token',
+				value: 'revokeToken',
+				description: 'Revoke an OAuth access token',
+				action: 'Revoke access token',
+			},
+		],
+		default: 'registerApp',
+	},
+] as INodeProperties[];
+
+export const authenticationFields = [
+	{
+		displayName: 'Client Name',
+		name: 'clientName',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: { show: { resource: ['authentication'], operation: ['registerApp'] } },
+		description: 'Name of your application',
+	},
+	{
+		displayName: 'Redirect URIs',
+		name: 'redirectUris',
+		type: 'string',
+		required: true,
+		default: 'urn:ietf:wg:oauth:2.0:oob',
+		displayOptions: { show: { resource: ['authentication'], operation: ['registerApp'] } },
+		description: 'Where the user should be redirected after authorization',
+	},
+	{
+		displayName: 'Scopes',
+		name: 'scopes',
+		type: 'string',
+		required: true,
+		default: 'read write',
+		displayOptions: { show: { resource: ['authentication'], operation: ['registerApp'] } },
+		description: 'Space-separated list of scopes',
+	},
+	{
+		displayName: 'Website',
+		name: 'website',
+		type: 'string',
+		required: false,
+		default: '',
+		displayOptions: { show: { resource: ['authentication'], operation: ['registerApp'] } },
+		description: 'URL of your website',
+	},
+	{
+		displayName: 'Client ID',
+		name: 'clientId',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: {
+			show: { resource: ['authentication'], operation: ['obtainToken', 'revokeToken'] },
+		},
+		description: 'OAuth client ID',
+	},
+	{
+		displayName: 'Client Secret',
+		name: 'clientSecret',
+		type: 'string',
+		typeOptions: { password: true },
+		required: true,
+		default: '',
+		displayOptions: {
+			show: { resource: ['authentication'], operation: ['obtainToken', 'revokeToken'] },
+		},
+		description: 'OAuth client secret',
+	},
+	{
+		displayName: 'Authorization Code',
+		name: 'code',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: { show: { resource: ['authentication'], operation: ['obtainToken'] } },
+		description: 'Code received from OAuth authorization',
+	},
+	{
+		displayName: 'Redirect URI',
+		name: 'redirectUri',
+		type: 'string',
+		required: true,
+		default: 'urn:ietf:wg:oauth:2.0:oob',
+		displayOptions: { show: { resource: ['authentication'], operation: ['obtainToken'] } },
+		description: 'Redirect URI matching app registration',
+	},
+	{
+		displayName: 'Token',
+		name: 'token',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: { show: { resource: ['authentication'], operation: ['revokeToken'] } },
+		description: 'OAuth token to revoke',
+	},
+] as INodeProperties[];

@@ -1,0 +1,90 @@
+{
+	"nodes": [
+		{
+			"parameters": {
+				"url": "https://mastodon.social",
+				"resource": "status",
+				"operation": "create",
+				"text": "Test post from n8n Mastodon node! #n8n #automation",
+				"additionalFields": {
+					"language": "en",
+					"spoilerText": "Test post"
+				}
+			},
+			"name": "Create Mastodon Post",
+			"type": "n8n-nodes-mastodon",
+			"typeVersion": 1,
+			"position": [500, 300],
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"url": "https://mastodon.social",
+				"resource": "timeline",
+				"operation": "home"
+			},
+			"name": "Get Home Timeline",
+			"type": "n8n-nodes-mastodon",
+			"typeVersion": 1,
+			"position": [700, 300],
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"url": "https://mastodon.social",
+				"resource": "status",
+				"operation": "search",
+				"searchText": "#n8n",
+				"returnAll": false,
+				"limit": 5
+			},
+			"name": "Search Posts",
+			"type": "n8n-nodes-mastodon",
+			"typeVersion": 1,
+			"position": [900, 300],
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon account"
+				}
+			}
+		}
+	],
+	"connections": {
+		"Create Mastodon Post": {
+			"main": [
+				[
+					{
+						"node": "Get Home Timeline",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Get Home Timeline": {
+			"main": [
+				[
+					{
+						"node": "Search Posts",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"meta": {
+		"templateCredsSetupLink": "https://docs.n8n.io/integrations/builtin/credentials/mastodon/"
+	}
+}

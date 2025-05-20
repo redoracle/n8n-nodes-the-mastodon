@@ -1,0 +1,93 @@
+name: Monthly Release and Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  schedule:
+    - cron: '0 0 1 * *' # 1st of every month at midnight UTC
+
+permissions:
+  contents: write # Required to push tags and create releases
+
+jobs:
+  release-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history and tags
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Fetch and increment version
+        id: fetch_tag
+        run: |
+          echo "Fetching latest tag..."
+          TAG=$(curl -s -H "Accept: application/vnd.github+json" \
+                     -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                     https://api.github.com/repos/${{ github.repository }}/tags \
+                     | jq -r '.[0].name')
+
+          TAG_NAME=${TAG#v}
+          if [ -z "$TAG_NAME" ] || [ "$TAG_NAME" = "null" ]; then
+            TAG_NAME="0.0.1"
+          else
+            TAG_NAME=$(echo "$TAG_NAME" | awk -F. -v OFS=. '{$NF++; print}')
+          fi
+
+          echo "New tag will be: v$TAG_NAME"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+
+      - name: Update package.json version
+        run: |
+          CURRENT_VERSION=$(jq -r .version package.json)
+          TARGET_VERSION="${{ env.TAG_NAME }}"
+          if [ "$CURRENT_VERSION" != "$TARGET_VERSION" ]; then
+            echo "Updating version to $TARGET_VERSION"
+            jq --arg v "$TARGET_VERSION" '.version = $v' package.json > tmp.json && mv tmp.json package.json
+          else
+            echo "package.json already up-to-date"
+          fi
+
+      - name: Commit version update
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add package.json
+          git commit -m "Release version v${{ env.TAG_NAME }}" || echo "No changes to commit"
+
+      - name: Create tag and push
+        run: |
+          git tag "v${{ env.TAG_NAME }}"
+          git push origin "v${{ env.TAG_NAME }}"
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.TAG_NAME }}
+          name: Release v${{ env.TAG_NAME }}
+          body: |
+            Automated release for version v${{ env.TAG_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

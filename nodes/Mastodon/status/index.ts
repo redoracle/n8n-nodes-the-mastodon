@@ -1,0 +1,32 @@
+// Aggregated status module for Mastodon node
+import { INodeProperties } from 'n8n-workflow';
+import * as Props from './StatusProperties';
+import StatusMethods from './StatusMethods';
+
+export const statusProperties: INodeProperties[] = [
+	Props.statusOperations,
+	...Props.createFields,
+	...Props.deleteFields,
+	...Props.searchFields,
+	...Props.favouriteFields,
+	...Props.boostFields,
+	...Props.mediaUploadFields,
+	...Props.scheduledStatusesFields,
+	...Props.statusExtraFields,
+];
+
+export const statusMethods = {
+	create: StatusMethods.create,
+	delete: StatusMethods.delete,
+	edit: StatusMethods.edit,
+	search: StatusMethods.search,
+	favourite: StatusMethods.favourite,
+	unfavourite: StatusMethods.unfavourite,
+	boost: StatusMethods.boost,
+	mediaUpload: StatusMethods.mediaUpload,
+	scheduledStatuses: StatusMethods.scheduledStatuses,
+	view: StatusMethods.view,
+	unboost: StatusMethods.unboost,
+	bookmark: StatusMethods.bookmark,
+	viewEditHistory: StatusMethods.viewEditHistory,
+};

@@ -1,0 +1,85 @@
+{
+	"name": "Mastodon Example Workflow",
+	"nodes": [
+		{
+			"parameters": {
+				"resource": "status",
+				"operation": "create",
+				"url": "=https://mastodon.example",
+				"text": "Hello from n8n!",
+				"additionalFields": {}
+			},
+			"id": "37912c74-5a1e-42c1-9978-a671cd228935",
+			"name": "Mastodon",
+			"type": "n8n-nodes-mastodon",
+			"typeVersion": 1,
+			"position": [885, 335]
+		},
+		{
+			"parameters": {
+				"keepOnlySet": true,
+				"values": {
+					"string": [
+						{
+							"name": "text",
+							"value": "Hello from n8n!"
+						}
+					]
+				},
+				"options": {}
+			},
+			"id": "89e7e1c7-3e74-4525-9f5a-06f01e45ddac",
+			"name": "Set",
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 2,
+			"position": [660, 335]
+		},
+		{
+			"parameters": {},
+			"id": "b825b174-de06-4716-b3ea-6bb0019fccd5",
+			"name": "Start",
+			"type": "n8n-nodes-base.start",
+			"typeVersion": 1,
+			"position": [455, 335]
+		}
+	],
+	"connections": {
+		"Set": {
+			"main": [
+				[
+					{
+						"node": "Mastodon",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Start": {
+			"main": [
+				[
+					{
+						"node": "Set",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"active": false,
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"tags": [
+		{
+			"name": "example",
+			"color": "#55ff55"
+		}
+	],
+	"pinData": {},
+	"versionId": "b825b174-de06-4716-b3ea-6bb0019fccd5",
+	"meta": {
+		"instanceId": "b825b174-de06-4716-b3ea-6bb0019fccd5"
+	}
+}
