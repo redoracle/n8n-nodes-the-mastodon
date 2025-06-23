@@ -212,6 +212,6 @@ This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for
 
 ## References
 
-- Mastodon API Docs: https://docs.joinmastodon.org/api/
-- n8n Community Nodes Docs: https://docs.n8n.io/integrations/community-nodes/
-- OAuth2 Setup Guide: https://docs.joinmastodon.org/client/token/
+- Mastodon API Docs: <https://docs.joinmastodon.org/api/>
+- n8n Community Nodes Docs: <https://docs.n8n.io/integrations/community-nodes/>
+- OAuth2 Setup Guide: <https://docs.joinmastodon.org/client/token/>
