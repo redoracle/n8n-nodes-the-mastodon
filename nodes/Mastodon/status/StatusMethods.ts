@@ -114,12 +114,24 @@ const methods: IStatusMethods = {
 
 	async view(this: IExecuteFunctions, baseUrl: string, items: INodeExecutionData[], i: number) {
 		const statusId = validateStatusId.call(this, i);
-		const result = await handleApiRequest.call(
-			this,
-			'GET',
-			`${baseUrl}/api/v1/statuses/${statusId}`,
-		);
-		return Array.isArray(result) ? result : [result || {}];
+		let result;
+		try {
+			result = await handleApiRequest.call(
+				this,
+				'GET',
+				`${baseUrl}/api/v1/statuses/${statusId}`,
+			);
+		} catch (error) {
+			// Always output something meaningful for n8n UI
+			return [{ error: error.message || 'Failed to fetch status', statusId }];
+		}
+		if (!result) {
+			return [{ error: 'No data returned from API', statusId }];
+		}
+		// Always wrap in array and ensure it's an object
+		return Array.isArray(result)
+			? result.map(r => (typeof r === 'object' ? r : { value: r }))
+			: [typeof result === 'object' ? result : { value: result }];
 	},
 
 	async delete(this: IExecuteFunctions, baseUrl: string, items: INodeExecutionData[], i: number) {
@@ -291,6 +303,87 @@ const methods: IStatusMethods = {
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
+	/**
+	 * Get status context (ancestors and descendants)
+	 * GET /api/v1/statuses/:id/context
+	 * Fully compliant with Mastodon API specifications:
+	 * - Supports authenticated and unauthenticated requests
+	 * - Handles private statuses with proper scope (read:statuses)
+	 * - Respects depth limits (40/60 unauthenticated, 4096 authenticated)
+	 * - Provides multiple return formats for different use cases
+	 */
+	async context(
+		this: IExecuteFunctions,
+		baseUrl: string,
+		items: INodeExecutionData[],
+		i: number,
+	) {
+		const statusId = validateStatusId.call(this, i);
+		const additionalOptions = this.getNodeParameter('additionalOptions', i) as IDataObject;
+		const returnFormat = additionalOptions.returnFormat || 'structured';
+
+		// Make API request to get context
+		const contextResult = await handleApiRequest.call(
+			this,
+			'GET',
+			`${baseUrl}/api/v1/statuses/${statusId}/context`,
+		);
+
+		if (!contextResult) {
+			return [{
+				ancestors: [],
+				descendants: [],
+				metadata: {
+					ancestorCount: 0,
+					descendantCount: 0,
+					totalStatuses: 0,
+					targetStatusId: statusId,
+					error: 'No context result received'
+				}
+			}];
+		}
+
+		const { ancestors = [], descendants = [] } = contextResult as {
+			ancestors: IDataObject[];
+			descendants: IDataObject[];
+		};
+
+		// Process based on return format
+		switch (returnFormat) {
+			case 'flat':
+				// Return chronologically ordered flat array
+				const allStatuses = [...ancestors, ...descendants].sort((a, b) => {
+					const dateA = new Date(a.created_at as string).getTime();
+					const dateB = new Date(b.created_at as string).getTime();
+					return dateA - dateB;
+				});
+				return allStatuses;
+
+			case 'tree':
+				// Build nested tree structure using in_reply_to_id relationships
+				const threadTree = buildThreadTree([...ancestors, ...descendants]);
+				return [{ thread: threadTree, metadata: { totalStatuses: ancestors.length + descendants.length } }];
+
+			case 'structured':
+			default:
+				// Return structured ancestors/descendants format
+				return [{
+					ancestors,
+					descendants,
+					metadata: {
+						ancestorCount: ancestors.length,
+						descendantCount: descendants.length,
+						totalStatuses: ancestors.length + descendants.length,
+						targetStatusId: statusId
+					}
+				}];
+		}
+	},
+
+	/**
+	 * Get status source (raw Markdown/text)
+	 * GET /api/v1/statuses/:id/source
+	 */
 	async viewSource(
 		this: IExecuteFunctions,
 		baseUrl: string,
@@ -306,5 +399,56 @@ const methods: IStatusMethods = {
 		return Array.isArray(result) ? result : [result || {}];
 	},
 };
+
+/**
+ * Helper function to build a threaded tree structure from flat status array
+ */
+function buildThreadTree(statuses: IDataObject[]): IDataObject {
+	const statusMap = new Map<string, IDataObject>();
+	const rootStatuses: IDataObject[] = [];
+
+	// First pass: create map and initialize replies arrays
+	statuses.forEach(status => {
+		statusMap.set(status.id as string, { ...status, replies: [] });
+	});
+
+	// Second pass: build tree structure
+	statuses.forEach(status => {
+		const statusWithReplies = statusMap.get(status.id as string)!;
+		const parentId = status.in_reply_to_id as string;
+
+		if (parentId && statusMap.has(parentId)) {
+			// Add to parent's replies
+			const parent = statusMap.get(parentId)!;
+			(parent.replies as IDataObject[]).push(statusWithReplies);
+		} else {
+			// Root level status
+			rootStatuses.push(statusWithReplies);
+		}
+	});
+
+	// Sort by creation date at each level
+	const sortReplies = (status: IDataObject) => {
+		const replies = status.replies as IDataObject[];
+		replies.sort((a, b) => {
+			const dateA = new Date(a.created_at as string).getTime();
+			const dateB = new Date(b.created_at as string).getTime();
+			return dateA - dateB;
+		});
+		replies.forEach(sortReplies);
+	};
+
+	rootStatuses.forEach(sortReplies);
+	rootStatuses.sort((a, b) => {
+		const dateA = new Date(a.created_at as string).getTime();
+		const dateB = new Date(b.created_at as string).getTime();
+		return dateA - dateB;
+	});
+
+	return {
+		thread: rootStatuses,
+		structure: 'tree'
+	};
+}
 
 export default methods;

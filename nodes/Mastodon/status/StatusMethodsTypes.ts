@@ -1,4 +1,4 @@
-import { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 
 export interface IStatus {
 	id: string;
@@ -31,96 +31,107 @@ export interface IStatusMethods {
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	view(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	delete(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<{}[]>;
+	): Promise<IDataObject[]>;
 
 	search(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	favourite(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	unfavourite(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	boost(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	unboost(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	bookmark(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	mediaUpload(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IMediaAttachment[]>;
+	): Promise<IDataObject[]>;
 
 	scheduledStatuses(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	edit(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	viewEditHistory(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatus[]>;
+	): Promise<IDataObject[]>;
 
 	viewSource(
 		this: IExecuteFunctions,
 		baseUrl: string,
 		items: INodeExecutionData[],
 		i: number,
-	): Promise<IStatusSource[]>;
+	): Promise<IDataObject[]>;
+
+	/**
+	 * Get status context (ancestors and descendants)
+	 * GET /api/v1/statuses/:id/context
+	 */
+	context(
+		this: IExecuteFunctions,
+		baseUrl: string,
+		items: INodeExecutionData[],
+		i: number,
+	): Promise<IDataObject[]>;
 }

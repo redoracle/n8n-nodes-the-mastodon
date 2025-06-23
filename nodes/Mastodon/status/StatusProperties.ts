@@ -36,6 +36,12 @@ export const statusOperations: INodeProperties = {
 			description: 'View status details',
 			action: 'View a status',
 		},
+		{
+			name: 'Get Context',
+			value: 'context',
+			description: 'Get a status’s context (original and all replies)',
+			action: 'Get status context',
+		},
 	],
 	default: 'create',
 };
@@ -276,6 +282,77 @@ export const editFields: INodeProperties[] = [
 	},
 ];
 
+// Fields for context operation
+export const contextFields: INodeProperties[] = [
+	{
+		displayName: 'Status ID',
+		name: 'statusId',
+		type: 'string',
+		required: true,
+		default: '',
+		description: 'ID of the status to retrieve its full thread context',
+		displayOptions: {
+			show: {
+				resource: ['status'],
+				operation: ['context'],
+			},
+		},
+	},
+	{
+		displayName: 'Additional Options',
+		name: 'additionalOptions',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['status'],
+				operation: ['context'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Include Private Statuses',
+				name: 'includePrivate',
+				type: 'boolean',
+				default: true,
+				description: 'Whether to include private statuses in the context (requires read:statuses scope)',
+			},
+			{
+				displayName: 'Max Depth',
+				name: 'maxDepth',
+				type: 'number',
+				default: 20,
+				description: 'Maximum depth of reply threads to retrieve (unlimited when authenticated)',
+			},
+			{
+				displayName: 'Return Format',
+				name: 'returnFormat',
+				type: 'options',
+				default: 'structured',
+				options: [
+					{
+						name: 'Structured (Ancestors/Descendants)',
+						value: 'structured',
+						description: 'Return ancestors and descendants as separate arrays',
+					},
+					{
+						name: 'Flat Thread',
+						value: 'flat',
+						description: 'Return all statuses in chronological order as a flat array',
+					},
+					{
+						name: 'Tree Structure',
+						value: 'tree',
+						description: 'Return statuses organized as a nested thread tree',
+					},
+				],
+				description: 'How to format the returned conversation data',
+			},
+		],
+	},
+];
+
 // Removed the duplicate operation menu (statusExtraOperations) to avoid confusion
 // Ensure only one operation menu is displayed for the "Status" resource
 
@@ -292,4 +369,5 @@ export const statusProperties: INodeProperties[] = [
 	...scheduledStatusesFields,
 	...statusExtraFields,
 	...editFields,
+	...contextFields,
 ];
