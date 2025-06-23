@@ -13,6 +13,7 @@ export const statusProperties: INodeProperties[] = [
 	...Props.mediaUploadFields,
 	...Props.scheduledStatusesFields,
 	...Props.statusExtraFields,
+	...Props.contextFields,
 ];
 
 export const statusMethods = {
@@ -29,4 +30,6 @@ export const statusMethods = {
 	unboost: StatusMethods.unboost,
 	bookmark: StatusMethods.bookmark,
 	viewEditHistory: StatusMethods.viewEditHistory,
+	viewSource: StatusMethods.viewSource,
+	context: StatusMethods.context,
 };

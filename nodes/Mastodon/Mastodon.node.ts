@@ -151,7 +151,11 @@ export class Mastodon implements INodeType {
 		const operation = this.getNodeParameter('operation', 0) as string;
 
 		let executionData: IDataObject | IDataObject[] | null = null;
-		const url = (await this.getCredentials('mastodonOAuth2Api')).baseUrl as string;
+		// Determine base URL: use credential baseUrl for auth, configured URL for API actions
+		const credentials = await this.getCredentials('mastodonOAuth2Api');
+		const credentialBaseUrl = credentials.baseUrl as string;
+		const nodeBaseUrl = this.getNodeParameter('url', 0) as string;
+		const url = resource === 'authentication' ? credentialBaseUrl : nodeBaseUrl;
 
 		// Handle authentication operations
 		if (resource === 'authentication') {
