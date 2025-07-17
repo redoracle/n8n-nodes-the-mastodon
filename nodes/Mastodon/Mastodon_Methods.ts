@@ -151,14 +151,26 @@ class PerformanceMonitor {
 }
 
 // Rate limiting and request queue
-class RequestQueue {
+export class RequestQueue {
 	private static instance: RequestQueue;
-	private queue: Array<() => Promise<any>> = [];
+	private queue: Array<{
+		request: () => Promise<any>;
+		resolve: (value: any) => void;
+		reject: (error: any) => void;
+		timestamp: number;
+	}> = [];
 	private processing = false;
 	private rateLimitRemaining = 300; // Default rate limit
 	private rateLimitReset = Date.now();
+	private requestsMadeThisWindow = 0;
+	private readonly MAX_QUEUE_SIZE = 1000; // Prevent memory leaks
+	private readonly REQUEST_TIMEOUT = 60000; // 60 seconds timeout for queued requests
+	private cleanupIntervalId: NodeJS.Timeout | null = null;
 
-	private constructor() {}
+	private constructor() {
+		// Clean up old queued requests periodically
+		this.cleanupIntervalId = setInterval(() => this.cleanupExpiredRequests(), 30000);
+	}
 
 	static getInstance(): RequestQueue {
 		if (!RequestQueue.instance) {
@@ -170,45 +182,140 @@ class RequestQueue {
 	public updateRateLimits(remaining: number, resetTime: number): void {
 		this.rateLimitRemaining = remaining;
 		this.rateLimitReset = resetTime * 1000;
+
+		// Reset the requests counter when we get fresh rate limit info
+		if (resetTime * 1000 > Date.now()) {
+			this.requestsMadeThisWindow = Math.max(0, 300 - remaining);
+		}
+
+		// Resume processing if we have remaining requests
+		if (remaining > 0 && !this.processing) {
+			this.processQueue();
+		}
 	}
 
 	public async add<T>(request: () => Promise<T>): Promise<T> {
-		return new Promise((resolve, reject) => {
-			this.queue.push(async () => {
-				try {
-					// Check rate limits before processing
-					if (this.rateLimitRemaining <= 0) {
-						const now = Date.now();
-						if (now < this.rateLimitReset) {
-							const delay = this.rateLimitReset - now;
-							Logger.debug(`[Mastodon] Queue waiting for rate limit reset: ${delay}ms`);
-							await new Promise((r) => setTimeout(r, delay));
-						}
-					}
+		// Check if queue is full to prevent memory leaks
+		if (this.queue.length >= this.MAX_QUEUE_SIZE) {
+			throw new Error('Request queue is full. Too many pending requests.');
+		}
 
-					const result = await request();
-					resolve(result);
-				} catch (error) {
-					reject(error);
-				}
-			});
-			this.processQueue();
+		return new Promise<T>((resolve, reject) => {
+			const queueItem = {
+				request,
+				resolve,
+				reject,
+				timestamp: Date.now()
+			};
+
+			this.queue.push(queueItem);
+
+			// Start processing if not already running
+			if (!this.processing) {
+				this.processQueue();
+			}
 		});
 	}
 
-	private async processQueue() {
-		if (this.processing || this.queue.length === 0) return;
+	private cleanupExpiredRequests(): void {
+		const now = Date.now();
+		const expiredRequests = this.queue.filter(item =>
+			now - item.timestamp > this.REQUEST_TIMEOUT
+		);
 
+		// Reject expired requests
+		expiredRequests.forEach(item => {
+			item.reject(new Error('Request timeout: queued too long'));
+		});
+
+		// Remove expired requests from queue
+		this.queue = this.queue.filter(item =>
+			now - item.timestamp <= this.REQUEST_TIMEOUT
+		);
+	}
+
+	private async processQueue(): Promise<void> {
+		if (this.processing) return;
 		this.processing = true;
-		while (this.queue.length > 0) {
-			const request = this.queue.shift();
-			if (request) {
-				await request();
-				// Add small delay between requests
-				await new Promise((resolve) => setTimeout(resolve, 100));
+
+		try {
+			while (this.queue.length > 0) {
+				// Check if we need to wait for rate limit reset
+				const now = Date.now();
+				if (this.rateLimitRemaining <= 0 && now < this.rateLimitReset) {
+					const delay = this.rateLimitReset - now;
+					Logger.debug(`[Mastodon] Queue waiting for rate limit reset: ${delay}ms`);
+					await new Promise(resolve => setTimeout(resolve, delay));
+
+					// After waiting, reset our tracking
+					this.rateLimitRemaining = 300;
+					this.requestsMadeThisWindow = 0;
+				}
+
+				// Process next request in queue
+				const queueItem = this.queue.shift();
+				if (!queueItem) break;
+
+				// Check if request has expired
+				if (Date.now() - queueItem.timestamp > this.REQUEST_TIMEOUT) {
+					queueItem.reject(new Error('Request timeout: queued too long'));
+					continue;
+				}
+
+				try {
+					// Decrement rate limit counter before making request
+					if (this.rateLimitRemaining > 0) {
+						this.rateLimitRemaining--;
+						this.requestsMadeThisWindow++;
+					}
+
+					const result = await queueItem.request();
+					queueItem.resolve(result);
+				} catch (error) {
+					queueItem.reject(error);
+				}
+
+				// Add delay between requests to be respectful
+				await new Promise(resolve => setTimeout(resolve, 100));
+			}
+		} catch (error) {
+			Logger.error('Error in queue processing', error);
+		} finally {
+			this.processing = false;
+
+			// If there are still items in queue, schedule another processing cycle
+			if (this.queue.length > 0) {
+				setTimeout(() => this.processQueue(), 1000);
 			}
 		}
+	}
+
+	// Add method to cleanup and destroy the queue instance (useful for tests)
+	public destroy(): void {
+		if (this.cleanupIntervalId) {
+			clearInterval(this.cleanupIntervalId);
+			this.cleanupIntervalId = null;
+		}
+		this.queue.length = 0; // Clear the queue
 		this.processing = false;
+		RequestQueue.instance = undefined as any; // Reset singleton
+	}
+
+	// Add method to get queue status for debugging
+	public getStatus(): {
+		queueLength: number;
+		rateLimitRemaining: number;
+		rateLimitReset: number;
+		processing: boolean;
+		requestsMade: number;
+	} {
+		return {
+			queueLength: this.queue.length,
+			rateLimitRemaining: this.rateLimitRemaining,
+			rateLimitReset: this.rateLimitReset,
+			processing: this.processing,
+			requestsMade: this.requestsMadeThisWindow
+		};
 	}
 }
 
@@ -527,11 +634,16 @@ export async function handleApiRequest(
 
 				// Handle rate limits
 				if (rawResponse.headers) {
-					RateLimitHandler.handleRateLimit(
-						parseInt(rawResponse.headers['x-ratelimit-limit'] || '0'),
-						parseInt(rawResponse.headers['x-ratelimit-remaining'] || '0'),
-						parseInt(rawResponse.headers['x-ratelimit-reset'] || '0'),
-					);
+					const limit = parseInt(rawResponse.headers['x-ratelimit-limit'] || '300');
+					const remaining = parseInt(rawResponse.headers['x-ratelimit-remaining'] || '300');
+					const reset = parseInt(rawResponse.headers['x-ratelimit-reset'] || '0');
+
+					RateLimitHandler.handleRateLimit(limit, remaining, reset);
+
+					// Log rate limit status for monitoring
+					if (remaining < 50) {
+						logger.warn(`Rate limit running low: ${remaining}/${limit} remaining`);
+					}
 				}
 
 				// Cache successful GET responses
@@ -610,6 +722,20 @@ export async function handleApiRequest(
 						);
 					case 429:
 						const retryAfter = parseInt(error.response?.headers?.['retry-after'] || '60');
+						metrics.trackRateLimit(operationName);
+
+						// Update queue with rate limit info
+						const queue = RequestQueue.getInstance();
+						queue.updateRateLimits(0, Math.floor(Date.now() / 1000) + retryAfter);
+
+						// If this is not a retry, queue the request instead of failing immediately
+						if (retryAttempt === 0) {
+							logger.info(`Rate limit hit, queuing request for retry after ${retryAfter}s`);
+							return queue.add(() =>
+								handleApiRequest.call(this, method, endpoint, body, qs, options, 1)
+							);
+						}
+
 						throw new MastodonRateLimitError(retryAfter);
 					case 502:
 					case 503:
