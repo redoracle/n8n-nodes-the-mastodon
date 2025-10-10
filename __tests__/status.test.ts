@@ -1,5 +1,5 @@
 import { Mastodon } from '../nodes/Mastodon/Mastodon.node';
-import { IExecuteFunctions, INodeExecutionData, NodeOperationError } from 'n8n-workflow';
+import { IExecuteFunctions } from 'n8n-workflow';
 
 describe('Mastodon Node - Status', () => {
 	let node: Mastodon;
@@ -158,5 +158,32 @@ describe('Mastodon Node - Status', () => {
 			}),
 		);
 		expect(result?.[0]?.[0].json).toEqual(unboostResponse);
+	});
+
+	it('should count URLs as 23 characters no matter their length, per Mastodon character counting	', async () => {
+		const { ValidationUtils } = await import('../nodes/Mastodon/Mastodon_Methods');
+		const text = 'https://example.com/' + 'a'.repeat(500);
+
+		(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
+			if (param === 'resource') return 'status';
+			if (param === 'operation') return 'create';
+			if (param === 'status') return text;
+			if (param === 'additionalFields') return {};
+			return undefined;
+		});
+		(ctx.getInputData as jest.Mock).mockReturnValue([{ json: {} }]);
+		(ctx.helpers!.requestOAuth2 as jest.Mock).mockResolvedValue({ id: '1', content: text });
+
+		await node.execute.call(ctx as IExecuteFunctions);
+
+		const requestCall = (ctx.helpers!.requestOAuth2 as jest.Mock).mock.calls[0][1];
+		const sentStatus = requestCall.body.status;
+
+		// New behavior: URL should be preserved
+		expect(sentStatus).toContain(text);
+
+		// Effective length should be 23 since it's only a single really long URL
+		const effectiveLength = ValidationUtils.calculateMastodonLength(sentStatus);
+		expect(effectiveLength).toEqual(23);
 	});
 });

@@ -847,6 +847,108 @@ export async function uploadAttachments(
 
 // Input validation utilities
 export class ValidationUtils {
+	/** The default maximum character length for Mastodon status posts */
+	static readonly MASTODON_MAX_STATUS_LENGTH = 500;
+
+	/** Character count that Mastodon uses for all URLs regardless of actual length
+	 * https://github.com/mastodon/mastodon/blob/0219b7cad7d9ef800f82cc561571b70da040433f/app/validators/status_length_validator.rb#L5
+	 * */
+	static readonly MASTODON_URL_LENGTH = 23;
+
+	/**
+	 * URL detection regex adapted from twitter-text library.
+	 * Matches http/https URLs with proper boundary detection
+	 */
+	private static readonly URL_REGEX = /https?:\/\/[^\s<>"\{\}\|\\\^\[\]`]+/gi;
+
+	/**
+	 * Extract URLs from text with their positions
+	 */
+	static extractUrls(text: string): Array<{ url: string; startIndex: number; endIndex: number }> {
+		const urls: Array<{ url: string; startIndex: number; endIndex: number }> = [];
+		const regex = new RegExp(this.URL_REGEX);
+		let match;
+
+		while ((match = regex.exec(text)) !== null) {
+			urls.push({
+				url: match[0],
+				startIndex: match.index,
+				endIndex: match.index + match[0].length,
+			});
+		}
+
+		return urls;
+	}
+
+	/**
+	 * Calculate the effective character length for Mastodon
+	 * URLs count as 23 characters regardless of actual length
+	 */
+	static calculateMastodonLength(text: string): number {
+		if (!text) return 0;
+
+		const urls = this.extractUrls(text);
+
+		if (urls.length === 0) {
+			return text.length;
+		}
+
+		// Start with actual text length
+		let effectiveLength = text.length;
+
+		// Subtract actual URL length and add Mastodon's normalized URL length for each URL
+		for (const link of urls) {
+			const actualUrlLength = link.url.length;
+			effectiveLength = effectiveLength - actualUrlLength + ValidationUtils.MASTODON_URL_LENGTH;
+		}
+
+		return effectiveLength;
+	}
+
+	/**
+	 * Truncate text to fit within Mastodon's max status length.
+	 *
+	 * Mastodon counts all URLs as the same length, doesn't matter if they're longer or shorter.
+	 * This function uses "effective length" (URL-aware counting) when URLs are present,
+	 * and "actual length" (plain character count) when no URLs exist.
+	 *
+	 * When truncation would break a URL in half, the entire URL is removed instead,
+	 * since partial URLs don't help and might make it harder to debug.
+	 */
+	static truncateWithUrlPreservation(text: string, maxLength: number = ValidationUtils.MASTODON_MAX_STATUS_LENGTH): string {
+		if (typeof text !== 'string') {
+			throw new Error(`Expected string parameter, got ${typeof text}`);
+		}
+
+		const urls = this.extractUrls(text);
+
+		// No URLs - use simple actual character length
+		if (urls.length === 0) {
+			return text.length <= maxLength ? text : text.slice(0, maxLength);
+		}
+
+		// Has URLs - use Mastodon's effective length
+		const effectiveLength = this.calculateMastodonLength(text);
+
+		if (effectiveLength <= maxLength) {
+			return text;
+		}
+
+		const excessLength = effectiveLength - maxLength;
+		const targetActualLength = text.length - excessLength;
+
+		// Check if truncating at targetActualLength would cut through the middle of a URL
+		for (const urlInfo of urls) {
+			if (targetActualLength > urlInfo.startIndex && targetActualLength < urlInfo.endIndex) {
+				// Would break this URL - truncate before the URL instead (removes it entirely)
+				return text.slice(0, urlInfo.startIndex);
+			}
+		}
+
+		// Safe to truncate at calculated position without breaking any URLs
+		return text.slice(0, targetActualLength);
+	}
+
 	static validateRequiredParameters(params: { [key: string]: any }, required: string[]): void {
 		const missing = required.filter(
 			(param) => params[param] === undefined || params[param] === null,
@@ -856,7 +958,7 @@ export class ValidationUtils {
 		}
 	}
 
-	static sanitizeStringParam(value: any, maxLength: number = 500): string {
+	static sanitizeStringParam(value: any, maxLength: number = this.MASTODON_MAX_STATUS_LENGTH): string {
 		if (typeof value !== 'string') {
 			throw new Error(`Expected string parameter, got ${typeof value}`);
 		}

@@ -13,7 +13,7 @@ function validateStatusParam(this: IExecuteFunctions, i: number): string {
 	if (!status) {
 		throw new NodeOperationError(this.getNode(), 'Status text is required');
 	}
-	return ValidationUtils.sanitizeStringParam(status as string, 500);
+	return ValidationUtils.truncateWithUrlPreservation(status as string, ValidationUtils.MASTODON_MAX_STATUS_LENGTH);
 }
 
 function validateStatusId(this: IExecuteFunctions, i: number): string {
