@@ -1,15 +1,14 @@
 import {
-	ICredentialType,
-	INodeProperties,
-	Icon,
 	IAuthenticate,
-	ICredentialTestRequest,
-	ICredentialsDecrypted,
-	INodeCredentialTestResult,
-	IDataObject,
-	JsonObject,
-	IHttpRequestHelper,
+	Icon,
 	ICredentialDataDecryptedObject,
+	ICredentialTestRequest,
+	ICredentialType,
+	IDataObject,
+	IHttpRequestHelper,
+	INodeCredentialTestResult,
+	INodeProperties,
+	JsonObject,
 } from 'n8n-workflow';
 import { generatePKCE } from '../src/utils/pkceWrapper';
 
@@ -96,7 +95,7 @@ export class MastodonOAuth2Api implements ICredentialType {
 			displayName: 'Scope',
 			name: 'scope',
 			type: 'hidden',
-			default: 'read write follow push',
+			default: 'read write',
 			description: 'The scopes to request. Multiple scopes can be separated by spaces.',
 		},
 		{
@@ -115,11 +114,11 @@ export class MastodonOAuth2Api implements ICredentialType {
 	];
 
 	// PKCE Storage with static helper methods to handle storage access
-	private static pkceStorage = new Map<string, { code_verifier: string; expires: number }>();
+	private static pkceStorage = new Map<string, { codeVerifier: string; expires: number }>();
 
-	private static storePKCE(clientId: string, code_verifier: string): void {
+	private static storePKCE(clientId: string, codeVerifier: string): void {
 		MastodonOAuth2Api.pkceStorage.set(clientId, {
-			code_verifier,
+			codeVerifier,
 			expires: Date.now() + 10 * 60 * 1000, // 10 minutes
 		});
 	}
@@ -136,7 +135,7 @@ export class MastodonOAuth2Api implements ICredentialType {
 
 		// Clear after use
 		MastodonOAuth2Api.pkceStorage.delete(clientId);
-		return stored.code_verifier;
+		return stored.codeVerifier;
 	}
 
 	authenticate: IAuthenticate = {
@@ -149,7 +148,9 @@ export class MastodonOAuth2Api implements ICredentialType {
 				response_type: 'code',
 				client_id: '={{$credentials.clientId}}',
 				redirect_uri: '={{$credentials.redirectUri}}',
-				scope: 'read write follow push',
+					// Use granted/current scopes when available, otherwise fall back to configured scope or sensible default
+					// This avoids requesting deprecated/unsupported scopes (e.g. follow) when the instance doesn't accept them
+					scope: '={{$credentials.currentScopes || $credentials.scope || "read write"}}',
 				state: '={{Date.now()}}',
 				force_login: true, // Always force login to support multiple accounts
 			},
@@ -162,9 +163,10 @@ export class MastodonOAuth2Api implements ICredentialType {
 	): Promise<IDataObject> {
 		const mastodonCredentials = credentials as IMastodonCredentials;
 
-		// Generate and store PKCE values
-		const { code_verifier, code_challenge } = await generatePKCE();
-		MastodonOAuth2Api.storePKCE(mastodonCredentials.clientId, code_verifier);
+	// Generate and store PKCE values
+	const { code_verifier, code_challenge } = await generatePKCE();
+	const codeVerifier = code_verifier;
+	MastodonOAuth2Api.storePKCE(mastodonCredentials.clientId, codeVerifier);
 
 		// Check if server supports PKCE
 		try {
@@ -193,21 +195,18 @@ export class MastodonOAuth2Api implements ICredentialType {
 	): Promise<IDataObject> {
 		const mastodonCredentials = credentials as IMastodonCredentials;
 		let accessToken: string | undefined;
+		const creds = credentials as unknown as Record<string, unknown>;
 		if (
-			typeof credentials === 'object' &&
-			credentials !== null &&
-			'oauth2' in credentials &&
-			typeof (credentials as any).oauth2 === 'object' &&
-			(credentials as any).oauth2 !== null &&
-			'accessToken' in (credentials as any).oauth2
+			creds &&
+			typeof creds === 'object' &&
+			'oauth2' in creds &&
+			typeof creds['oauth2'] === 'object' &&
+			creds['oauth2'] !== null &&
+			'accessToken' in (creds['oauth2'] as Record<string, unknown>)
 		) {
-			accessToken = (credentials as any).oauth2.accessToken;
-		} else if (
-			typeof credentials === 'object' &&
-			credentials !== null &&
-			'accessToken' in credentials
-		) {
-			accessToken = (credentials as any).accessToken;
+			accessToken = (creds['oauth2'] as Record<string, unknown>)['accessToken'] as string | undefined;
+		} else if (creds && typeof creds === 'object' && 'accessToken' in creds) {
+			accessToken = creds['accessToken'] as string | undefined;
 		}
 		if (!accessToken) return {};
 
@@ -260,23 +259,30 @@ export class MastodonOAuth2Api implements ICredentialType {
 		this: IHttpRequestHelper,
 		requestOptions: IDataObject,
 	): Promise<IDataObject> {
-		const credentials = requestOptions.credentials as any;
+		const credentials = requestOptions.credentials as IMastodonCredentials;
 
 		// Add PKCE code_verifier if we have one stored
-		const code_verifier = MastodonOAuth2Api.getStoredPKCE(credentials.clientId);
-		if (code_verifier) {
-			(requestOptions.body as IDataObject).code_verifier = code_verifier;
+		const codeVerifier = MastodonOAuth2Api.getStoredPKCE(credentials.clientId);
+		if (codeVerifier) {
+			// Ensure body exists and is an object before assigning PKCE code_verifier
+			if (!requestOptions.body || typeof requestOptions.body !== 'object') {
+				requestOptions.body = {} as IDataObject;
+			}
+			(requestOptions.body as IDataObject).code_verifier = codeVerifier;
 		}
 
 		// Ensure access token is available under credentials.oauth2.accessToken
-		if (!credentials.oauth2 || !credentials.oauth2.accessToken) {
+		const credRecord = credentials as unknown as Record<string, unknown>;
+		const oauth2 = credRecord['oauth2'] as Record<string, unknown> | undefined;
+		if (!oauth2 || !('accessToken' in oauth2)) {
 			// Map from oauthTokenData if present (n8n default for OAuth2)
+			const oauthTokenData = credRecord['oauthTokenData'] as Record<string, unknown> | undefined;
 			const accessToken =
-				credentials.oauthTokenData?.access_token ||
-				credentials.access_token ||
-				credentials.accessToken;
+				oauthTokenData?.['access_token'] as string | undefined ||
+				(credRecord['access_token'] as string | undefined) ||
+				(credRecord['accessToken'] as string | undefined);
 			if (accessToken) {
-				credentials.oauth2 = { accessToken };
+				credRecord['oauth2'] = { accessToken } as unknown as Record<string, unknown>;
 			}
 		}
 

@@ -80,7 +80,22 @@ Before using the Mastodon node, you must configure OAuth2 credentials for your t
      - **Scope**: `read write push`
    - Save and **Connect**. Authorize when prompted.
 
-![](./docs/credentials-setup.png)
+### Note about deprecated scopes and server compatibility
+
+Some Mastodon instances have deprecated or removed scopes such as `follow` (and may not accept `push` in some configurations). If you see an error like:
+
+```text
+The requested scope is invalid, unknown, or malformed.
+```
+
+It usually means the authorization URL requested scopes the server doesn't support. If that happens you can:
+
+- Edit the **Scope** value in the credential to only request `read write` before initiating the Connect flow.
+- Or, after the Connect URL opens, remove unsupported scopes from the `scope` query param (e.g. change `read write follow push` → `read write`) and continue.
+
+The node will try to prefer the currently granted scopes when available to avoid requesting deprecated/unsupported scopes automatically.
+
+![Credentials setup screenshot](./docs/credentials-setup.png)
 
 ---
 

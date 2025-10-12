@@ -1,8 +1,8 @@
 // Modularized Account methods for Mastodon node
 import {
+	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
-	IDataObject,
 	NodeOperationError,
 } from 'n8n-workflow';
 import { handleApiRequest } from '../Mastodon_Methods';
@@ -18,7 +18,7 @@ export async function follow(
 		throw new NodeOperationError(this.getNode(), 'Account ID is required to follow');
 	}
 	const result = await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/follow`);
-	return [result || {}];
+	return [result as IAccount];
 }
 
 export async function unfollow(
@@ -35,7 +35,7 @@ export async function unfollow(
 		'POST',
 		`/api/v1/accounts/${accountId}/unfollow`,
 	);
-	return [result || {}];
+	return [result as IAccount];
 }
 
 export async function block(
@@ -45,7 +45,7 @@ export async function block(
 ): Promise<IAccount> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
 	console.log('Executing block method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/block`);
+	return (await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/block`)) as IAccount;
 }
 
 export async function mute(
@@ -70,12 +70,12 @@ export async function mute(
 		body.duration = additionalFields.duration as number;
 	}
 
-	return await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/mute`, body);
+	return (await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/mute`, body)) as IAccount;
 }
 
 export async function verifyCredentials(this: IExecuteFunctions): Promise<IAccount> {
 	console.log('Executing verifyCredentials method');
-	return await handleApiRequest.call(this, 'GET', `/api/v1/accounts/verify_credentials`);
+	return (await handleApiRequest.call(this, 'GET', `/api/v1/accounts/verify_credentials`)) as IAccount;
 }
 
 export async function viewProfile(
@@ -247,11 +247,11 @@ export async function registerAccount(
 	const agreement = this.getNodeParameter('agreement', i) as boolean;
 	const locale = this.getNodeParameter('locale', i) as string;
 	const reason = this.getNodeParameter('reason', i, undefined) as string | undefined;
-	const date_of_birth = this.getNodeParameter('date_of_birth', i, undefined) as string | undefined;
+	const dateOfBirth = this.getNodeParameter('date_of_birth', i, undefined) as string | undefined;
 	const body: IDataObject = { username, email, password, agreement, locale };
 	if (reason) body.reason = reason;
-	if (date_of_birth) body.date_of_birth = date_of_birth;
-	return await handleApiRequest.call(this, 'POST', '/api/v1/accounts', body);
+	if (dateOfBirth) body.date_of_birth = dateOfBirth;
+	return (await handleApiRequest.call(this, 'POST', '/api/v1/accounts', body)) as IDataObject;
 }
 
 // Update account credentials

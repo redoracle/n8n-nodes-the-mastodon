@@ -5,7 +5,7 @@ describe('ValidationUtils.truncateWithUrlPreservation', () => {
 		// @ts-expect-error - intentionally passing wrong type to test runtime check
 		expect(() => ValidationUtils.truncateWithUrlPreservation(123, 500))
 			.toThrow('Expected string parameter, got number');
-	})
+	});
 
 	it('should not truncate text within the character limit', () => {
 		const text = 'Short text with https://example.com';
@@ -72,4 +72,39 @@ describe('ValidationUtils.truncateWithUrlPreservation', () => {
 		expect(result).toBe(text); // Should not truncate
 		expect(ValidationUtils.calculateMastodonLength(text)).toBe(500);
 	});
+
+	it('should handle internationalized domain names (punycode) correctly', () => {
+ 		const prefix = 'a'.repeat(450);
+ 		const idn = 'https://xn--d1acpjx3f.xn--p1ai/path'; // example punycode domain
+ 		const text = `${prefix} ${idn} ${'b'.repeat(100)}`;
+
+ 		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
+
+ 		// The IDN should be counted as a URL (23 effective) and preserved if possible
+ 		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
+ 	});
+
+	it('should not treat protocol-less text as URL (no leading http)', () => {
+ 		const text = 'Visit example.com/test today';
+ 		const result = ValidationUtils.truncateWithUrlPreservation(text, 20);
+
+ 		// Since no http/https prefix, it should behave as normal text
+ 		expect(result.length).toBe(20);
+ 	});
+
+	it('should handle adjacent punctuation after URL', () => {
+ 		const text = 'See https://example.com,' + 'x'.repeat(480);
+ 		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
+
+ 		// Comma should not be considered part of URL and truncation should account for URL effective length
+ 		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
+ 	});
+
+	it('should handle multiple consecutive URLs and truncate appropriately', () => {
+ 		const text = 'https://a.com https://b.com https://c.com ' + 'x'.repeat(470);
+ 		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
+
+ 		// Ensure result effective length is within limit
+ 		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
+ 	});
 });

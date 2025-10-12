@@ -1,9 +1,9 @@
 import {
+	IBinaryKeyData,
+	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
-	IBinaryKeyData,
 	NodeOperationError,
-	IDataObject,
 } from 'n8n-workflow';
 import { handleApiRequest, ValidationUtils } from '../Mastodon_Methods';
 import { IStatusMethods } from './StatusMethodsTypes';
@@ -66,14 +66,24 @@ const methods: IStatusMethods = {
 
 		// Visibility setting
 		if (additionalFields.visibility) {
-			body.visibility = ValidationUtils.sanitizeVisibility(additionalFields.visibility as string);
+			const vis = ValidationUtils.sanitizeStringParam(additionalFields.visibility as string);
+			const allowedVisibilities = ['direct', 'private', 'unlisted', 'public'];
+			if (!allowedVisibilities.includes(vis)) {
+				throw new NodeOperationError(
+					this.getNode(),
+					`Invalid visibility value "${vis}". Allowed values: ${allowedVisibilities.join(', ')}`,
+				);
+			}
+			body.visibility = vis;
 		}
 
 		// Scheduled posting
 		if (additionalFields.scheduledAt) {
-			const scheduledDate = ValidationUtils.validateDateParam(
-				additionalFields.scheduledAt as string,
-			);
+			const scheduledAtStr = additionalFields.scheduledAt as string;
+			const scheduledDate = new Date(scheduledAtStr);
+			if (isNaN(scheduledDate.getTime())) {
+				throw new NodeOperationError(this.getNode(), 'Scheduled time is not a valid date');
+			}
 			// Ensure scheduled time is at least 5 minutes in the future per API requirement
 			const fiveMinutesFromNow = new Date(Date.now() + 5 * 60 * 1000);
 			if (scheduledDate <= fiveMinutesFromNow) {
@@ -338,8 +348,8 @@ const methods: IStatusMethods = {
 					descendantCount: 0,
 					totalStatuses: 0,
 					targetStatusId: statusId,
-					error: 'No context result received'
-				}
+					error: 'No context result received',
+				},
 			}];
 		}
 
@@ -374,8 +384,8 @@ const methods: IStatusMethods = {
 						ancestorCount: ancestors.length,
 						descendantCount: descendants.length,
 						totalStatuses: ancestors.length + descendants.length,
-						targetStatusId: statusId
-					}
+						targetStatusId: statusId,
+					},
 				}];
 		}
 	},
@@ -447,8 +457,8 @@ function buildThreadTree(statuses: IDataObject[]): IDataObject {
 
 	return {
 		thread: rootStatuses,
-		structure: 'tree'
+		structure: 'tree',
 	};
 }
 
-export default methods;
+export { methods };

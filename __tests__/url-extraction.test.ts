@@ -52,4 +52,28 @@ describe('ValidationUtils.extractUrls', () => {
 		expect(urls).toHaveLength(1);
 		expect(urls[0].endIndex).toBe(text.length);
 	});
+
+	it('should not include trailing punctuation in extracted URL', () => {
+		const text = 'Check this out: https://example.com!';
+		const urls = ValidationUtils.extractUrls(text);
+
+		expect(urls).toHaveLength(1);
+		expect(urls[0].url).toBe('https://example.com');
+	});
+
+	it('should extract URL inside parentheses without trailing paren', () => {
+		const text = 'See (https://example.com/page) for details';
+		const urls = ValidationUtils.extractUrls(text);
+
+		expect(urls).toHaveLength(1);
+		expect(urls[0].url).toBe('https://example.com/page');
+	});
+
+	it('should extract URL with port and fragment', () => {
+		const text = 'Connect to https://example.com:8080/path#section';
+		const urls = ValidationUtils.extractUrls(text);
+
+		expect(urls).toHaveLength(1);
+		expect(urls[0].url).toBe('https://example.com:8080/path#section');
+	});
 });

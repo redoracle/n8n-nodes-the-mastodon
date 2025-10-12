@@ -1,4 +1,4 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { handleApiRequest } from '../Mastodon_Methods';
 import { IAccount } from '../account/AccountInterfaces';
 

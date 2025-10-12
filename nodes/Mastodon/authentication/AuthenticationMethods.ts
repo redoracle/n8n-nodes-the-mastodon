@@ -1,7 +1,7 @@
 import {
+	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
-	IDataObject,
 	NodeOperationError,
 } from 'n8n-workflow';
 import { handleApiRequest } from '../Mastodon_Methods';
@@ -90,7 +90,7 @@ async function obtainToken(
 
 	// Check if PKCE is supported and we have a code verifier
 	const credentials = await this.getCredentials('mastodonOAuth2Api');
-	const code_verifier = (credentials as IDataObject).code_verifier as string;
+	const codeVerifier = (credentials as IDataObject).code_verifier as string;
 
 	const body: IDataObject = {
 		grant_type: 'authorization_code',
@@ -101,8 +101,8 @@ async function obtainToken(
 	};
 
 	// Add PKCE code_verifier if supported and available
-	if (config?.code_challenge_methods_supported?.includes('S256') && code_verifier) {
-		body.code_verifier = code_verifier;
+	if (config?.code_challenge_methods_supported?.includes('S256') && codeVerifier) {
+		body.code_verifier = codeVerifier;
 	}
 
 	// Exchange the authorization code for an access token

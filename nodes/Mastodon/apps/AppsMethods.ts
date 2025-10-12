@@ -1,4 +1,4 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { handleApiRequest } from '../Mastodon_Methods';
 
 export async function registerApp(
@@ -19,12 +19,12 @@ export async function registerApp(
 		website,
 	};
 
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/apps`, body);
+	return (await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/apps`, body)) as IDataObject;
 }
 
 export async function verifyAppCredentials(
 	this: IExecuteFunctions,
 	baseUrl: string,
 ): Promise<IDataObject> {
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/apps/verify_credentials`);
+	return (await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/apps/verify_credentials`)) as IDataObject;
 }
