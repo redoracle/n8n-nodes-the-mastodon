@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 
 interface IPoll {
 	id: string;
@@ -8,11 +8,11 @@ interface IPoll {
 	multiple: boolean;
 	votes_count: number;
 	voters_count: number | null;
-	options: {
+	options: Array<{
 		title: string;
 		votes_count: number | null;
-	}[];
-	emojis: any[];
+	}>;
+	emojis: IDataObject[];
 	voted?: boolean;
 	own_votes?: number[];
 }
@@ -28,7 +28,8 @@ export async function view(
 	i: number,
 ): Promise<IPoll> {
 	const pollId = this.getNodeParameter('pollId', i) as string;
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/polls/${pollId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IPoll>('GET', `${baseUrl}/api/v1/polls/${pollId}`);
 }
 
 /**
@@ -43,8 +44,6 @@ export async function vote(
 ): Promise<IPoll> {
 	const pollId = this.getNodeParameter('pollId', i) as string;
 	const choices = this.getNodeParameter('choices', i) as number[];
-
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/polls/${pollId}/votes`, {
-		choices,
-	});
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IPoll>('POST', `${baseUrl}/api/v1/polls/${pollId}/votes`, { choices });
 }

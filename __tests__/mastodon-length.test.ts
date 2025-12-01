@@ -33,7 +33,8 @@ describe('ValidationUtils.calculateMastodonLength', () => {
 
 	it('should count long URL as only 23 characters', () => {
 		// URL = 92 chars actual, counts as 23
-		const text = 'Read https://example.com/very/long/path/to/article/with/many/segments?param1=value1&param2=value2';
+		const text =
+			'Read https://example.com/very/long/path/to/article/with/many/segments?param1=value1&param2=value2';
 
 		const length = ValidationUtils.calculateMastodonLength(text);
 

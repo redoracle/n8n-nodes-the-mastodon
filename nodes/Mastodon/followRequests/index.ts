@@ -1,13 +1,22 @@
-import { INodeProperties } from 'n8n-workflow';
+import { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import * as FollowRequestMethods from './FollowRequestMethods';
-import { followRequestOperations, followRequestFields } from './FollowRequestProperties';
+import { followRequestFields, followRequestOperations } from './FollowRequestProperties';
 
 export const followRequestsProperties: INodeProperties[] = [
 	...followRequestOperations,
 	...followRequestFields,
 ];
 
-export const followRequestsMethods = {
+type FollowRequestMethod = (
+	this: IExecuteFunctions,
+	baseUrl: string,
+	items: INodeExecutionData[],
+	i: number,
+) => Promise<unknown>;
+
+export const followRequestsMethods: {
+	[K in keyof typeof FollowRequestMethods]: FollowRequestMethod;
+} = {
 	list: FollowRequestMethods.list,
 	acceptRequest: FollowRequestMethods.acceptRequest,
 	rejectRequest: FollowRequestMethods.rejectRequest,

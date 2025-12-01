@@ -4,7 +4,7 @@ import {
 	INodeExecutionData,
 	NodeOperationError,
 } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 
 export async function getBookmarks(
 	this: IExecuteFunctions,
@@ -23,7 +23,8 @@ export async function getBookmarks(
 	if (minId) qs.min_id = minId;
 	if (limit) qs.limit = Math.min(limit, 40);
 
-	return (await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/bookmarks`, {}, qs)) as IDataObject[];
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject[]>('GET', `${baseUrl}/api/v1/bookmarks`, {}, qs);
 }
 
 export async function addBookmark(
@@ -31,16 +32,13 @@ export async function addBookmark(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-	): Promise<IDataObject[]> {
+): Promise<IDataObject[]> {
 	const statusId = this.getNodeParameter('statusId', i) as string;
 	if (!statusId) {
 		throw new NodeOperationError(this.getNode(), 'Status ID is required to add a bookmark');
 	}
-	return [(await handleApiRequest.call(
-		this,
-		'POST',
-		`${baseUrl}/api/v1/statuses/${statusId}/bookmark`,
-	)) as IDataObject];
+	const apiRequest = bindHandleApiRequest(this);
+	return [await apiRequest<IDataObject>('POST', `${baseUrl}/api/v1/statuses/${statusId}/bookmark`)];
 }
 
 export async function removeBookmark(
@@ -48,14 +46,11 @@ export async function removeBookmark(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-	): Promise<IDataObject[]> {
+): Promise<IDataObject[]> {
 	const statusId = this.getNodeParameter('statusId', i) as string;
 	if (!statusId) {
 		throw new NodeOperationError(this.getNode(), 'Status ID is required to remove a bookmark');
 	}
-	return [(await handleApiRequest.call(
-		this,
-		'POST',
-		`${baseUrl}/api/v1/statuses/${statusId}/unbookmark`,
-	)) as IDataObject];
+	const apiRequest = bindHandleApiRequest(this);
+	return [await apiRequest<IDataObject>('POST', `${baseUrl}/api/v1/statuses/${statusId}/unbookmark`)];
 }

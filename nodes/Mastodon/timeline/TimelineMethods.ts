@@ -1,6 +1,6 @@
 // Modularized Timeline methods for Mastodon node
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 import { ITimeline, ITimelineParams } from './TimelineInterfaces';
 
 /**
@@ -39,7 +39,8 @@ export async function publicTimeline(
 		qs.limit = Math.min(additionalFields.limit, 40);
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/timelines/public`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ITimeline>('GET', `${baseUrl}/api/v1/timelines/public`, {}, qs);
 }
 
 /**
@@ -88,13 +89,8 @@ export async function hashtagTimeline(
 		qs.limit = Math.min(additionalFields.limit, 40);
 	}
 
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`${baseUrl}/api/v1/timelines/tag/${hashtag}`,
-		{},
-		qs,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ITimeline>('GET', `${baseUrl}/api/v1/timelines/tag/${hashtag}`, {}, qs);
 }
 
 /**
@@ -125,7 +121,8 @@ export async function homeTimeline(
 		qs.limit = Math.min(additionalFields.limit, 40);
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/timelines/home`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ITimeline>('GET', `${baseUrl}/api/v1/timelines/home`, {}, qs);
 }
 
 /**
@@ -157,13 +154,8 @@ export async function listTimeline(
 		qs.limit = Math.min(additionalFields.limit, 40);
 	}
 
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`${baseUrl}/api/v1/timelines/list/${listId}`,
-		{},
-		qs,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ITimeline>('GET', `${baseUrl}/api/v1/timelines/list/${listId}`, {}, qs);
 }
 
 /**
@@ -194,5 +186,6 @@ export async function linkTimeline(
 		qs.limit = Math.min(additionalFields.limit, 40);
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/timelines/link`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ITimeline>('GET', `${baseUrl}/api/v1/timelines/link`, {}, qs);
 }

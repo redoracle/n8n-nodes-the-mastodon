@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest } from '../Mastodon_Methods';
 
 /**
  * Gets follow suggestions
@@ -10,7 +10,7 @@ export async function get(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-): Promise<any> {
+): Promise<IDataObject[]> {
 	const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 	const qs: IDataObject = {};
 
@@ -18,7 +18,9 @@ export async function get(
 		qs.limit = Math.min(additionalFields.limit as number, 80);
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v2/suggestions`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	const result = await apiRequest('GET', `${baseUrl}/api/v2/suggestions`, {}, qs);
+	return Array.isArray(result) ? result : (result ? [result] : []);
 }
 
 /**
@@ -32,5 +34,6 @@ export async function remove(
 	i: number,
 ): Promise<{}> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	return await handleApiRequest.call(this, 'DELETE', `${baseUrl}/api/v1/suggestions/${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest('DELETE', `${baseUrl}/api/v1/suggestions/${accountId}`);
 }

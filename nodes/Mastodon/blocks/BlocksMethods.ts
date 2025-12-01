@@ -1,5 +1,6 @@
-import { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { IAccount } from '../account/AccountInterfaces';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 
 /**
  * Blocks an account by ID
@@ -9,9 +10,10 @@ export async function block(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-): Promise<any> {
+): Promise<IDataObject> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/accounts/${accountId}/block`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject>('POST', `${baseUrl}/api/v1/accounts/${accountId}/block`);
 }
 
 /**
@@ -22,11 +24,8 @@ export async function unblock(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-): Promise<any> {
+): Promise<IDataObject> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'POST',
-		`${baseUrl}/api/v1/accounts/${accountId}/unblock`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject>('POST', `${baseUrl}/api/v1/accounts/${accountId}/unblock`);
 }

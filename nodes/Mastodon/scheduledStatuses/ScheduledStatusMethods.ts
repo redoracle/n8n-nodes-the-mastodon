@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest } from '../Mastodon_Methods';
 
 interface IScheduledStatus {
 	id: string;
@@ -7,14 +7,14 @@ interface IScheduledStatus {
 	params: {
 		text: string;
 		media_ids: string[] | null;
-		poll: object | null;
+		poll: IDataObject | null;
 		in_reply_to_id: string | null;
 		sensitive: boolean;
 		spoiler_text: string | null;
 		visibility: string;
 		language: string | null;
 	};
-	media_attachments: any[];
+	media_attachments: IDataObject[];
 }
 
 /**
@@ -43,7 +43,8 @@ export async function list(
 		qs.min_id = additionalFields.min_id;
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/scheduled_statuses`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IScheduledStatus[]>('GET', `${baseUrl}/api/v1/scheduled_statuses`, {}, qs);
 }
 
 /**
@@ -57,11 +58,8 @@ export async function view(
 	i: number,
 ): Promise<IScheduledStatus> {
 	const statusId = this.getNodeParameter('statusId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`${baseUrl}/api/v1/scheduled_statuses/${statusId}`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IScheduledStatus>('GET', `${baseUrl}/api/v1/scheduled_statuses/${statusId}`);
 }
 
 /**
@@ -77,12 +75,10 @@ export async function update(
 	const statusId = this.getNodeParameter('statusId', i) as string;
 	const scheduledAt = this.getNodeParameter('scheduledAt', i) as string;
 
-	return await handleApiRequest.call(
-		this,
-		'PUT',
-		`${baseUrl}/api/v1/scheduled_statuses/${statusId}`,
-		{ scheduled_at: scheduledAt },
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IScheduledStatus>('PUT', `${baseUrl}/api/v1/scheduled_statuses/${statusId}`, {
+		scheduled_at: scheduledAt,
+	});
 }
 
 /**
@@ -96,9 +92,6 @@ export async function cancel(
 	i: number,
 ): Promise<{}> {
 	const statusId = this.getNodeParameter('statusId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'DELETE',
-		`${baseUrl}/api/v1/scheduled_statuses/${statusId}`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<{}>('DELETE', `${baseUrl}/api/v1/scheduled_statuses/${statusId}`);
 }

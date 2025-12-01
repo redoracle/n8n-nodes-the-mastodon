@@ -1,12 +1,13 @@
 // Aggregated status module for Mastodon node
 import { INodeProperties } from 'n8n-workflow';
-import * as Props from './StatusProperties';
 import { methods as StatusMethods } from './StatusMethods';
+import * as Props from './StatusProperties';
 
 export const statusProperties: INodeProperties[] = [
 	Props.statusOperations,
 	...Props.createFields,
 	...Props.deleteFields,
+	...Props.editFields,
 	...Props.searchFields,
 	...Props.favouriteFields,
 	...Props.boostFields,

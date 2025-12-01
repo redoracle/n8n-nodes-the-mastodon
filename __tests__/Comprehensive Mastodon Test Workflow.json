@@ -1,0 +1,2063 @@
+{
+	"name": "Comprehensive Mastodon Test Workflow",
+	"nodes": [
+		{
+			"parameters": {},
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [-1760, 80],
+			"id": "fc7ac918-1332-4918-bd17-622aa68dcdbd",
+			"name": "Manual Trigger"
+		},
+		{
+			"parameters": {
+				"options": {}
+			},
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 3,
+			"position": [-1536, 80],
+			"id": "2c02e812-8ed3-4b9c-b59c-bc19d4bd240e",
+			"name": "Initialize Test Variables",
+			"notesInFlow": true,
+			"notes": "Set up variables for testing"
+		},
+		{
+			"parameters": {
+				"resource": "account",
+				"operation": "verifyCredentials"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-1312, -320],
+			"id": "f585ecb7-a029-4a2f-b30f-cd148b93f0fa",
+			"name": "1. Verify Credentials",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"status": "=🧪 Test Status - {{ $now.format('MM-DD HH:mm:ss') }}",
+				"additionalFields": {
+					"visibility": "public"
+				}
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-1088, -320],
+			"id": "0d9ea302-edcd-4878-948e-d5900308d23b",
+			"name": "2. Create Status",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"operation": "view",
+				"statusId": "={{ $json.id }}"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-864, -320],
+			"id": "d7fc7814-cbdd-4796-8248-9317c8c00c65",
+			"name": "3. View Status",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"operation": "edit",
+				"statusId": "={{ $json.id }}",
+				"status": "=✏️ Edited Test Status - {{ $now.format('MM-DD HH:mm:ss') }}"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-640, -320],
+			"id": "d1130769-dca4-4e35-9276-a0e44951efd5",
+			"name": "4. Edit Status",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"operation": "context",
+				"statusId": "={{ $json.id }}",
+				"additionalOptions": {}
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-432, -320],
+			"id": "31d37e33-87db-4639-94c1-3a622c233cb6",
+			"name": "5. Get Context",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "bookmarks",
+				"operation": "addBookmark",
+				"statusId": "={{ $('2. Create Status').item.json.id }}"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-208, -320],
+			"id": "1c3f8f40-26db-4633-bdb8-569becf14bab",
+			"name": "6. Add Bookmark",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "bookmarks"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [32, -320],
+			"id": "8611e961-4a07-4a10-bd85-b2f952e8c602",
+			"name": "7. Get Bookmarks",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "bookmarks",
+				"operation": "removeBookmark",
+				"statusId": "={{ $('2. Create Status').item.json.id }}"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [256, -320],
+			"id": "8ca9a151-2bbd-440b-9492-e879ad813403",
+			"name": "8. Remove Bookmark",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "favourites",
+				"operation": "favourite",
+				"statusId": "={{ $('2. Create Status').item.json.id }}"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-1312, -112],
+			"id": "e9bcb617-404d-47c4-9257-79028df9360b",
+			"name": "9. Favourite Status",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "favourites"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-1088, -112],
+			"id": "96bf07cb-aa6e-4713-9be2-a8688b5484c5",
+			"name": "10. Get Favourites",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "favourites",
+				"operation": "unfavourite",
+				"statusId": "={{ $('2. Create Status').item.json.id }}"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-864, -112],
+			"id": "99e29353-a903-48dc-9bc2-3cd8744ba420",
+			"name": "11. Unfavourite Status",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "lists",
+				"operation": "createList",
+				"title": "Test List"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-640, -112],
+			"id": "3b2659d3-47f5-4019-8cef-3c9a7c259615",
+			"name": "12. Create List",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "lists"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-432, -112],
+			"id": "efd84976-617a-43db-a33e-ff3b9e2214d3",
+			"name": "13. Get Lists",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "lists",
+				"operation": "getList",
+				"listId": "={{ $('12. Create List').item.json.id }}"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-208, -112],
+			"id": "a9ffde42-3a49-47d0-9c5e-f72ffa320762",
+			"name": "14. Get List",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "lists",
+				"operation": "updateList",
+				"listId": "={{ $('12. Create List').item.json.id }}",
+				"title": "Updated Test List"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [32, -112],
+			"id": "583c2cb5-7e1a-43b8-bb60-0024493193b6",
+			"name": "15. Update List",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "lists",
+				"operation": "deleteList",
+				"listId": "={{ $('12. Create List').item.json.id }}"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [256, -112],
+			"id": "b8f3b486-085e-4a48-8371-c44f0b07947a",
+			"name": "16. Delete List",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "timeline",
+				"operation": "home",
+				"additionalFields": {}
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-1312, 80],
+			"id": "559d61e7-91c9-4850-9b26-88ee65c4ff39",
+			"name": "17. Get Home Timeline",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "timeline",
+				"additionalFields": {}
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-1088, 80],
+			"id": "ff0012b7-db6c-4263-9095-1182443805c6",
+			"name": "18. Get Public Timeline",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "timeline",
+				"operation": "hashtag",
+				"hashtag": "mastodon",
+				"additionalFields": {
+					"limit": 20
+				}
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-864, 80],
+			"id": "e441c5e3-fd67-4326-8198-88c6497f12eb",
+			"name": "19. Get Hashtag Timeline",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "search",
+				"query": "mastodon",
+				"additionalFields": {
+					"limit": 20
+				}
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-640, 80],
+			"id": "959fe88c-4c44-42a1-9f18-314ecd0d3bdc",
+			"name": "20. Search",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "notifications",
+				"operation": "getAll"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-432, 80],
+			"id": "75c6fc56-ec36-40cc-9bcd-a0173f39739f",
+			"name": "21. Get Notifications",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "account",
+				"operation": "searchAccounts",
+				"query": "red"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-208, 80],
+			"id": "f3a26bd9-6f41-4b6a-a8af-70040182d092",
+			"name": "22. Search Accounts",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "instance"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [32, 80],
+			"id": "1ec2e8e2-e154-4028-8637-760a78d0e5e3",
+			"name": "23. Get Server Info",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "preferences"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [256, 80],
+			"id": "3e9fa860-5470-4ff3-9e22-a49639024260",
+			"name": "24. Get Preferences",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "customEmojis"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-1312, 288],
+			"id": "a2407d8c-135b-4677-976c-4e99ef9123a2",
+			"name": "25. Get Custom Emojis",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "directory",
+				"additionalFields": {}
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-1088, 288],
+			"id": "8955f2e3-6ab5-40d5-b2d3-5236ddb38214",
+			"name": "26. View Directory",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "followRequests",
+				"operation": "get"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-864, 288],
+			"id": "0425e00d-32ee-4e76-acbf-b4869adbc562",
+			"name": "27. Get Follow Requests",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "endorsements",
+				"additionalFields": {}
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-640, 288],
+			"id": "b80c1f1e-a4b5-429d-9f62-8da065c1f12f",
+			"name": "28. Get Endorsements",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "conversations",
+				"operation": "get"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-432, 288],
+			"id": "91f9fab6-da96-4bf6-965e-4d8ae13db000",
+			"name": "29. Get Conversations",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "featuredTags"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-208, 288],
+			"id": "183b079b-a3e5-4926-98b9-1a4bea7ebab6",
+			"name": "30. Get Featured Tags",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "mutes",
+				"operation": "get"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [32, 288],
+			"id": "7b19f569-feb1-435f-80ee-d001f0f7254e",
+			"name": "31. Get Mutes",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "domainBlocks",
+				"operation": "get"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [256, 288],
+			"id": "1181ef85-3613-41cf-8560-fbdf555f4621",
+			"name": "32. Get Domain Blocks",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "announcements"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-1312, 480],
+			"id": "0f6447c2-a88f-4938-9dc1-c294a2c1ab85",
+			"name": "33. Get Announcements",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "filters",
+				"phrase": "test_filter",
+				"context": ["home"],
+				"additionalFields": {}
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-1088, 480],
+			"id": "4943cd40-c807-4acb-be62-36ca08b7c882",
+			"name": "34. Get Filters",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"resource": "suggestions",
+				"additionalFields": {}
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-864, 480],
+			"id": "e2b33a30-ca0c-4956-a874-f37e43583389",
+			"name": "35. Get Suggestions",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"operation": "delete",
+				"statusId": "={{ $('2. Create Status').item.json.id }}"
+			},
+			"type": "CUSTOM.mastodon",
+			"typeVersion": 1,
+			"position": [-640, 480],
+			"id": "bf148eda-e0b9-403a-8699-f44bee807129",
+			"name": "36. Delete Status (Cleanup)",
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": "8AZZ3YP89vjO3vCG",
+					"name": "Unnamed credential"
+				}
+			},
+			"continueOnFail": true
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"1. Verify Credentials\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "8390f183-e639-4f59-aab0-fcf4234754b6",
+			"name": "Label: 1. Verify Credentials"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"2. Create Status\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "c2769240-b50a-4aef-8c1b-a7dc1d248f98",
+			"name": "Label: 2. Create Status"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"3. View Status\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "1fcc4b34-8c92-401d-a5b3-160601a58db4",
+			"name": "Label: 3. View Status"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"4. Edit Status\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "a295e9e9-ca6b-4e59-8fea-c62921f27a6a",
+			"name": "Label: 4. Edit Status"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"5. Get Context\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "9660e12a-6345-4ded-bdb3-faf056438429",
+			"name": "Label: 5. Get Context"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"6. Add Bookmark\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "20b4eb02-d4f4-4f8c-b973-effe9208dd38",
+			"name": "Label: 6. Add Bookmark"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"7. Get Bookmarks\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "bf00bc89-4ceb-4f17-b5dc-6b01c3db23f9",
+			"name": "Label: 7. Get Bookmarks"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"8. Remove Bookmark\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "e0cbb5ff-93e3-4afa-8e7e-e72e9f019f40",
+			"name": "Label: 8. Remove Bookmark"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"9. Favourite Status\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "0b89165c-21be-4572-ba56-d165c3308725",
+			"name": "Label: 9. Favourite Status"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"10. Get Favourites\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "c8f71228-fa93-4462-95ab-c46572ef81db",
+			"name": "Label: 10. Get Favourites"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"11. Unfavourite Status\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "6d69f680-c178-44c4-a531-44668238d7c1",
+			"name": "Label: 11. Unfavourite Status"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"12. Create List\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "ea31d3fc-c6d2-403c-b5d3-4cedcc27b806",
+			"name": "Label: 12. Create List"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"13. Get Lists\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "4e806889-06a0-4b6e-a852-5aa88fda60b4",
+			"name": "Label: 13. Get Lists"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"14. Get List\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "8a91c910-21ce-4d03-84e0-a1ca5f4b9073",
+			"name": "Label: 14. Get List"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"15. Update List\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "834de3b3-dbb8-4971-9481-2748442bebd0",
+			"name": "Label: 15. Update List"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"16. Delete List\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "f7314b3d-11d4-418c-a692-ad5243a55517",
+			"name": "Label: 16. Delete List"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"17. Get Home Timeline\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "541e5947-7506-47b5-958c-ec21bd387cef",
+			"name": "Label: 17. Get Home Timeline"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"18. Get Public Timeline\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "db82eda0-cb03-4cd8-9019-779c50a2b2ba",
+			"name": "Label: 18. Get Public Timeline"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"19. Get Hashtag Timeline\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "d40c6913-2541-46c2-931a-4cdb614c1ae7",
+			"name": "Label: 19. Get Hashtag Timeline"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"20. Search\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "1b99c135-7963-4f28-b373-36ce44a46b38",
+			"name": "Label: 20. Search"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"21. Get Notifications\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "cda39a92-0a6d-46fa-82cf-62fd68abf414",
+			"name": "Label: 21. Get Notifications"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"22. Search Accounts\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "49c32537-4bd7-4599-b4b4-b7c85b1efb02",
+			"name": "Label: 22. Search Accounts"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"23. Get Server Info\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "f918e7af-1a62-456e-ba3b-dc1e6db74dff",
+			"name": "Label: 23. Get Server Info"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"24. Get Preferences\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "b5498323-2794-47cc-9722-048e705c6e58",
+			"name": "Label: 24. Get Preferences"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"25. Get Custom Emojis\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "13e79f86-09d0-4af3-891b-352af864abb2",
+			"name": "Label: 25. Get Custom Emojis"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"26. View Directory\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "a06d06e8-9d3c-4469-bb65-028d681a7645",
+			"name": "Label: 26. View Directory"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"27. Get Follow Requests\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "f3c955c2-92c6-407a-9202-e35efa9d0ab4",
+			"name": "Label: 27. Get Follow Requests"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"28. Get Endorsements\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "8410454b-980c-4ff2-a2ff-56a890db9b5c",
+			"name": "Label: 28. Get Endorsements"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"29. Get Conversations\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "d0346f99-11e1-4d76-a462-353b12569fd6",
+			"name": "Label: 29. Get Conversations"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"30. Get Featured Tags\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "5f4212a3-adf3-4fe1-ac6e-ae266c3069c0",
+			"name": "Label: 30. Get Featured Tags"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"31. Get Mutes\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "566d2524-f36f-4ea5-a197-0c1728b403cb",
+			"name": "Label: 31. Get Mutes"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"32. Get Domain Blocks\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "2c0248ab-464a-4a1f-a417-f068047351f2",
+			"name": "Label: 32. Get Domain Blocks"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"33. Get Announcements\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "fc3e1537-f361-4029-8a82-5e34fb5a74f7",
+			"name": "Label: 33. Get Announcements"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"34. Get Filters\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "0e35249b-a6e9-4974-be06-5f1f2958f11d",
+			"name": "Label: 34. Get Filters"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"35. Get Suggestions\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "5c3f32aa-ab9f-4c2c-8a71-3daf2ae5c623",
+			"name": "Label: 35. Get Suggestions"
+		},
+		{
+			"parameters": {
+				"jsCode": "return items.map(item => ({\n  json: {\n    ...item.json,\n    test_name: \"36. Delete Status (Cleanup)\"\n  }\n}));"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-1312, -320],
+			"id": "fbb45ee4-138c-4ade-b20c-0e3d8e00712c",
+			"name": "Label: 36. Delete Status (Cleanup)"
+		},
+		{
+			"parameters": {
+				"jsCode": "// Comprehensive Test Results Report\nconst results = [];\nconst allItems = $input.all();\n\nconsole.log(`Processing ${allItems.length} test results...`);\n\nfor (const item of allItems) {\n  // Get test name from the Set node that added it\n  const nodeName = item.json.test_name || 'Unknown Test';\n  const hasError = !!item.json.error;\n  const errorMessage = item.json.error?.message || null;\n  \n  // Determine if the test passed\n  const passed = !hasError && (item.json.id || item.json.length >= 0 || item.json.accounts || item.json.statuses || item.json.hashtags || item.json.instance || item.json.preferences || Object.keys(item.json).length > 2);\n  \n  results.push({\n    test: nodeName,\n    status: passed ? '✅ PASS' : '❌ FAIL',\n    error: errorMessage,\n    hasData: !hasError && Object.keys(item.json).length > 1,\n    dataKeys: Object.keys(item.json).filter(k => k !== 'test_name' && k !== 'error').slice(0, 5).join(', ')\n  });\n}\n\nconst passed = results.filter(r => r.status === '✅ PASS').length;\nconst failed = results.filter(r => r.status === '❌ FAIL').length;\nconst successRate = ((passed / results.length) * 100).toFixed(2);\n\n// Group results by status\nconst passedTests = results.filter(r => r.status === '✅ PASS');\nconst failedTests = results.filter(r => r.status === '❌ FAIL');\n\nconsole.log(`\\n${'='.repeat(60)}`);\nconsole.log('MASTODON PLUGIN TEST RESULTS');\nconsole.log('='.repeat(60));\nconsole.log(`Total Tests: ${results.length}`);\nconsole.log(`Passed: ${passed} (${successRate}%)`);\nconsole.log(`Failed: ${failed}`);\nconsole.log('='.repeat(60));\n\nif (failedTests.length > 0) {\n  console.log('\\nFailed Tests:');\n  failedTests.forEach(t => {\n    console.log(`  ${t.status} ${t.test}`);\n    if (t.error) console.log(`     Error: ${t.error}`);\n  });\n}\n\nif (passedTests.length > 0) {\n  console.log('\\nPassed Tests:');\n  passedTests.forEach(t => {\n    console.log(`  ${t.status} ${t.test}`);\n    if (t.dataKeys) console.log(`     Data: ${t.dataKeys}`);\n  });\n}\n\nconsole.log('\\n' + '='.repeat(60));\n\nreturn [\n  {\n    json: {\n      summary: {\n        total: results.length,\n        passed: passed,\n        failed: failed,\n        success_rate: `${successRate}%`,\n        timestamp: new Date().toISOString(),\n        verdict: failed === 0 ? '🎉 ALL TESTS PASSED!' : `⚠️  ${failed} TEST(S) FAILED`\n      },\n      passed_tests: passedTests,\n      failed_tests: failedTests,\n      all_results: results\n    }\n  }\n];",
+				"mode": "runOnceForAllItems"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [-432, 480],
+			"id": "7959891a-dbcf-408a-8856-6a8854085486",
+			"name": "Collect Test Results"
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"Manual Trigger": {
+			"main": [
+				[
+					{
+						"node": "Initialize Test Variables",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Initialize Test Variables": {
+			"main": [
+				[
+					{
+						"node": "1. Verify Credentials",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "17. Get Home Timeline",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "18. Get Public Timeline",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "19. Get Hashtag Timeline",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "20. Search",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "21. Get Notifications",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "22. Search Accounts",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "23. Get Server Info",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "24. Get Preferences",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "25. Get Custom Emojis",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "26. View Directory",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "27. Get Follow Requests",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "28. Get Endorsements",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "29. Get Conversations",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "30. Get Featured Tags",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "31. Get Mutes",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "32. Get Domain Blocks",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "33. Get Announcements",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "34. Get Filters",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "35. Get Suggestions",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"1. Verify Credentials": {
+			"main": [
+				[
+					{
+						"node": "2. Create Status",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 1. Verify Credentials",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 1. Verify Credentials": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"2. Create Status": {
+			"main": [
+				[
+					{
+						"node": "3. View Status",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "9. Favourite Status",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 2. Create Status",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 2. Create Status": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"3. View Status": {
+			"main": [
+				[
+					{
+						"node": "4. Edit Status",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 3. View Status",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 3. View Status": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"4. Edit Status": {
+			"main": [
+				[
+					{
+						"node": "5. Get Context",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 4. Edit Status",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 4. Edit Status": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"5. Get Context": {
+			"main": [
+				[
+					{
+						"node": "6. Add Bookmark",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 5. Get Context",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 5. Get Context": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"6. Add Bookmark": {
+			"main": [
+				[
+					{
+						"node": "7. Get Bookmarks",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 6. Add Bookmark",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 6. Add Bookmark": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"7. Get Bookmarks": {
+			"main": [
+				[
+					{
+						"node": "8. Remove Bookmark",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 7. Get Bookmarks",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 7. Get Bookmarks": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"8. Remove Bookmark": {
+			"main": [
+				[
+					{
+						"node": "Label: 8. Remove Bookmark",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 8. Remove Bookmark": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"9. Favourite Status": {
+			"main": [
+				[
+					{
+						"node": "10. Get Favourites",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 9. Favourite Status",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 9. Favourite Status": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"10. Get Favourites": {
+			"main": [
+				[
+					{
+						"node": "11. Unfavourite Status",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 10. Get Favourites",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 10. Get Favourites": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"11. Unfavourite Status": {
+			"main": [
+				[
+					{
+						"node": "12. Create List",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 11. Unfavourite Status",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "36. Delete Status (Cleanup)",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 11. Unfavourite Status": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"12. Create List": {
+			"main": [
+				[
+					{
+						"node": "13. Get Lists",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 12. Create List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 12. Create List": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"13. Get Lists": {
+			"main": [
+				[
+					{
+						"node": "14. Get List",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 13. Get Lists",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 13. Get Lists": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"14. Get List": {
+			"main": [
+				[
+					{
+						"node": "15. Update List",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 14. Get List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 14. Get List": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"15. Update List": {
+			"main": [
+				[
+					{
+						"node": "16. Delete List",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Label: 15. Update List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 15. Update List": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"16. Delete List": {
+			"main": [
+				[
+					{
+						"node": "Label: 16. Delete List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 16. Delete List": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"17. Get Home Timeline": {
+			"main": [
+				[
+					{
+						"node": "Label: 17. Get Home Timeline",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 17. Get Home Timeline": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"18. Get Public Timeline": {
+			"main": [
+				[
+					{
+						"node": "Label: 18. Get Public Timeline",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 18. Get Public Timeline": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"19. Get Hashtag Timeline": {
+			"main": [
+				[
+					{
+						"node": "Label: 19. Get Hashtag Timeline",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 19. Get Hashtag Timeline": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"20. Search": {
+			"main": [
+				[
+					{
+						"node": "Label: 20. Search",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 20. Search": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"21. Get Notifications": {
+			"main": [
+				[
+					{
+						"node": "Label: 21. Get Notifications",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 21. Get Notifications": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"22. Search Accounts": {
+			"main": [
+				[
+					{
+						"node": "Label: 22. Search Accounts",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 22. Search Accounts": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"23. Get Server Info": {
+			"main": [
+				[
+					{
+						"node": "Label: 23. Get Server Info",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 23. Get Server Info": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"24. Get Preferences": {
+			"main": [
+				[
+					{
+						"node": "Label: 24. Get Preferences",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 24. Get Preferences": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"25. Get Custom Emojis": {
+			"main": [
+				[
+					{
+						"node": "Label: 25. Get Custom Emojis",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 25. Get Custom Emojis": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"26. View Directory": {
+			"main": [
+				[
+					{
+						"node": "Label: 26. View Directory",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 26. View Directory": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"27. Get Follow Requests": {
+			"main": [
+				[
+					{
+						"node": "Label: 27. Get Follow Requests",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 27. Get Follow Requests": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"28. Get Endorsements": {
+			"main": [
+				[
+					{
+						"node": "Label: 28. Get Endorsements",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 28. Get Endorsements": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"29. Get Conversations": {
+			"main": [
+				[
+					{
+						"node": "Label: 29. Get Conversations",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 29. Get Conversations": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"30. Get Featured Tags": {
+			"main": [
+				[
+					{
+						"node": "Label: 30. Get Featured Tags",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 30. Get Featured Tags": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"31. Get Mutes": {
+			"main": [
+				[
+					{
+						"node": "Label: 31. Get Mutes",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 31. Get Mutes": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"32. Get Domain Blocks": {
+			"main": [
+				[
+					{
+						"node": "Label: 32. Get Domain Blocks",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 32. Get Domain Blocks": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"33. Get Announcements": {
+			"main": [
+				[
+					{
+						"node": "Label: 33. Get Announcements",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 33. Get Announcements": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"34. Get Filters": {
+			"main": [
+				[
+					{
+						"node": "Label: 34. Get Filters",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 34. Get Filters": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"35. Get Suggestions": {
+			"main": [
+				[
+					{
+						"node": "Label: 35. Get Suggestions",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 35. Get Suggestions": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"36. Delete Status (Cleanup)": {
+			"main": [
+				[
+					{
+						"node": "Label: 36. Delete Status (Cleanup)",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Label: 36. Delete Status (Cleanup)": {
+			"main": [
+				[
+					{
+						"node": "Collect Test Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"active": false,
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"versionId": "c5d2dce0-be89-4146-bca1-b61705ea97cc",
+	"meta": {
+		"templateCredsSetupCompleted": true,
+		"instanceId": "a5a41f2243ac2aa6f01c787f43b5522334fe7e93d80c3827fd200d5ed20ca31b"
+	},
+	"id": "QbOQenCGsAe0P13f",
+	"tags": []
+}

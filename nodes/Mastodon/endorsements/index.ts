@@ -1,6 +1,6 @@
 import { INodeProperties } from 'n8n-workflow';
 import * as EndorsementMethods from './EndorsementMethods';
-import { endorsementOperations, endorsementFields } from './EndorsementProperties';
+import { endorsementFields, endorsementOperations } from './EndorsementProperties';
 
 export const endorsementProperties: INodeProperties[] = [
 	...endorsementOperations,
@@ -8,5 +8,5 @@ export const endorsementProperties: INodeProperties[] = [
 ];
 
 export const endorsementMethods = {
-	list: EndorsementMethods.list,
+	get: EndorsementMethods.get,
 };

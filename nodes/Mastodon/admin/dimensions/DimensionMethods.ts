@@ -1,9 +1,10 @@
-import { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { handleApiRequest } from '../../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../../Mastodon_Methods';
 import { IDimension } from '../AdminInterfaces';
 
 export async function listAll(this: IExecuteFunctions, baseUrl: string): Promise<IDimension[]> {
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/admin/dimensions`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDimension[]>('GET', `${baseUrl}/api/v1/admin/dimensions`);
 }
 
 export async function get(
@@ -13,9 +14,6 @@ export async function get(
 	i: number,
 ): Promise<IDimension> {
 	const dimensionId = this.getNodeParameter('dimensionId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`${baseUrl}/api/v1/admin/dimensions/${dimensionId}`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDimension>('GET', `${baseUrl}/api/v1/admin/dimensions/${dimensionId}`);
 }

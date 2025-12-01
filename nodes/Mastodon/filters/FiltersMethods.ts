@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest } from '../Mastodon_Methods';
 
 /**
  * Creates a new filter
@@ -10,7 +10,7 @@ export async function create(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-): Promise<any> {
+): Promise<IDataObject> {
 	const phrase = this.getNodeParameter('phrase', i) as string;
 	const context = this.getNodeParameter('context', i) as string[];
 	const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
@@ -27,7 +27,8 @@ export async function create(
 		body.whole_word = additionalFields.whole_word as boolean;
 	}
 
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/filters`, body);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest('POST', `${baseUrl}/api/v1/filters`, body);
 }
 
 /**
@@ -39,16 +40,12 @@ export async function update(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-): Promise<any> {
+): Promise<IDataObject> {
 	const filterId = this.getNodeParameter('filterId', i) as string;
 	const updateFields = this.getNodeParameter('updateFields', i) as IDataObject;
 
-	return await handleApiRequest.call(
-		this,
-		'PUT',
-		`${baseUrl}/api/v1/filters/${filterId}`,
-		updateFields,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest('PUT', `${baseUrl}/api/v1/filters/${filterId}`, updateFields);
 }
 
 /**
@@ -60,7 +57,8 @@ export async function remove(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-): Promise<any> {
+): Promise<IDataObject> {
 	const filterId = this.getNodeParameter('filterId', i) as string;
-	return await handleApiRequest.call(this, 'DELETE', `${baseUrl}/api/v1/filters/${filterId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest('DELETE', `${baseUrl}/api/v1/filters/${filterId}`);
 }

@@ -1,6 +1,6 @@
 // Modularized Email Blocked Domain methods for Mastodon node
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../../Mastodon_Methods';
 import { IAdminEmailDomainBlock } from '../../admin/AdminInterfaces';
 
 export async function listEmailBlockedDomains(
@@ -25,13 +25,8 @@ export async function listEmailBlockedDomains(
 		qs.min_id = additionalFields.min_id;
 	}
 
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`${baseUrl}/api/v1/admin/email_domain_blocks`,
-		{},
-		qs,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminEmailDomainBlock[]>('GET', `${baseUrl}/api/v1/admin/email_domain_blocks`, {}, qs);
 }
 
 export async function getEmailBlockedDomain(
@@ -41,11 +36,8 @@ export async function getEmailBlockedDomain(
 	i: number,
 ): Promise<IAdminEmailDomainBlock> {
 	const domainId = this.getNodeParameter('domainId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`${baseUrl}/api/v1/admin/email_domain_blocks/${domainId}`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminEmailDomainBlock>('GET', `${baseUrl}/api/v1/admin/email_domain_blocks/${domainId}`);
 }
 
 export async function blockEmailDomain(
@@ -56,7 +48,8 @@ export async function blockEmailDomain(
 ): Promise<IAdminEmailDomainBlock> {
 	const domain = this.getNodeParameter('domain', i) as string;
 
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/admin/email_domain_blocks`, {
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminEmailDomainBlock>('POST', `${baseUrl}/api/v1/admin/email_domain_blocks`, {
 		domain,
 	});
 }

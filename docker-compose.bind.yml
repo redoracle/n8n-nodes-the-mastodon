@@ -1,0 +1,10 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    environment:
+      - N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom
+      - N8N_LOG_LEVEL=debug
+    ports:
+      - '5678:5678'
+    volumes:
+      - ./_dev/custom:/home/node/.n8n/custom

@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 import { IAccount } from '../account/AccountInterfaces';
 
 /**
@@ -28,5 +28,6 @@ export async function view(
 		qs.local = additionalFields.local;
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/directory`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount[]>('GET', `${baseUrl}/api/v1/directory`, {}, qs);
 }

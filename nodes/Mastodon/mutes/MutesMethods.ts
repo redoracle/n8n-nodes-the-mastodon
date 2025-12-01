@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 
 export async function mute(
 	this: IExecuteFunctions,
@@ -13,7 +13,7 @@ export async function mute(
 		duration?: number;
 	};
 
-	const body: { [key: string]: any } = {};
+	const body: IDataObject = {};
 	if (options.notifications !== undefined) {
 		body.notifications = options.notifications;
 	}
@@ -21,12 +21,8 @@ export async function mute(
 		body.duration = options.duration;
 	}
 
-	return await handleApiRequest.call(
-		this,
-		'POST',
-		`${baseUrl}/api/v1/accounts/${accountId}/mute`,
-		body,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest('POST', `${baseUrl}/api/v1/accounts/${accountId}/mute`, body);
 }
 
 export async function unmute(
@@ -36,9 +32,6 @@ export async function unmute(
 	i: number,
 ) {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'POST',
-		`${baseUrl}/api/v1/accounts/${accountId}/unmute`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest('POST', `${baseUrl}/api/v1/accounts/${accountId}/unmute`);
 }

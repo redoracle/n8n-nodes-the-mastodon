@@ -1,0 +1,13 @@
+services:
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        PLUGIN_TARBALL: ${PLUGIN_TARBALL}
+    image: n8n-dev-with-plugin
+    environment:
+      - N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom
+      - N8N_LOG_LEVEL=debug
+    ports:
+      - '5678:5678'

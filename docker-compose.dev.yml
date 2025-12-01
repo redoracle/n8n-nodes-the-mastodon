@@ -1,0 +1,26 @@
+services:
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Set this to the exact filename created by `npm pack`, e.g. n8n-nodes-the-mastodon-0.0.1.tgz
+        PLUGIN_TARBALL: ${PLUGIN_TARBALL:?Set PLUGIN_TARBALL to the npm-packaged tarball}
+    image: n8n-with-mastodon:dev
+    ports:
+      - '5678:5678'
+    environment:
+      - NODE_ENV=development
+      - N8N_PORT=5678
+      - N8N_TUNNEL=false
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - N8N_LOG_LEVEL=info
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    volumes:
+      - ./:/data/custom-nodes:ro
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+  # Use image's entrypoint wrapper (will symlink plugin into /home/node/.n8n/node_modules)
+
+volumes:
+  n8n_data:

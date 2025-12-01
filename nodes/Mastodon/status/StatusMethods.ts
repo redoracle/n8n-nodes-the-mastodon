@@ -1,11 +1,11 @@
+import crypto from 'crypto';
 import {
-	IBinaryKeyData,
 	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
-	NodeOperationError,
+	NodeOperationError
 } from 'n8n-workflow';
-import { handleApiRequest, ValidationUtils } from '../Mastodon_Methods';
+import { bindHandleApiRequest, ValidationUtils } from '../Mastodon_Methods';
 import { IStatusMethods } from './StatusMethodsTypes';
 
 function validateStatusParam(this: IExecuteFunctions, i: number): string {
@@ -13,7 +13,10 @@ function validateStatusParam(this: IExecuteFunctions, i: number): string {
 	if (!status) {
 		throw new NodeOperationError(this.getNode(), 'Status text is required');
 	}
-	return ValidationUtils.truncateWithUrlPreservation(status as string, ValidationUtils.MASTODON_MAX_STATUS_LENGTH);
+	return ValidationUtils.truncateWithUrlPreservation(
+		status as string,
+		ValidationUtils.MASTODON_MAX_STATUS_LENGTH,
+	);
 }
 
 function validateStatusId(this: IExecuteFunctions, i: number): string {
@@ -101,23 +104,19 @@ const methods: IStatusMethods = {
 		}
 
 		// Generate idempotency key to prevent duplicate submissions
-		const idempotencyKey = require('crypto')
+		const idempotencyKey = crypto
 			.createHash('sha256')
-			.update(JSON.stringify({ status, additionalFields, timestamp: Date.now() }))
+			.update(JSON.stringify({ status, additionalFields }))
 			.digest('hex');
 
 		// Make API request with idempotency key
-		const result = await handleApiRequest.call(
-			this,
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest(
 			'POST',
 			`${baseUrl}/api/v1/statuses`,
 			body,
 			{},
-			{
-				headers: {
-					'Idempotency-Key': idempotencyKey,
-				},
-			},
+			{ headers: { 'Idempotency-Key': idempotencyKey } },
 		);
 		return Array.isArray(result) ? result : [result || {}];
 	},
@@ -126,11 +125,8 @@ const methods: IStatusMethods = {
 		const statusId = validateStatusId.call(this, i);
 		let result;
 		try {
-			result = await handleApiRequest.call(
-				this,
-				'GET',
-				`${baseUrl}/api/v1/statuses/${statusId}`,
-			);
+			const apiRequest = bindHandleApiRequest(this);
+			result = await apiRequest('GET', `${baseUrl}/api/v1/statuses/${statusId}`);
 		} catch (error) {
 			// Always output something meaningful for n8n UI
 			return [{ error: error.message || 'Failed to fetch status', statusId }];
@@ -140,47 +136,35 @@ const methods: IStatusMethods = {
 		}
 		// Always wrap in array and ensure it's an object
 		return Array.isArray(result)
-			? result.map(r => (typeof r === 'object' ? r : { value: r }))
+			? result.map((r) => (typeof r === 'object' ? r : { value: r }))
 			: [typeof result === 'object' ? result : { value: result }];
 	},
 
 	async delete(this: IExecuteFunctions, baseUrl: string, items: INodeExecutionData[], i: number) {
 		const statusId = validateStatusId.call(this, i);
-		const result = await handleApiRequest.call(
-			this,
-			'DELETE',
-			`${baseUrl}/api/v1/statuses/${statusId}`,
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('DELETE', `${baseUrl}/api/v1/statuses/${statusId}`);
 		return Array.isArray(result) ? result : [result];
 	},
 
 	async boost(this: IExecuteFunctions, baseUrl: string, items: INodeExecutionData[], i: number) {
 		const statusId = validateStatusId.call(this, i);
-		const result = await handleApiRequest.call(
-			this,
-			'POST',
-			`${baseUrl}/api/v1/statuses/${statusId}/reblog`,
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('POST', `${baseUrl}/api/v1/statuses/${statusId}/reblog`);
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
 	async unboost(this: IExecuteFunctions, baseUrl: string, items: INodeExecutionData[], i: number) {
 		const statusId = validateStatusId.call(this, i);
-		const result = await handleApiRequest.call(
-			this,
-			'POST',
-			`${baseUrl}/api/v1/statuses/${statusId}/unreblog`,
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('POST', `${baseUrl}/api/v1/statuses/${statusId}/unreblog`);
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
 	async bookmark(this: IExecuteFunctions, baseUrl: string, items: INodeExecutionData[], i: number) {
 		const statusId = validateStatusId.call(this, i);
-		const result = await handleApiRequest.call(
-			this,
-			'POST',
-			`${baseUrl}/api/v1/statuses/${statusId}/bookmark`,
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('POST', `${baseUrl}/api/v1/statuses/${statusId}/bookmark`);
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
@@ -219,14 +203,8 @@ const methods: IStatusMethods = {
 			},
 		};
 
-		const result = await handleApiRequest.call(
-			this,
-			'POST',
-			`${baseUrl}/api/v1/media`,
-			{},
-			{},
-			{ formData },
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('POST', `${baseUrl}/api/v1/media`, {}, {}, { formData });
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
@@ -236,7 +214,8 @@ const methods: IStatusMethods = {
 		items: INodeExecutionData[],
 		i: number,
 	) {
-		const result = await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/scheduled_statuses`);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('GET', `${baseUrl}/api/v1/scheduled_statuses`);
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
@@ -246,13 +225,8 @@ const methods: IStatusMethods = {
 			throw new NodeOperationError(this.getNode(), 'Search query is required');
 		}
 
-		const result = await handleApiRequest.call(
-			this,
-			'GET',
-			`${baseUrl}/api/v2/search`,
-			{},
-			{ q: query, type: 'statuses' },
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('GET', `${baseUrl}/api/v2/search`, {}, { q: query, type: 'statuses' });
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
@@ -263,11 +237,8 @@ const methods: IStatusMethods = {
 		i: number,
 	) {
 		const statusId = validateStatusId.call(this, i);
-		const result = await handleApiRequest.call(
-			this,
-			'POST',
-			`${baseUrl}/api/v1/statuses/${statusId}/favourite`,
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('POST', `${baseUrl}/api/v1/statuses/${statusId}/favourite`);
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
@@ -278,23 +249,16 @@ const methods: IStatusMethods = {
 		i: number,
 	) {
 		const statusId = validateStatusId.call(this, i);
-		const result = await handleApiRequest.call(
-			this,
-			'POST',
-			`${baseUrl}/api/v1/statuses/${statusId}/unfavourite`,
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('POST', `${baseUrl}/api/v1/statuses/${statusId}/unfavourite`);
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
 	async edit(this: IExecuteFunctions, baseUrl: string, items: INodeExecutionData[], i: number) {
 		const statusId = validateStatusId.call(this, i);
 		const status = validateStatusParam.call(this, i);
-		const result = await handleApiRequest.call(
-			this,
-			'PUT',
-			`${baseUrl}/api/v1/statuses/${statusId}`,
-			{ status },
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('PUT', `${baseUrl}/api/v1/statuses/${statusId}`, { status });
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
@@ -305,11 +269,8 @@ const methods: IStatusMethods = {
 		i: number,
 	) {
 		const statusId = validateStatusId.call(this, i);
-		const result = await handleApiRequest.call(
-			this,
-			'GET',
-			`${baseUrl}/api/v1/statuses/${statusId}/history`,
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('GET', `${baseUrl}/api/v1/statuses/${statusId}/history`);
 		return Array.isArray(result) ? result : [result || {}];
 	},
 
@@ -322,35 +283,29 @@ const methods: IStatusMethods = {
 	 * - Respects depth limits (40/60 unauthenticated, 4096 authenticated)
 	 * - Provides multiple return formats for different use cases
 	 */
-	async context(
-		this: IExecuteFunctions,
-		baseUrl: string,
-		items: INodeExecutionData[],
-		i: number,
-	) {
+	async context(this: IExecuteFunctions, baseUrl: string, items: INodeExecutionData[], i: number) {
 		const statusId = validateStatusId.call(this, i);
 		const additionalOptions = this.getNodeParameter('additionalOptions', i) as IDataObject;
 		const returnFormat = additionalOptions.returnFormat || 'structured';
 
 		// Make API request to get context
-		const contextResult = await handleApiRequest.call(
-			this,
-			'GET',
-			`${baseUrl}/api/v1/statuses/${statusId}/context`,
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const contextResult = await apiRequest('GET', `${baseUrl}/api/v1/statuses/${statusId}/context`);
 
 		if (!contextResult) {
-			return [{
-				ancestors: [],
-				descendants: [],
-				metadata: {
-					ancestorCount: 0,
-					descendantCount: 0,
-					totalStatuses: 0,
-					targetStatusId: statusId,
-					error: 'No context result received',
+			return [
+				{
+					ancestors: [],
+					descendants: [],
+					metadata: {
+						ancestorCount: 0,
+						descendantCount: 0,
+						totalStatuses: 0,
+						targetStatusId: statusId,
+						error: 'No context result received',
+					},
 				},
-			}];
+			];
 		}
 
 		const { ancestors = [], descendants = [] } = contextResult as {
@@ -372,21 +327,28 @@ const methods: IStatusMethods = {
 			case 'tree':
 				// Build nested tree structure using in_reply_to_id relationships
 				const threadTree = buildThreadTree([...ancestors, ...descendants]);
-				return [{ thread: threadTree, metadata: { totalStatuses: ancestors.length + descendants.length } }];
+				return [
+					{
+						thread: threadTree,
+						metadata: { totalStatuses: ancestors.length + descendants.length },
+					},
+				];
 
 			case 'structured':
 			default:
 				// Return structured ancestors/descendants format
-				return [{
-					ancestors,
-					descendants,
-					metadata: {
-						ancestorCount: ancestors.length,
-						descendantCount: descendants.length,
-						totalStatuses: ancestors.length + descendants.length,
-						targetStatusId: statusId,
+				return [
+					{
+						ancestors,
+						descendants,
+						metadata: {
+							ancestorCount: ancestors.length,
+							descendantCount: descendants.length,
+							totalStatuses: ancestors.length + descendants.length,
+							targetStatusId: statusId,
+						},
 					},
-				}];
+				];
 		}
 	},
 
@@ -401,11 +363,8 @@ const methods: IStatusMethods = {
 		i: number,
 	) {
 		const statusId = validateStatusId.call(this, i);
-		const result = await handleApiRequest.call(
-			this,
-			'GET',
-			`${baseUrl}/api/v1/statuses/${statusId}/source`,
-		);
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('GET', `${baseUrl}/api/v1/statuses/${statusId}/source`);
 		return Array.isArray(result) ? result : [result || {}];
 	},
 };
@@ -418,12 +377,12 @@ function buildThreadTree(statuses: IDataObject[]): IDataObject {
 	const rootStatuses: IDataObject[] = [];
 
 	// First pass: create map and initialize replies arrays
-	statuses.forEach(status => {
+	statuses.forEach((status) => {
 		statusMap.set(status.id as string, { ...status, replies: [] });
 	});
 
 	// Second pass: build tree structure
-	statuses.forEach(status => {
+	statuses.forEach((status) => {
 		const statusWithReplies = statusMap.get(status.id as string)!;
 		const parentId = status.in_reply_to_id as string;
 

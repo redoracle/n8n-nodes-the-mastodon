@@ -1,10 +1,10 @@
 import {
+	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
-	IDataObject,
 	NodeOperationError,
 } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 
 interface IMediaAttachment {
 	id: string;
@@ -35,7 +35,7 @@ export async function upload(
 	}
 
 	const buffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
-	const formData: { [key: string]: any } = {
+	const formData: { [key: string]: unknown } = {
 		file: {
 			value: buffer,
 			options: {
@@ -52,7 +52,14 @@ export async function upload(
 		formData.focus = additionalFields.focus as string;
 	}
 
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/media`, {}, {}, { formData });
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IMediaAttachment>(
+		'POST',
+		`${baseUrl}/api/v1/media`,
+		{},
+		{},
+		{ formData },
+	);
 }
 
 /**
@@ -76,5 +83,6 @@ export async function update(
 		body.focus = updateFields.focus;
 	}
 
-	return await handleApiRequest.call(this, 'PUT', `${baseUrl}/api/v1/media/${mediaId}`, body);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IMediaAttachment>('PUT', `${baseUrl}/api/v1/media/${mediaId}`, body);
 }

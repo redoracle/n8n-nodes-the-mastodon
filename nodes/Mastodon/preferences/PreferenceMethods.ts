@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 
 /**
  * Gets user preferences
@@ -10,6 +10,7 @@ export async function get(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-): Promise<any> {
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/preferences`);
+): Promise<IDataObject> {
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject>('GET', `${baseUrl}/api/v1/preferences`);
 }

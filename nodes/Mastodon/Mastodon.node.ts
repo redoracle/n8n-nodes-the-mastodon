@@ -1,13 +1,12 @@
 // Mastodon Node for n8n
 // Organized and optimized for maintainability and Mastodon API compliance
 import {
-	INodeType,
-	INodeTypeDescription,
+	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
-	NodeOperationError,
 	INodeProperties,
-	IDataObject,
+	INodeType,
+	INodeTypeDescription
 } from 'n8n-workflow';
 
 // Define core interfaces
@@ -64,31 +63,39 @@ interface IMarkerResponse extends IDataObject {
 type ExecutionResult = IDataObject | IDataObject[] | null;
 
 // Import modularized components
+import { accountMethods, accountProperties } from './account';
+import { announcementMethods, announcementProperties } from './announcements';
+import { appsMethods, appsProperties } from './apps/index';
+import { authenticationMethods, authenticationProperties } from './authentication/index';
+import { blocksMethods, blocksProperties } from './blocks';
+import { bookmarksMethods, bookmarksProperties } from './bookmarks';
+import { conversationMethods, conversationProperties } from './conversations';
+import { customEmojisMethods, customEmojisProperties } from './customEmojis';
+import { directoryMethods, directoryProperties } from './directory';
+import { domainBlocksMethods, domainBlocksProperties } from './domainBlocks';
+import { endorsementMethods, endorsementProperties } from './endorsements';
+import { favouritesMethods, favouritesProperties } from './favourites';
+import { featuredTagMethods, featuredTagProperties } from './featuredTags';
+import { filterMethods, filterProperties } from './filters';
+import { followRequestsMethods, followRequestsProperties } from './followRequests';
+import { instanceMethods, instanceProperties } from './instance';
+import { listMethods, listProperties } from './lists';
+import { markerMethods, markerProperties } from './markers';
 import { properties } from './Mastodon_Properties';
-import { statusProperties, statusMethods } from './status';
-import { accountProperties, accountMethods } from './account';
-import { timelineProperties, timelineMethods } from './timeline';
-import { mediaProperties, mediaMethods } from './media';
-import { pollProperties, pollMethods } from './polls';
-import { bookmarksProperties, bookmarksMethods } from './bookmarks';
-import { favouritesProperties, favouritesMethods } from './favourites';
-import { mutesProperties, mutesMethods } from './mutes';
-import { blocksProperties, blocksMethods } from './blocks';
-import { domainBlocksProperties, domainBlocksMethods } from './domainBlocks';
-import { filterProperties, filterMethods } from './filters';
-import { followRequestsProperties, followRequestsMethods } from './followRequests';
-import { featuredTagProperties, featuredTagMethods } from './featuredTags';
-import { preferenceProperties, preferenceMethods } from './preferences';
-import { measureProperties, measureMethods } from './measures';
-import { reportProperties, reportMethods } from './reports';
-import { retentionProperties, retentionMethods } from './retention';
-import { proofProperties, proofMethods } from './proofs';
-import { oembedProperties, oembedMethods } from './oembed';
-import { markerProperties, markerMethods } from './markers';
-import { notificationProperties, notificationMethods } from './notifications';
-import { authenticationProperties, authenticationMethods } from './authentication/index';
-import { appsProperties, appsMethods } from './apps/index';
-import { listMethods } from './lists';
+import { measureMethods, measureProperties } from './measures';
+import { mediaMethods, mediaProperties } from './media';
+import { mutesMethods, mutesProperties } from './mutes';
+import { notificationMethods, notificationProperties } from './notifications';
+import { oembedMethods, oembedProperties } from './oembed';
+import { pollMethods, pollProperties } from './polls';
+import { preferenceMethods, preferenceProperties } from './preferences';
+import { proofMethods, proofProperties } from './proofs';
+import { reportMethods, reportProperties } from './reports';
+import { retentionMethods, retentionProperties } from './retention';
+import { searchMethods, searchProperties } from './search';
+import { statusMethods, statusProperties } from './status';
+import { suggestionMethods, suggestionProperties } from './suggestions';
+import { timelineMethods, timelineProperties } from './timeline';
 
 export class Mastodon implements INodeType {
 	description: INodeTypeDescription = {
@@ -118,10 +125,15 @@ export class Mastodon implements INodeType {
 			// Modularized Components
 			...statusProperties,
 			...accountProperties,
+			...announcementProperties,
 			...timelineProperties,
 			...mediaProperties,
 			...pollProperties,
 			...bookmarksProperties,
+			...conversationProperties,
+			...customEmojisProperties,
+			...directoryProperties,
+			...endorsementProperties,
 			...favouritesProperties,
 			...mutesProperties,
 			...blocksProperties,
@@ -129,9 +141,13 @@ export class Mastodon implements INodeType {
 			...filterProperties,
 			...followRequestsProperties,
 			...featuredTagProperties,
+			...listProperties,
+			...instanceProperties,
 			...preferenceProperties,
 			...markerProperties,
 			...notificationProperties,
+			...searchProperties,
+			...suggestionProperties,
 			...authenticationProperties,
 			...appsProperties,
 
@@ -201,12 +217,12 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await statusMethods[operation as keyof typeof statusMethods].call(
+						executionData = (await statusMethods[operation as keyof typeof statusMethods].call(
 							this,
 							url,
 							items,
 							i,
-						);
+						)) as unknown as ExecutionResult;
 						break;
 
 					case 'account':
@@ -215,9 +231,11 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await (
-							accountMethods[operation as keyof typeof accountMethods] as any
-						).call(this, items, i);
+						executionData = (await accountMethods[operation as keyof typeof accountMethods].call(
+							this,
+							items,
+							i,
+						)) as unknown as ExecutionResult;
 						break;
 
 					case 'timeline':
@@ -279,12 +297,9 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await bookmarksMethods[operation as keyof typeof bookmarksMethods].call(
-							this,
-							url,
-							items,
-							i,
-						);
+						executionData = (await bookmarksMethods[
+							operation as keyof typeof bookmarksMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
 						break;
 
 					case 'favourites':
@@ -293,9 +308,9 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await favouritesMethods[
+						executionData = (await favouritesMethods[
 							operation as keyof typeof favouritesMethods
-						].call(this, url, items, i);
+						].call(this, url, items, i)) as unknown as ExecutionResult;
 						break;
 
 					case 'mutes':
@@ -304,12 +319,12 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await mutesMethods[operation as keyof typeof mutesMethods].call(
+						executionData = (await mutesMethods[operation as keyof typeof mutesMethods].call(
 							this,
 							url,
 							items,
 							i,
-						);
+						)) as unknown as ExecutionResult;
 						break;
 
 					case 'blocks':
@@ -318,12 +333,12 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await blocksMethods[operation as keyof typeof blocksMethods].call(
+						executionData = (await blocksMethods[operation as keyof typeof blocksMethods].call(
 							this,
 							url,
 							items,
 							i,
-						);
+						)) as unknown as ExecutionResult;
 						break;
 
 					case 'domainBlocks':
@@ -332,9 +347,9 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await domainBlocksMethods[
+						executionData = (await domainBlocksMethods[
 							operation as keyof typeof domainBlocksMethods
-						].call(this, url, items, i);
+						].call(this, url, items, i)) as unknown as ExecutionResult;
 						break;
 
 					case 'filters':
@@ -343,12 +358,12 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await filterMethods[operation as keyof typeof filterMethods].call(
+						executionData = (await filterMethods[operation as keyof typeof filterMethods].call(
 							this,
 							url,
 							items,
 							i,
-						);
+						)) as unknown as ExecutionResult;
 						break;
 
 					case 'followRequests':
@@ -357,9 +372,9 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await (
-							followRequestsMethods[operation as keyof typeof followRequestsMethods] as any
-						).call(this, url, items, i);
+						executionData = (await followRequestsMethods[
+							operation as keyof typeof followRequestsMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
 						break;
 
 					case 'featuredTags':
@@ -368,9 +383,9 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await featuredTagMethods[
+						executionData = (await featuredTagMethods[
 							operation as keyof typeof featuredTagMethods
-						].call(this, url, items, i);
+						].call(this, url, items, i)) as unknown as ExecutionResult;
 						break;
 
 					case 'preferences':
@@ -379,9 +394,9 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await preferenceMethods[
+						executionData = (await preferenceMethods[
 							operation as keyof typeof preferenceMethods
-						].call(this, url, items, i);
+						].call(this, url, items, i)) as unknown as ExecutionResult;
 						break;
 
 					case 'markers':
@@ -405,9 +420,9 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await notificationMethods[
+						executionData = (await notificationMethods[
 							operation as keyof typeof notificationMethods
-						].call(this, url, items, i);
+						].call(this, url, items, i)) as unknown as ExecutionResult;
 						break;
 
 					case 'apps':
@@ -416,12 +431,12 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await appsMethods[operation as keyof typeof appsMethods].call(
+						executionData = (await appsMethods[operation as keyof typeof appsMethods].call(
 							this,
 							url,
 							items,
 							i,
-						);
+						)) as unknown as ExecutionResult;
 						break;
 
 					case 'authentication':
@@ -447,12 +462,12 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await measureMethods[operation as keyof typeof measureMethods].call(
+						executionData = (await measureMethods[operation as keyof typeof measureMethods].call(
 							this,
 							url,
 							items,
 							i,
-						);
+						)) as unknown as ExecutionResult;
 						break;
 
 					case 'reports':
@@ -461,12 +476,12 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await reportMethods[operation as keyof typeof reportMethods].call(
+						executionData = (await reportMethods[operation as keyof typeof reportMethods].call(
 							this,
 							url,
 							items,
 							i,
-						);
+						)) as unknown as ExecutionResult;
 						break;
 
 					case 'retention':
@@ -475,10 +490,9 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await retentionMethods[operation as keyof typeof retentionMethods].call(
-							this,
-							url,
-						);
+						executionData = (await retentionMethods[
+							operation as keyof typeof retentionMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
 						break;
 
 					case 'proofs':
@@ -487,10 +501,12 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await proofMethods[operation as keyof typeof proofMethods].call(
+						executionData = (await proofMethods[operation as keyof typeof proofMethods].call(
 							this,
 							url,
-						);
+							items,
+							i,
+						)) as unknown as ExecutionResult;
 						break;
 
 					case 'oembed':
@@ -499,12 +515,12 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = await oembedMethods[operation as keyof typeof oembedMethods].call(
+						executionData = (await oembedMethods[operation as keyof typeof oembedMethods].call(
 							this,
 							url,
 							items,
 							i,
-						);
+						)) as unknown as ExecutionResult;
 						break;
 
 					case 'lists':
@@ -529,6 +545,97 @@ export class Mastodon implements INodeType {
 						returnData.push(...listsItems);
 						continue;
 
+					case 'customEmojis':
+						if (!(operation in customEmojisMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await customEmojisMethods[
+							operation as keyof typeof customEmojisMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
+						break;
+
+					case 'directory':
+						if (!(operation in directoryMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await directoryMethods[
+							operation as keyof typeof directoryMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
+						break;
+
+					case 'announcements':
+						if (!(operation in announcementMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await announcementMethods[
+							operation as keyof typeof announcementMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
+						break;
+
+					case 'endorsements':
+						if (!(operation in endorsementMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await endorsementMethods[
+							operation as keyof typeof endorsementMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
+						break;
+
+					case 'conversations':
+						if (!(operation in conversationMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await conversationMethods[
+							operation as keyof typeof conversationMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
+						break;
+
+					case 'search':
+						if (!(operation in searchMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await searchMethods[operation as keyof typeof searchMethods].call(
+							this,
+							url,
+							items,
+							i,
+						)) as unknown as ExecutionResult;
+						break;
+
+					case 'suggestions':
+						if (!(operation in suggestionMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await suggestionMethods[
+							operation as keyof typeof suggestionMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
+						break;
+
+					case 'instance':
+						if (!(operation in instanceMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await instanceMethods[
+							operation as keyof typeof instanceMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
+						break;
+
 					default:
 						throw new Error(`The resource "${resource}" is not known!`);
 				}
@@ -550,4 +657,4 @@ export class Mastodon implements INodeType {
 	}
 }
 
-export default Mastodon;
+// Mastodon class already exported above; no additional export declaration needed.

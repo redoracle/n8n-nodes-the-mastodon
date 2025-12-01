@@ -14,7 +14,7 @@ describe('Mastodon Node - Timeline', () => {
 				return undefined;
 			}),
 			getInputData: jest.fn().mockReturnValue([{ json: {} }]),
-			helpers: { requestOAuth2: jest.fn() } as any,
+			helpers: { requestOAuth2: jest.fn() } as unknown as IExecuteFunctions['helpers'],
 			getCredentials: jest.fn().mockResolvedValue({
 				baseUrl: 'https://mastodon.social',
 				oauth2: { accessToken: 'test-token' },
@@ -28,7 +28,7 @@ describe('Mastodon Node - Timeline', () => {
 					typeVersion: 1,
 					position: [0, 0],
 					parameters: {},
-				}) as any,
+				}) as unknown as ReturnType<IExecuteFunctions['getNode']>,
 		};
 	});
 
@@ -97,13 +97,14 @@ describe('Mastodon Node - Timeline', () => {
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
 			if (param === 'operation') return 'hashtag';
 			if (param === 'hashtag') return 'cats';
-			if (param === 'additionalFields')
+			if (param === 'additionalFields') {
 				return {
 					any: ['dogs', 'pets'],
 					all: ['cute'],
 					none: ['boring'],
 					remote: true,
 				};
+			}
 			if (param === 'resource') return 'timeline';
 			return undefined;
 		});

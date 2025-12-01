@@ -10,7 +10,7 @@ describe('Mastodon Node - Status', () => {
 		ctx = {
 			getNodeParameter: jest.fn(),
 			getInputData: jest.fn(),
-			helpers: { requestOAuth2: jest.fn() } as any,
+			helpers: { requestOAuth2: jest.fn() } as unknown as IExecuteFunctions['helpers'],
 			getCredentials: jest.fn().mockResolvedValue({
 				baseUrl: 'https://mastodon.social',
 				oauth2: { accessToken: 'test-token' },
@@ -24,7 +24,7 @@ describe('Mastodon Node - Status', () => {
 					typeVersion: 1,
 					position: [0, 0],
 					parameters: {},
-				}) as any,
+				}) as unknown as ReturnType<IExecuteFunctions['getNode']>,
 		};
 	});
 

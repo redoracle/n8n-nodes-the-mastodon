@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest } from '../Mastodon_Methods';
 
 interface ICredentialAccount {
 	id: string;
@@ -7,7 +7,8 @@ interface ICredentialAccount {
 	acct: string;
 	avatar: string;
 	header: string;
-	[key: string]: any;
+	// Additional dynamic fields returned by the API live here to avoid widening declared keys
+	additionalFields?: Record<string, IDataObject | string | number | boolean | null | undefined>;
 }
 
 /**
@@ -17,10 +18,9 @@ interface ICredentialAccount {
 export async function deleteAvatar(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
-	i: number,
 ): Promise<ICredentialAccount> {
-	return await handleApiRequest.call(this, 'DELETE', `${baseUrl}/api/v1/profile/avatar`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ICredentialAccount>('DELETE', `${baseUrl}/api/v1/profile/avatar`);
 }
 
 /**
@@ -30,8 +30,7 @@ export async function deleteAvatar(
 export async function deleteHeader(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
-	i: number,
 ): Promise<ICredentialAccount> {
-	return await handleApiRequest.call(this, 'DELETE', `${baseUrl}/api/v1/profile/header`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ICredentialAccount>('DELETE', `${baseUrl}/api/v1/profile/header`);
 }

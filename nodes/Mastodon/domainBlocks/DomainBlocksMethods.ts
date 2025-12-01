@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 
 /**
  * Blocks a domain
@@ -12,7 +12,8 @@ export async function block(
 	i: number,
 ): Promise<{}> {
 	const domain = this.getNodeParameter('domain', i) as string;
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/domain_blocks`, { domain });
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<{}>('POST', `${baseUrl}/api/v1/domain_blocks`, { domain });
 }
 
 /**
@@ -26,5 +27,6 @@ export async function unblock(
 	i: number,
 ): Promise<{}> {
 	const domain = this.getNodeParameter('domain', i) as string;
-	return await handleApiRequest.call(this, 'DELETE', `${baseUrl}/api/v1/domain_blocks`, { domain });
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<{}>('DELETE', `${baseUrl}/api/v1/domain_blocks`, { domain });
 }

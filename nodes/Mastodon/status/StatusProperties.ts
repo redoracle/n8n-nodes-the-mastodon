@@ -316,7 +316,8 @@ export const contextFields: INodeProperties[] = [
 				name: 'includePrivate',
 				type: 'boolean',
 				default: true,
-				description: 'Whether to include private statuses in the context (requires read:statuses scope)',
+				description:
+					'Whether to include private statuses in the context (requires read:statuses scope)',
 			},
 			{
 				displayName: 'Max Depth',

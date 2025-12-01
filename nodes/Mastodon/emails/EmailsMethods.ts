@@ -1,6 +1,10 @@
-import { IExecuteFunctions } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 
-export async function resendConfirmation(this: IExecuteFunctions, baseUrl: string): Promise<any> {
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/emails/confirmation`);
+export async function resendConfirmation(
+	this: IExecuteFunctions,
+	baseUrl: string,
+): Promise<IDataObject> {
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest('POST', `${baseUrl}/api/v1/emails/confirmation`);
 }

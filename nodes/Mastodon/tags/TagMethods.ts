@@ -1,14 +1,14 @@
-import { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IExecuteFunctions } from 'n8n-workflow';
+import { bindHandleApiRequest } from '../Mastodon_Methods';
 
 interface ITag {
 	name: string;
 	url: string;
-	history: {
+	history: Array<{
 		day: string;
 		uses: string;
 		accounts: string;
-	}[];
+	}>;
 }
 
 /**
@@ -18,11 +18,11 @@ interface ITag {
 export async function get(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
 	i: number,
 ): Promise<ITag> {
 	const tagId = this.getNodeParameter('tagId', i) as string;
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/tags/${tagId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ITag>('GET', `${baseUrl}/api/v1/tags/${tagId}`);
 }
 
 /**
@@ -32,11 +32,11 @@ export async function get(
 export async function follow(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
 	i: number,
 ): Promise<ITag> {
 	const tagId = this.getNodeParameter('tagId', i) as string;
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/tags/${tagId}/follow`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ITag>('POST', `${baseUrl}/api/v1/tags/${tagId}/follow`);
 }
 
 /**
@@ -46,9 +46,9 @@ export async function follow(
 export async function unfollow(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
 	i: number,
 ): Promise<ITag> {
 	const tagId = this.getNodeParameter('tagId', i) as string;
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/tags/${tagId}/unfollow`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ITag>('POST', `${baseUrl}/api/v1/tags/${tagId}/unfollow`);
 }

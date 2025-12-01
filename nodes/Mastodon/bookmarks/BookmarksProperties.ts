@@ -9,7 +9,7 @@ export const bookmarksOperations: INodeProperties = {
 	options: [
 		{
 			name: 'Get Bookmarked Statuses',
-			value: 'get',
+			value: 'getBookmarks',
 			description: 'Fetch bookmarked statuses',
 			action: 'Get bookmarked statuses',
 		},
@@ -26,7 +26,7 @@ export const bookmarksOperations: INodeProperties = {
 			action: 'Remove bookmark',
 		},
 	],
-	default: 'get',
+	default: 'getBookmarks',
 };
 
 export const bookmarksFields: INodeProperties[] = [
@@ -36,7 +36,7 @@ export const bookmarksFields: INodeProperties[] = [
 		name: 'max_id',
 		type: 'string',
 		default: '',
-		displayOptions: { show: { resource: ['bookmarks'], operation: ['get'] } },
+		displayOptions: { show: { resource: ['bookmarks'], operation: ['getBookmarks'] } },
 		description: 'Return results older than this ID',
 	},
 	{
@@ -44,7 +44,7 @@ export const bookmarksFields: INodeProperties[] = [
 		name: 'since_id',
 		type: 'string',
 		default: '',
-		displayOptions: { show: { resource: ['bookmarks'], operation: ['get'] } },
+		displayOptions: { show: { resource: ['bookmarks'], operation: ['getBookmarks'] } },
 		description: 'Return results newer than this ID',
 	},
 	{
@@ -52,7 +52,7 @@ export const bookmarksFields: INodeProperties[] = [
 		name: 'min_id',
 		type: 'string',
 		default: '',
-		displayOptions: { show: { resource: ['bookmarks'], operation: ['get'] } },
+		displayOptions: { show: { resource: ['bookmarks'], operation: ['getBookmarks'] } },
 		description: 'Return results immediately newer than this ID',
 	},
 	{
@@ -61,7 +61,7 @@ export const bookmarksFields: INodeProperties[] = [
 		type: 'number',
 		default: 20,
 		typeOptions: { minValue: 1, maxValue: 40 },
-		displayOptions: { show: { resource: ['bookmarks'], operation: ['get'] } },
+		displayOptions: { show: { resource: ['bookmarks'], operation: ['getBookmarks'] } },
 		description: 'Max results to return',
 	},
 	// For add/remove

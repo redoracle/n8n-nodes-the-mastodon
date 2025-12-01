@@ -3,9 +3,10 @@ import {
 	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
+	LoggerProxy as Logger,
 	NodeOperationError,
 } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { bindHandleApiRequest } from '../Mastodon_Methods';
 import { IAccount, IAccountWarning, IAdminAccount } from './AccountInterfaces';
 
 export async function follow(
@@ -17,8 +18,9 @@ export async function follow(
 	if (!accountId) {
 		throw new NodeOperationError(this.getNode(), 'Account ID is required to follow');
 	}
-	const result = await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/follow`);
-	return [result as IAccount];
+	const apiRequest = bindHandleApiRequest(this);
+	const result = await apiRequest<IAccount>('POST', `/api/v1/accounts/${accountId}/follow`);
+	return [result];
 }
 
 export async function unfollow(
@@ -30,12 +32,9 @@ export async function unfollow(
 	if (!accountId) {
 		throw new NodeOperationError(this.getNode(), 'Account ID is required to unfollow');
 	}
-	const result = await handleApiRequest.call(
-		this,
-		'POST',
-		`/api/v1/accounts/${accountId}/unfollow`,
-	);
-	return [result as IAccount];
+	const apiRequest = bindHandleApiRequest(this);
+	const result = await apiRequest<IAccount>('POST', `/api/v1/accounts/${accountId}/unfollow`);
+	return [result];
 }
 
 export async function block(
@@ -44,8 +43,13 @@ export async function block(
 	i: number,
 ): Promise<IAccount> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing block method with accountId:', accountId);
-	return (await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/block`)) as IAccount;
+	if (process.env.MASTODON_DEBUG === '1' || process.env.MASTODON_DEBUG === 'true') {
+		Logger.debug(`[Mastodon][AccountMethods][block] accountId=${accountId}`);
+	} else {
+		Logger.info(`[Mastodon][AccountMethods][block] accountId=${accountId}`);
+	}
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('POST', `/api/v1/accounts/${accountId}/block`);
 }
 
 export async function mute(
@@ -55,12 +59,11 @@ export async function mute(
 ): Promise<IAccount> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-	console.log(
-		'Executing mute method with accountId:',
-		accountId,
-		'and additionalFields:',
-		additionalFields,
-	);
+	if (process.env.MASTODON_DEBUG === '1' || process.env.MASTODON_DEBUG === 'true') {
+		Logger.debug(`[Mastodon][AccountMethods][mute]`, { accountId, additionalFields });
+	} else {
+		Logger.info(`[Mastodon][AccountMethods][mute]`, { accountId });
+	}
 
 	const body: IDataObject = {};
 	if (additionalFields.notifications !== undefined) {
@@ -70,12 +73,18 @@ export async function mute(
 		body.duration = additionalFields.duration as number;
 	}
 
-	return (await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/mute`, body)) as IAccount;
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('POST', `/api/v1/accounts/${accountId}/mute`, body);
 }
 
-export async function verifyCredentials(this: IExecuteFunctions): Promise<IAccount> {
-	console.log('Executing verifyCredentials method');
-	return (await handleApiRequest.call(this, 'GET', `/api/v1/accounts/verify_credentials`)) as IAccount;
+export async function verifyCredentials(
+	this: IExecuteFunctions,
+	_items: INodeExecutionData[] | undefined,
+	_i: number | undefined,
+): Promise<IAccount> {
+	Logger.debug('[Mastodon][AccountMethods][verifyCredentials]');
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('GET', `/api/v1/accounts/verify_credentials`);
 }
 
 export async function viewProfile(
@@ -89,8 +98,13 @@ export async function viewProfile(
 	if (additionalFields.with_relationships !== undefined) {
 		qs.with_relationships = additionalFields.with_relationships;
 	}
-	console.log('Executing viewProfile method with accountId:', accountId, 'and qs:', qs);
-	return await handleApiRequest.call(this, 'GET', `/api/v1/accounts/${accountId}`, {}, qs);
+	if (process.env.MASTODON_DEBUG === '1' || process.env.MASTODON_DEBUG === 'true') {
+		Logger.debug(`[Mastodon][AccountMethods][viewProfile]`, { accountId, qs });
+	} else {
+		Logger.info(`[Mastodon][AccountMethods][viewProfile]`, { accountId });
+	}
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('GET', `/api/v1/accounts/${accountId}`, {}, qs);
 }
 
 export async function getAccountWarnings(
@@ -99,8 +113,9 @@ export async function getAccountWarnings(
 	i: number,
 ): Promise<IAccountWarning[]> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing getAccountWarnings method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'GET', `/api/v1/admin/accounts/${accountId}/warnings`);
+	Logger.info(`[Mastodon][AccountMethods][getAccountWarnings] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccountWarning[]>('GET', `/api/v1/admin/accounts/${accountId}/warnings`);
 }
 
 export async function getAdminAccountInfo(
@@ -109,8 +124,9 @@ export async function getAdminAccountInfo(
 	i: number,
 ): Promise<IAdminAccount> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing getAdminAccountInfo method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'GET', `/api/v1/admin/accounts/${accountId}`);
+	Logger.info(`[Mastodon][AccountMethods][getAdminAccountInfo] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminAccount>('GET', `/api/v1/admin/accounts/${accountId}`);
 }
 
 export async function addNoteToAccount(
@@ -120,8 +136,13 @@ export async function addNoteToAccount(
 ): Promise<IAccount> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
 	const note = this.getNodeParameter('note', i) as string;
-	console.log('Executing addNoteToAccount method with accountId:', accountId, 'and note:', note);
-	return await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/note`, { note });
+	if (process.env.MASTODON_DEBUG === '1' || process.env.MASTODON_DEBUG === 'true') {
+		Logger.debug(`[Mastodon][AccountMethods][addNoteToAccount]`, { accountId, note });
+	} else {
+		Logger.info(`[Mastodon][AccountMethods][addNoteToAccount]`, { accountId });
+	}
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('POST', `/api/v1/accounts/${accountId}/note`, { note });
 }
 
 export async function getAccountFollowers(
@@ -130,8 +151,9 @@ export async function getAccountFollowers(
 	i: number,
 ): Promise<IAccount[]> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing getAccountFollowers method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'GET', `/api/v1/accounts/${accountId}/followers`);
+	Logger.info(`[Mastodon][AccountMethods][getAccountFollowers] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount[]>('GET', `/api/v1/accounts/${accountId}/followers`);
 }
 
 export async function getAccountFollowing(
@@ -140,8 +162,9 @@ export async function getAccountFollowing(
 	i: number,
 ): Promise<IAccount[]> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing getAccountFollowing method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'GET', `/api/v1/accounts/${accountId}/following`);
+	Logger.info(`[Mastodon][AccountMethods][getAccountFollowing] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount[]>('GET', `/api/v1/accounts/${accountId}/following`);
 }
 
 export async function getAccountFeaturedTags(
@@ -150,8 +173,9 @@ export async function getAccountFeaturedTags(
 	i: number,
 ): Promise<IDataObject[]> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing getAccountFeaturedTags method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'GET', `/api/v1/accounts/${accountId}/featured_tags`);
+	Logger.info(`[Mastodon][AccountMethods][getAccountFeaturedTags] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject[]>('GET', `/api/v1/accounts/${accountId}/featured_tags`);
 }
 
 export async function getAccountLists(
@@ -160,8 +184,9 @@ export async function getAccountLists(
 	i: number,
 ): Promise<IDataObject[]> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing getAccountLists method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'GET', `/api/v1/accounts/${accountId}/lists`);
+	Logger.info(`[Mastodon][AccountMethods][getAccountLists] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject[]>('GET', `/api/v1/accounts/${accountId}/lists`);
 }
 
 export async function getAccountStatuses(
@@ -170,8 +195,9 @@ export async function getAccountStatuses(
 	i: number,
 ): Promise<IDataObject[]> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing getAccountStatuses method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'GET', `/api/v1/accounts/${accountId}/statuses`);
+	Logger.info(`[Mastodon][AccountMethods][getAccountStatuses] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject[]>('GET', `/api/v1/accounts/${accountId}/statuses`);
 }
 
 export async function pinAccount(
@@ -180,8 +206,9 @@ export async function pinAccount(
 	i: number,
 ): Promise<IAccount> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing pinAccount method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/pin`);
+	Logger.info(`[Mastodon][AccountMethods][pinAccount] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('POST', `/api/v1/accounts/${accountId}/pin`);
 }
 
 export async function removeAccountFromFollowers(
@@ -190,12 +217,9 @@ export async function removeAccountFromFollowers(
 	i: number,
 ): Promise<IAccount> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing removeAccountFromFollowers method with accountId:', accountId);
-	return await handleApiRequest.call(
-		this,
-		'POST',
-		`/api/v1/accounts/${accountId}/remove_from_followers`,
-	);
+	Logger.info(`[Mastodon][AccountMethods][removeAccountFromFollowers] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('POST', `/api/v1/accounts/${accountId}/remove_from_followers`);
 }
 
 export async function searchAccounts(
@@ -205,14 +229,13 @@ export async function searchAccounts(
 ): Promise<IAccount[]> {
 	const query = this.getNodeParameter('query', i) as string;
 	const limit = this.getNodeParameter('limit', i) as number;
-	console.log('Executing searchAccounts method with query:', query, 'and limit:', limit);
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`/api/v1/accounts/search`,
-		{},
-		{ q: query, limit },
-	);
+	if (process.env.MASTODON_DEBUG === '1' || process.env.MASTODON_DEBUG === 'true') {
+		Logger.debug(`[Mastodon][AccountMethods][searchAccounts] query=${query} limit=${limit}`);
+	} else {
+		Logger.info(`[Mastodon][AccountMethods][searchAccounts] query=<redacted> limit=${limit}`);
+	}
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount[]>('GET', `/api/v1/accounts/search`, {}, { q: query, limit });
 }
 
 export async function unmuteAccount(
@@ -221,8 +244,9 @@ export async function unmuteAccount(
 	i: number,
 ): Promise<IAccount> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing unmuteAccount method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/unmute`);
+	Logger.info(`[Mastodon][AccountMethods][unmuteAccount] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('POST', `/api/v1/accounts/${accountId}/unmute`);
 }
 
 export async function unpinAccount(
@@ -231,8 +255,9 @@ export async function unpinAccount(
 	i: number,
 ): Promise<IAccount> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	console.log('Executing unpinAccount method with accountId:', accountId);
-	return await handleApiRequest.call(this, 'POST', `/api/v1/accounts/${accountId}/unpin`);
+	Logger.info(`[Mastodon][AccountMethods][unpinAccount] accountId=${accountId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('POST', `/api/v1/accounts/${accountId}/unpin`);
 }
 
 // Register an account
@@ -251,7 +276,8 @@ export async function registerAccount(
 	const body: IDataObject = { username, email, password, agreement, locale };
 	if (reason) body.reason = reason;
 	if (dateOfBirth) body.date_of_birth = dateOfBirth;
-	return (await handleApiRequest.call(this, 'POST', '/api/v1/accounts', body)) as IDataObject;
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject>('POST', '/api/v1/accounts', body);
 }
 
 // Update account credentials
@@ -263,7 +289,8 @@ export async function updateCredentials(
 	const additionalFields = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
 	const body: IDataObject = { ...additionalFields };
 	// Handle avatar/header as binary if provided (n8n-specific, not implemented here)
-	return await handleApiRequest.call(this, 'PATCH', '/api/v1/accounts/update_credentials', body);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('PATCH', '/api/v1/accounts/update_credentials', body);
 }
 
 // Get multiple accounts
@@ -273,7 +300,8 @@ export async function getMultipleAccounts(
 	i: number,
 ): Promise<IAccount[]> {
 	const ids = this.getNodeParameter('ids', i) as string[];
-	return await handleApiRequest.call(this, 'GET', '/api/v1/accounts', {}, { id: ids });
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount[]>('GET', '/api/v1/accounts', {}, { id: ids });
 }
 
 // Check relationships to other accounts
@@ -286,7 +314,8 @@ export async function getRelationships(
 	const withSuspended = this.getNodeParameter('with_suspended', i, false) as boolean;
 	const qs: IDataObject = { id: ids };
 	if (withSuspended) qs.with_suspended = true;
-	return await handleApiRequest.call(this, 'GET', '/api/v1/accounts/relationships', {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject[]>('GET', '/api/v1/accounts/relationships', {}, qs);
 }
 
 // Find familiar followers
@@ -296,8 +325,8 @@ export async function getFamiliarFollowers(
 	i: number,
 ): Promise<IDataObject[]> {
 	const ids = this.getNodeParameter('ids', i) as string[];
-	return await handleApiRequest.call(
-		this,
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject[]>(
 		'GET',
 		'/api/v1/accounts/familiar_followers',
 		{},
@@ -312,5 +341,6 @@ export async function lookupAccount(
 	i: number,
 ): Promise<IAccount> {
 	const acct = this.getNodeParameter('acct', i) as string;
-	return await handleApiRequest.call(this, 'GET', '/api/v1/accounts/lookup', {}, { acct });
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount>('GET', '/api/v1/accounts/lookup', {}, { acct });
 }

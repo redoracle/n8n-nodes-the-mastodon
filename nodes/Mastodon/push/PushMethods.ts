@@ -1,6 +1,6 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
-import { IWebPushSubscription, IPushSubscriptionData, IPushAlerts } from './PushInterfaces';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
+import { IPushAlerts, IPushSubscriptionData, IWebPushSubscription } from './PushInterfaces';
 
 /**
  * Subscribe to push notifications
@@ -29,7 +29,8 @@ export async function subscribe(
 		body.data = additionalFields.data;
 	}
 
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/push/subscription`, body);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IWebPushSubscription>('POST', `${baseUrl}/api/v1/push/subscription`, body);
 }
 
 /**
@@ -43,7 +44,8 @@ export async function get(
 	items: INodeExecutionData[],
 	i: number,
 ): Promise<IWebPushSubscription> {
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/push/subscription`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IWebPushSubscription>('GET', `${baseUrl}/api/v1/push/subscription`);
 }
 
 /**
@@ -71,7 +73,8 @@ export async function update(
 		body.data = additionalFields.data;
 	}
 
-	return await handleApiRequest.call(this, 'PUT', `${baseUrl}/api/v1/push/subscription`, body);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IWebPushSubscription>('PUT', `${baseUrl}/api/v1/push/subscription`, body);
 }
 
 /**
@@ -85,5 +88,6 @@ export async function remove(
 	items: INodeExecutionData[],
 	i: number,
 ): Promise<{}> {
-	return await handleApiRequest.call(this, 'DELETE', `${baseUrl}/api/v1/push/subscription`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<{}>('DELETE', `${baseUrl}/api/v1/push/subscription`);
 }

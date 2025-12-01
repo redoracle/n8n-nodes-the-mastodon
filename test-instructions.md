@@ -87,6 +87,7 @@ npm run build:watch
 ## Setting Up Credentials
 
 1. **Create Mastodon OAuth2 Credentials**:
+
    - Go to your Mastodon instance (e.g., <https://mastodon.social>)
    - Go to Settings > Development > New Application
    - Set the redirect URI to match n8n's OAuth callback
@@ -103,11 +104,13 @@ npm run build:watch
 Try these operations to verify everything works:
 
 1. **Status Operations**:
+
    - Create a status
    - View a status
    - Get status context (test the new feature!)
 
 2. **Account Operations**:
+
    - View user profile
    - Verify credentials
    - Search accounts

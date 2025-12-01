@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest } from '../Mastodon_Methods';
 import { IConversation } from './ConversationInterfaces';
 
 /**
@@ -7,7 +7,7 @@ import { IConversation } from './ConversationInterfaces';
  * GET /api/v1/conversations
  * OAuth Scope: read:statuses
  */
-export async function getConversations(
+export async function get(
 	this: IExecuteFunctions,
 	baseUrl: string,
 	items: INodeExecutionData[],
@@ -29,7 +29,8 @@ export async function getConversations(
 		qs.limit = Math.min(additionalFields.limit as number, 40);
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/conversations`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IConversation[]>('GET', `${baseUrl}/api/v1/conversations`, {}, qs);
 }
 
 /**
@@ -44,11 +45,8 @@ export async function removeConversation(
 	i: number,
 ): Promise<{}> {
 	const conversationId = this.getNodeParameter('conversationId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'DELETE',
-		`${baseUrl}/api/v1/conversations/${conversationId}`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<{}>('DELETE', `${baseUrl}/api/v1/conversations/${conversationId}`);
 }
 
 /**
@@ -63,9 +61,6 @@ export async function markAsRead(
 	i: number,
 ): Promise<{}> {
 	const conversationId = this.getNodeParameter('conversationId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'POST',
-		`${baseUrl}/api/v1/conversations/${conversationId}/read`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<{}>('POST', `${baseUrl}/api/v1/conversations/${conversationId}/read`);
 }

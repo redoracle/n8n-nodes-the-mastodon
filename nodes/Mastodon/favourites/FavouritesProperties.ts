@@ -8,6 +8,12 @@ export const favouritesOperations: INodeProperties = {
 	displayOptions: { show: { resource: ['favourites'] } },
 	options: [
 		{
+			name: 'Get Favourites',
+			value: 'getFavourites',
+			description: 'Get favourited statuses',
+			action: 'Get favourites',
+		},
+		{
 			name: 'Favourite',
 			value: 'favourite',
 			description: 'Add a status to favourites',
@@ -20,10 +26,18 @@ export const favouritesOperations: INodeProperties = {
 			action: 'Unfavourite status',
 		},
 	],
-	default: 'favourite',
+	default: 'getFavourites',
 };
 
 export const favouritesFields: INodeProperties[] = [
+	{
+		displayName: 'Limit',
+		name: 'limit',
+		type: 'number',
+		default: 20,
+		displayOptions: { show: { resource: ['favourites'], operation: ['getFavourites'] } },
+		description: 'Maximum number of results to return',
+	},
 	{
 		displayName: 'Status ID',
 		name: 'statusId',

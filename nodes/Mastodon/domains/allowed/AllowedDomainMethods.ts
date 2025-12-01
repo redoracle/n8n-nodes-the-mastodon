@@ -1,6 +1,6 @@
 // Modularized Allowed Domain methods for Mastodon node
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../../Mastodon_Methods';
 import { IAdminDomainAllow } from '../../admin/AdminInterfaces';
 
 export async function listAllowedDomains(
@@ -25,7 +25,8 @@ export async function listAllowedDomains(
 		qs.min_id = additionalFields.min_id;
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/admin/domain_allows`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminDomainAllow[]>('GET', `${baseUrl}/api/v1/admin/domain_allows`, {}, qs);
 }
 
 export async function getAllowedDomain(
@@ -35,9 +36,6 @@ export async function getAllowedDomain(
 	i: number,
 ): Promise<IAdminDomainAllow> {
 	const domainId = this.getNodeParameter('domainId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`${baseUrl}/api/v1/admin/domain_allows/${domainId}`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminDomainAllow>('GET', `${baseUrl}/api/v1/admin/domain_allows/${domainId}`);
 }

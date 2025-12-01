@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 import { IFeaturedTag } from './FeaturedTagInterfaces';
 
 /**
@@ -13,7 +13,8 @@ export async function list(
 	items: INodeExecutionData[],
 	i: number,
 ): Promise<IFeaturedTag[]> {
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/featured_tags`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IFeaturedTag[]>('GET', `${baseUrl}/api/v1/featured_tags`);
 }
 
 /**
@@ -28,7 +29,8 @@ export async function feature(
 	i: number,
 ): Promise<IFeaturedTag> {
 	const name = this.getNodeParameter('name', i) as string;
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/featured_tags`, { name });
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IFeaturedTag>('POST', `${baseUrl}/api/v1/featured_tags`, { name });
 }
 
 /**
@@ -43,5 +45,6 @@ export async function unfeature(
 	i: number,
 ): Promise<{}> {
 	const tagId = this.getNodeParameter('tagId', i) as string;
-	return await handleApiRequest.call(this, 'DELETE', `${baseUrl}/api/v1/featured_tags/${tagId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<{}>('DELETE', `${baseUrl}/api/v1/featured_tags/${tagId}`);
 }

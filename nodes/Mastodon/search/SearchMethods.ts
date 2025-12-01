@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 import { ISearchResults } from './SearchInterfaces';
 
 /**
@@ -45,5 +45,6 @@ export async function search(
 		qs.limit = additionalFields.limit as number;
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v2/search`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest('GET', `${baseUrl}/api/v2/search`, {}, qs);
 }

@@ -1,7 +1,8 @@
 {
+	"$schema": "https://json.schemastore.org/tsconfig",
 	"compilerOptions": {
 		"lib": ["es2017", "es2019"],
-		"types": ["node", "jest"],
+		"baseUrl": ".",
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"noImplicitAny": true,
@@ -17,9 +18,18 @@
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"useUnknownInCatchVariables": false,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		// Include both custom type shims (./types) and standard @types packages (./node_modules/@types)
+		// Custom shims in ./types provide minimal declarations for editor-only type checking
+		// while node_modules/@types provides full third-party type definitions
+		"typeRoots": ["./types", "./node_modules/@types"],
+		"paths": {
+			"n8n-workflow": ["types/n8n-workflow-shim.d.ts"]
+		}
 	},
 	"include": [
+		"types/**/*.d.ts",
 		"credentials/**/*",
 		"nodes/**/*",
 		"nodes/**/*.json",

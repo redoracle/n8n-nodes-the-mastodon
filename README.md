@@ -56,6 +56,35 @@ A community maintained n8n node pack for interacting with the Mastodon API. This
 npm install n8n-nodes-the-mastodon
 ```
 
+### Building the image with or without the plugin
+
+The Dockerfiles in this repository now provide a safe multi-stage build that supports an optional plugin install.
+
+Usage patterns:
+
+- Build with plugin: provide the tarball via --build-arg and build the `final-plugin` target. The tarball must be present in the build context (e.g. the repository root) or specify a path relative to the build context.
+
+```bash
+docker build --target final-plugin --build-arg PLUGIN_TARBALL=n8n-nodes-the-mastodon-0.0.1.tgz -t n8n-with-plugin .
+```
+
+- For local development using the dev Dockerfile (no plugin):
+
+```bash
+docker build -f Dockerfile.dev -t n8n-dev:plain .
+```
+
+- For local development with plugin:
+
+```bash
+docker build -f Dockerfile.dev --target final-plugin --build-arg PLUGIN_TARBALL=n8n-nodes-the-mastodon-0.0.1.tgz -t n8n-dev:plugin .
+```
+
+Notes:
+
+- The plugin tarball is only used when you explicitly build the `final-plugin` target. The default builds (no target) will not attempt to install a plugin.
+- This approach works across common Docker installations and does not rely on BuildKit-specific optional mounts. If you prefer BuildKit mounts, the older instructions remain in the Git history, but the recommended path is the `--target` flow above.
+
 The node will automatically be detected by n8n after installation. Restart your n8n instance if it is running.
 
 ---
@@ -65,7 +94,6 @@ The node will automatically be detected by n8n after installation. Restart your 
 Before using the Mastodon node, you must configure OAuth2 credentials for your target Mastodon instance:
 
 1. In your Mastodon instance, navigate to **Settings > Development** and create a new application.
-
    - Name: e.g., `n8n`
    - Redirect URI: `http://localhost:5678/rest/oauth2-credential/callback`
    - Scopes: Select `read`, `write`, and `push` as needed.
@@ -94,8 +122,6 @@ It usually means the authorization URL requested scopes the server doesn't suppo
 - Or, after the Connect URL opens, remove unsupported scopes from the `scope` query param (e.g. change `read write follow push` → `read write`) and continue.
 
 The node will try to prefer the currently granted scopes when available to avoid requesting deprecated/unsupported scopes automatically.
-
-![Credentials setup screenshot](./docs/credentials-setup.png)
 
 ---
 
@@ -217,6 +243,25 @@ npm run lint
 npm run format
 ```
 
+### TypeScript Configuration
+
+This project uses a dual-typeRoots approach in `tsconfig.json`:
+
+- **`./types`**: Custom type shims providing minimal declarations for editor-only type checking (e.g., `n8n-workflow-shim.d.ts`, `jest.d.ts`, `node-globals.d.ts`)
+- **`./node_modules/@types`**: Standard third-party type definitions from npm
+
+This configuration allows the project to:
+
+1. Use custom shims for packages that don't provide types or where peer dependencies would cause conflicts
+2. Leverage full type definitions from `@types/*` packages for comprehensive type checking
+3. Maintain type-safety without forcing all types through custom shims
+
+When adding new dependencies, ensure either:
+
+- The package includes its own types, or
+- Add the corresponding `@types/*` package to devDependencies, or
+- Create a minimal shim in `./types/` if needed
+
 ---
 
 ## License
@@ -230,3 +275,7 @@ This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for
 - Mastodon API Docs: <https://docs.joinmastodon.org/api/>
 - n8n Community Nodes Docs: <https://docs.n8n.io/integrations/community-nodes/>
 - OAuth2 Setup Guide: <https://docs.joinmastodon.org/client/token/>
+
+## Frozen testing state
+
+On 2025-10-12 the plugin was validated against a locally built n8n image using the `docker-compose.dev.plugin.yml` flow. The package was packed, the image built, the package copied into n8n's runtime custom extensions folder, and a require test inside the container returned "require OK". See `DEV_SETUP.md` for step-by-step reproduction and recommended developer flows.

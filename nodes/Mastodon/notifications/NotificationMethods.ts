@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest } from '../Mastodon_Methods';
 import { INotification, INotificationParams, IUnreadCount } from './NotificationInterfaces';
 
 /**
@@ -36,7 +36,8 @@ export async function getNotifications(
 		qs.limit = Math.min(this.getNodeParameter('limit', i) as number, 40);
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/notifications`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<INotification[]>('GET', `${baseUrl}/api/v1/notifications`, {}, qs);
 }
 
 /**
@@ -52,7 +53,8 @@ export async function dismissNotification(
 ): Promise<{}> {
 	const notificationId = this.getNodeParameter('id', i) as string;
 
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/notifications/dismiss`, {
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<{}>('POST', `${baseUrl}/api/v1/notifications/dismiss`, {
 		id: notificationId,
 	});
 }
@@ -66,5 +68,6 @@ export async function getUnreadCount(
 	this: IExecuteFunctions,
 	baseUrl: string,
 ): Promise<IUnreadCount> {
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/notifications/unread_count`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IUnreadCount>('GET', `${baseUrl}/api/v1/notifications/unread_count`);
 }

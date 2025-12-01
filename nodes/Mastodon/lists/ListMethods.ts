@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 import { IList } from './ListInterfaces';
 
 /**
@@ -13,8 +13,9 @@ export async function getLists(
 	items: INodeExecutionData[],
 	i: number,
 ): Promise<IList[]> {
-	const result = await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/lists`);
-	return Array.isArray(result) ? result : [result];
+	const apiRequest = bindHandleApiRequest(this);
+	const result = await apiRequest<IList | IList[]>('GET', `${baseUrl}/api/v1/lists`);
+	return Array.isArray(result) ? result : [result as IList];
 }
 
 /**
@@ -29,8 +30,9 @@ export async function getList(
 	i: number,
 ): Promise<IList[]> {
 	const listId = this.getNodeParameter('listId', i) as string;
-	const result = await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/lists/${listId}`);
-	return Array.isArray(result) ? result : [result];
+	const apiRequest = bindHandleApiRequest(this);
+	const result = await apiRequest<IList | IList[]>('GET', `${baseUrl}/api/v1/lists/${listId}`);
+	return Array.isArray(result) ? result : [result as IList];
 }
 
 /**
@@ -45,17 +47,16 @@ export async function createList(
 	i: number,
 ): Promise<IList[]> {
 	const title = this.getNodeParameter('title', i) as string;
-	const replies_policy = this.getNodeParameter('replies_policy', i, undefined) as
-		| string
-		| undefined;
+	const repliesPolicy = this.getNodeParameter('replies_policy', i, undefined) as string | undefined;
 	const exclusive = this.getNodeParameter('exclusive', i, undefined) as boolean | undefined;
 
 	const body: IDataObject = { title };
-	if (replies_policy) body.replies_policy = replies_policy;
+	if (repliesPolicy) body.replies_policy = repliesPolicy;
 	if (exclusive !== undefined) body.exclusive = exclusive;
 
-	const result = await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/lists`, body);
-	return Array.isArray(result) ? result : [result];
+	const apiRequest = bindHandleApiRequest(this);
+	const result = await apiRequest<IList | IList[]>('POST', `${baseUrl}/api/v1/lists`, body);
+	return Array.isArray(result) ? result : [result as IList];
 }
 
 /**
@@ -71,22 +72,16 @@ export async function updateList(
 ): Promise<IList[]> {
 	const listId = this.getNodeParameter('listId', i) as string;
 	const title = this.getNodeParameter('title', i) as string;
-	const replies_policy = this.getNodeParameter('replies_policy', i, undefined) as
-		| string
-		| undefined;
+	const repliesPolicy = this.getNodeParameter('replies_policy', i, undefined) as string | undefined;
 	const exclusive = this.getNodeParameter('exclusive', i, undefined) as boolean | undefined;
 
 	const body: IDataObject = { title };
-	if (replies_policy) body.replies_policy = replies_policy;
+	if (repliesPolicy) body.replies_policy = repliesPolicy;
 	if (exclusive !== undefined) body.exclusive = exclusive;
 
-	const result = await handleApiRequest.call(
-		this,
-		'PUT',
-		`${baseUrl}/api/v1/lists/${listId}`,
-		body,
-	);
-	return Array.isArray(result) ? result : [result];
+	const apiRequest = bindHandleApiRequest(this);
+	const result = await apiRequest<IList | IList[]>('PUT', `${baseUrl}/api/v1/lists/${listId}`, body);
+	return Array.isArray(result) ? result : [result as IList];
 }
 
 /**
@@ -99,10 +94,11 @@ export async function deleteList(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-): Promise<{}[]> {
+): Promise<Array<{}>> {
 	const listId = this.getNodeParameter('listId', i) as string;
-	const result = await handleApiRequest.call(this, 'DELETE', `${baseUrl}/api/v1/lists/${listId}`);
-	return Array.isArray(result) ? result : [result];
+	const apiRequest = bindHandleApiRequest(this);
+	const result = await apiRequest<{} | Array<{}>>('DELETE', `${baseUrl}/api/v1/lists/${listId}`);
+	return Array.isArray(result) ? result : [result as {}];
 }
 
 /**
@@ -117,22 +113,17 @@ export async function getAccountsInList(
 	i: number,
 ): Promise<IDataObject[]> {
 	const listId = this.getNodeParameter('listId', i) as string;
-	const max_id = this.getNodeParameter('max_id', i, undefined) as string | undefined;
-	const since_id = this.getNodeParameter('since_id', i, undefined) as string | undefined;
-	const min_id = this.getNodeParameter('min_id', i, undefined) as string | undefined;
+	const maxId = this.getNodeParameter('max_id', i, undefined) as string | undefined;
+	const sinceId = this.getNodeParameter('since_id', i, undefined) as string | undefined;
+	const minId = this.getNodeParameter('min_id', i, undefined) as string | undefined;
 	const limit = this.getNodeParameter('limit', i, undefined) as number | undefined;
 	const qs: IDataObject = {};
-	if (max_id) qs.max_id = max_id;
-	if (since_id) qs.since_id = since_id;
-	if (min_id) qs.min_id = min_id;
+	if (maxId) qs.max_id = maxId;
+	if (sinceId) qs.since_id = sinceId;
+	if (minId) qs.min_id = minId;
 	if (limit !== undefined) qs.limit = limit;
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`${baseUrl}/api/v1/lists/${listId}/accounts`,
-		{},
-		qs,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject[]>('GET', `${baseUrl}/api/v1/lists/${listId}/accounts`, {}, qs);
 }
 
 /**
@@ -154,7 +145,8 @@ export async function addAccountsToList(
 			.map((id) => id.trim())
 			.filter(Boolean);
 	}
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/lists/${listId}/accounts`, {
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<{}>('POST', `${baseUrl}/api/v1/lists/${listId}/accounts`, {
 		account_ids: accountIds,
 	});
 }
@@ -178,7 +170,8 @@ export async function removeAccountsFromList(
 			.map((id) => id.trim())
 			.filter(Boolean);
 	}
-	return await handleApiRequest.call(this, 'DELETE', `${baseUrl}/api/v1/lists/${listId}/accounts`, {
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<{}>('DELETE', `${baseUrl}/api/v1/lists/${listId}/accounts`, {
 		account_ids: accountIds,
 	});
 }

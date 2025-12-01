@@ -14,7 +14,7 @@ export const conversationOperations: INodeProperties[] = [
 		options: [
 			{
 				name: 'Get All Conversations',
-				value: 'getConversations',
+				value: 'get',
 				description: 'Get all conversations',
 				action: 'Get all conversations',
 			},

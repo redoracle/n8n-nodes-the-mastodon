@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../../Mastodon_Methods';
 import { ICanonicalEmailBlock } from '../AdminInterfaces';
 
 export async function listBlocks(
@@ -24,8 +24,8 @@ export async function listBlocks(
 		qs.min_id = additionalFields.min_id;
 	}
 
-	return await handleApiRequest.call(
-		this,
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ICanonicalEmailBlock[]>(
 		'GET',
 		`${baseUrl}/api/v1/admin/canonical_email_blocks`,
 		{},
@@ -40,8 +40,8 @@ export async function getBlock(
 	i: number,
 ): Promise<ICanonicalEmailBlock> {
 	const blockId = this.getNodeParameter('blockId', i) as string;
-	return await handleApiRequest.call(
-		this,
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ICanonicalEmailBlock>(
 		'GET',
 		`${baseUrl}/api/v1/admin/canonical_email_blocks/${blockId}`,
 	);

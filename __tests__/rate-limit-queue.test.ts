@@ -16,10 +16,10 @@ jest.mock('n8n-workflow', () => ({
 // Keep this as a standalone structural type to avoid visibility issues
 // when intersecting with the real RequestQueue class (private members).
 type QueueInternal = {
- 	MAX_QUEUE_SIZE: number;
- 	REQUEST_TIMEOUT: number;
- 	cleanupExpiredRequests: () => void;
- 	getStatus: () => { rateLimitRemaining: number; queueLength: number; processing: boolean };
+	MAX_QUEUE_SIZE: number;
+	REQUEST_TIMEOUT: number;
+	cleanupExpiredRequests: () => void;
+	getStatus: () => { rateLimitRemaining: number; queueLength: number; processing: boolean };
 };
 
 describe('RequestQueue Rate Limit Handling', () => {
@@ -27,7 +27,7 @@ describe('RequestQueue Rate Limit Handling', () => {
 
 	beforeEach(() => {
 		// Reset singleton instance
-		((RequestQueue as unknown) as { instance?: RequestQueue }).instance = undefined;
+		(RequestQueue as unknown as { instance?: RequestQueue }).instance = undefined;
 		queue = RequestQueue.getInstance();
 		// Clear any existing timers
 		jest.clearAllTimers();
@@ -48,7 +48,7 @@ describe('RequestQueue Rate Limit Handling', () => {
 		if (queue && typeof queue.destroy === 'function') {
 			queue.destroy();
 		}
-		((RequestQueue as unknown) as { instance?: RequestQueue }).instance = undefined;
+		(RequestQueue as unknown as { instance?: RequestQueue }).instance = undefined;
 		jest.clearAllTimers();
 		jest.useRealTimers();
 	});
@@ -85,7 +85,7 @@ describe('RequestQueue Rate Limit Handling', () => {
 		for (let i = 0; i < 5; i++) {
 			promises.push(
 				queue.add(async () => {
-					await new Promise(resolve => setTimeout(resolve, 100));
+					await new Promise((resolve) => setTimeout(resolve, 100));
 					results.push(i);
 					return i;
 				}),
@@ -113,7 +113,7 @@ describe('RequestQueue Rate Limit Handling', () => {
 		if (!queue) throw new Error('RequestQueue instance not initialized');
 
 		// Test that the queue has a maximum size limit
-		const internal = (queue as unknown) as QueueInternal;
+		const internal = queue as unknown as QueueInternal;
 		const MAX_QUEUE_SIZE = internal.MAX_QUEUE_SIZE;
 		expect(MAX_QUEUE_SIZE).toBe(1000);
 
@@ -125,7 +125,7 @@ describe('RequestQueue Rate Limit Handling', () => {
 		if (!queue) throw new Error('RequestQueue instance not initialized');
 
 		// Test that the REQUEST_TIMEOUT is properly defined
-		const internal = (queue as unknown) as QueueInternal;
+		const internal = queue as unknown as QueueInternal;
 		const REQUEST_TIMEOUT = internal.REQUEST_TIMEOUT;
 		expect(REQUEST_TIMEOUT).toBe(60000); // 60 seconds
 

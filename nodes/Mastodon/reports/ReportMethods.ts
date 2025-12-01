@@ -1,6 +1,6 @@
 // Modularized Report methods for Mastodon node
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 
 export async function listReports(
 	this: IExecuteFunctions,
@@ -27,7 +27,8 @@ export async function listReports(
 		qs.offset = additionalFields.offset;
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/admin/reports`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject[]>('GET', `${baseUrl}/api/v1/admin/reports`, {}, qs);
 }
 
 export async function resolveReport(
@@ -37,8 +38,8 @@ export async function resolveReport(
 	i: number,
 ) {
 	const reportId = this.getNodeParameter('reportId', i) as string;
-	return await handleApiRequest.call(
-		this,
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject>(
 		'POST',
 		`${baseUrl}/api/v1/admin/reports/${reportId}/resolve`,
 	);
@@ -53,7 +54,7 @@ export async function create(
 	baseUrl: string,
 	items: INodeExecutionData[],
 	i: number,
-): Promise<any> {
+): Promise<IDataObject> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
 	const comment = this.getNodeParameter('comment', i) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
@@ -71,5 +72,6 @@ export async function create(
 		body.forward = additionalFields.forward as boolean;
 	}
 
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/reports`, body);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject>('POST', `${baseUrl}/api/v1/reports`, body);
 }

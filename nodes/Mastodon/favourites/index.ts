@@ -1,7 +1,7 @@
 // Aggregated favourites module for Mastodon node
 import { INodeProperties } from 'n8n-workflow';
-import * as Props from './FavouritesProperties';
 import * as Methods from './FavouritesMethods';
+import * as Props from './FavouritesProperties';
 
 export const favouritesProperties: INodeProperties[] = [
 	Props.favouritesOperations,
@@ -9,6 +9,7 @@ export const favouritesProperties: INodeProperties[] = [
 ];
 
 export const favouritesMethods = {
+	getFavourites: Methods.getFavourites,
 	favourite: Methods.favourite,
 	unfavourite: Methods.unfavourite,
 };

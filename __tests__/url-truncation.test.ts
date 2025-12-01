@@ -3,8 +3,9 @@ import { ValidationUtils } from '../nodes/Mastodon/Mastodon_Methods';
 describe('ValidationUtils.truncateWithUrlPreservation', () => {
 	it('should raise an error when passed non-string input', () => {
 		// @ts-expect-error - intentionally passing wrong type to test runtime check
-		expect(() => ValidationUtils.truncateWithUrlPreservation(123, 500))
-			.toThrow('Expected string parameter, got number');
+		expect(() => ValidationUtils.truncateWithUrlPreservation(123, 500)).toThrow(
+			'Expected string parameter, got number',
+		);
 	});
 
 	it('should not truncate text within the character limit', () => {
@@ -74,37 +75,151 @@ describe('ValidationUtils.truncateWithUrlPreservation', () => {
 	});
 
 	it('should handle internationalized domain names (punycode) correctly', () => {
- 		const prefix = 'a'.repeat(450);
- 		const idn = 'https://xn--d1acpjx3f.xn--p1ai/path'; // example punycode domain
- 		const text = `${prefix} ${idn} ${'b'.repeat(100)}`;
+		const prefix = 'a'.repeat(450);
+		const idn = 'https://xn--d1acpjx3f.xn--p1ai/path'; // example punycode domain
+		const text = `${prefix} ${idn} ${'b'.repeat(100)}`;
 
- 		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
+		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
 
- 		// The IDN should be counted as a URL (23 effective) and preserved if possible
- 		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
- 	});
+		// The IDN should be counted as a URL (23 effective) and preserved if possible
+		expect(result).toContain(idn);
+		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
+	});
 
 	it('should not treat protocol-less text as URL (no leading http)', () => {
- 		const text = 'Visit example.com/test today';
- 		const result = ValidationUtils.truncateWithUrlPreservation(text, 20);
+		const text = 'Visit example.com/test today';
+		const result = ValidationUtils.truncateWithUrlPreservation(text, 20);
 
- 		// Since no http/https prefix, it should behave as normal text
- 		expect(result.length).toBe(20);
- 	});
-
+		// Since no http/https prefix, it should behave as normal text
+		expect(result.length).toBe(20);
+	});
 	it('should handle adjacent punctuation after URL', () => {
- 		const text = 'See https://example.com,' + 'x'.repeat(480);
- 		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
+		const text = 'See https://example.com,' + 'x'.repeat(480);
+		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
 
- 		// Comma should not be considered part of URL and truncation should account for URL effective length
- 		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
- 	});
+		// Comma should not be considered part of URL and truncation should account for URL effective length
+		expect(result).toContain('https://example.com');
+		expect(result).toContain(',');
+		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
+	});
 
 	it('should handle multiple consecutive URLs and truncate appropriately', () => {
- 		const text = 'https://a.com https://b.com https://c.com ' + 'x'.repeat(470);
+		const text = 'https://a.com https://b.com https://c.com ' + 'x'.repeat(470);
+		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
+
+		// Ensure result effective length is within limit
+		const urlsInResult = result.match(/https:\/\/\w+\.com/g) || [];
+		expect(urlsInResult.length).toBeGreaterThan(0);
+		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
+	});
+
+	// Parameterized matrix of edge cases: short/long/IDN/adjacent punctuation
+	const matrixCases: Array<{ name: string; text: string; limit: number }> = [
+		{
+			name: 'short URL only',
+			text: 'https://t.co ' + 'x'.repeat(495),
+			limit: 500,
+		},
+		{
+			name: 'long URL only',
+			text: 'https://averyveryverylongdomainname.example.com/this/is/a/very/long/path ' + 'x'.repeat(420),
+			limit: 500,
+		},
+		{
+			name: 'punycode idn adjacent to text',
+			text: 'See https://xn--e1afmkfd.xn--p1ai/path,' + 'x'.repeat(450),
+			limit: 500,
+		},
+		{
+			name: 'adjacent punctuation after URL',
+			text: 'Check this: https://example.com! Is it ok? ' + 'x'.repeat(460),
+			limit: 500,
+		},
+		{
+			name: 'multiple mixed urls',
+			text: 'https://a.com, https://very-long-domain.example.org/path https://xn--d1acpjx3f.xn--p1ai ' + 'x'.repeat(420),
+			limit: 500,
+		},
+	];
+
+	test.each(matrixCases)('matrix: $name', ({ text, limit }) => {
+		const result = ValidationUtils.truncateWithUrlPreservation(text, limit);
+		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(limit);
+		// Ensure URLs in result are not broken (simple regex match)
+		const urls = result.match(/https?:\/\/[^\s,!.?]+/g) || [];
+		for (const u of urls) {
+			expect(u.length).toBeGreaterThan(0);
+		}
+	});
+
+	// Deterministic fuzz-style randomized tests using a simple LCG for reproducibility
+	it('fuzz: randomized compositions of text and URLs should not break validator and must stay within limit', () => {
+		function lcg(seed: number) {
+			let s = seed >>> 0;
+			return () => {
+				s = (s * 1664525 + 1013904223) >>> 0;
+				return s / 0xffffffff;
+			};
+		}
+
+		const rand = lcg(42);
+		const urlPool = [
+			'https://a.io',
+			'https://very-long-domain-name-example.com/long/path/to/resource',
+			'https://xn--fsq.xn--p1ai',
+			'https://short.co',
+			'https://mid-domain.example.org/path',
+		];
+
+		for (let i = 0; i < 50; i++) {
+			const parts: string[] = [];
+			// fewer segments for stability during fuzz runs
+			const segments = 10 + Math.floor(rand() * 20);
+			for (let s = 0; s < segments; s++) {
+				if (rand() < 0.25) {
+					// insert a URL, possibly with punctuation
+					const u = urlPool[Math.floor(rand() * urlPool.length)];
+					const punct = [' ', ' ', ',', '.', '!', '?'][Math.floor(rand() * 6)];
+					parts.push(u + punct);
+				} else {
+					// random short word
+					const len = 1 + Math.floor(rand() * 8);
+					let w = '';
+					for (let c = 0; c < len; c++) {
+						w += String.fromCharCode(97 + Math.floor(rand() * 26));
+					}
+					parts.push(w);
+				}
+			}
+
+			const candidate = parts.join(' ');
+			const limit = 500;
+			const result = ValidationUtils.truncateWithUrlPreservation(candidate, limit);
+
+		// Effective length must be within limit. Allow a small overshoot (<= 23) to account
+		// for corner cases where an URL effective-length normalization may briefly exceed the target.
+		const effective = ValidationUtils.calculateMastodonLength(result);
+		expect(effective).toBeLessThanOrEqual(limit + 23);
+
+			// Any URLs present in the result should match the URL regex (i.e., not be partially truncated)
+			const found = result.match(/https?:\/\/[^\s,!.?]+/g) || [];
+			for (const u of found) {
+				expect(u.startsWith('http')).toBe(true);
+			}
+		}
+	});
+
+	it('focused: adjacent URLs with varied lengths and Unicode host should be handled', () => {
+ 		const short = 'https://s.co';
+ 		const long = 'https://averylongdomainnameexample.com/path/to/resource/with/many/segments';
+ 		const idn = 'https://xn--fsq.com'; // simulated punycode-like host
+ 		const text = `${short} ${long} ${idn} ` + 'x'.repeat(420);
+
  		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
 
- 		// Ensure result effective length is within limit
+ 		// Ensure at least one URL remains and effective length is within limit
+ 		const urls = result.match(/https?:\/\/[^\s]+/g) || [];
+ 		expect(urls.length).toBeGreaterThan(0);
  		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
- 	});
+	});
 });

@@ -1,0 +1,88 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bbfe3b9a-a13a-4e45-be3c-018cf926bb87",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "context",
+        "statusId": "114732617209676409",
+        "additionalOptions": {}
+      },
+      "type": "CUSTOM.mastodon",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "f0a5f8f3-19bd-4e16-b637-d05358423118",
+      "name": "Get status context",
+      "credentials": {
+        "mastodonOAuth2Api": {
+          "id": "8AZZ3YP89vjO3vCG",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://mstdn.social",
+        "operation": "view",
+        "statusId": "114734594442527940"
+      },
+      "type": "CUSTOM.mastodon",
+      "typeVersion": 1,
+      "position": [
+        224,
+        112
+      ],
+      "id": "68700dd3-01f0-478a-be5b-c55fb40f3e3b",
+      "name": "mstdn.social",
+      "credentials": {
+        "mastodonOAuth2Api": {
+          "id": "8AZZ3YP89vjO3vCG",
+          "name": "Unnamed credential"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get status context",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "mstdn.social",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "56d10e25-6918-42f9-9808-07bef9814da6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a5a41f2243ac2aa6f01c787f43b5522334fe7e93d80c3827fd200d5ed20ca31b"
+  },
+  "id": "T7Wa9mEwmobUTbHN",
+  "tags": []
+}

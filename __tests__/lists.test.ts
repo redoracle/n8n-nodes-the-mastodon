@@ -1,5 +1,5 @@
 import { Mastodon } from '../nodes/Mastodon/Mastodon.node';
-import { IExecuteFunctions } from 'n8n-workflow';
+import { IExecuteFunctions, INode } from 'n8n-workflow';
 
 describe('Mastodon Node - Lists', () => {
 	let node: Mastodon;
@@ -12,8 +12,8 @@ describe('Mastodon Node - Lists', () => {
 			getInputData: jest.fn().mockReturnValue([{ json: {} }]),
 			helpers: {
 				requestOAuth2: jest.fn(),
-				createBinarySignedUrl: jest.fn()
-			} as any,
+				createBinarySignedUrl: jest.fn(),
+			} as unknown as IExecuteFunctions['helpers'],
 			getCredentials: jest.fn().mockResolvedValue({
 				baseUrl: 'https://mastodon.social',
 				oauth2: { accessToken: 'test-token' },
@@ -27,7 +27,7 @@ describe('Mastodon Node - Lists', () => {
 					typeVersion: 1,
 					position: [0, 0],
 					parameters: {},
-				}) as any,
+				}) as unknown as INode,
 		};
 	});
 

@@ -1,20 +1,17 @@
 // Core helper methods for Mastodon API interactions
 import {
 	IBinaryKeyData,
-	ICredentialDataDecryptedObject,
-	ICredentialTestRequest,
 	IDataObject,
 	IExecuteFunctions,
 	IHttpRequestMethods,
 	INodeExecutionData,
 	IRequestOptions,
-	JsonObject,
-	NodeApiError,
-	NodeExecutionWithMetadata,
-	NodeOperationError,
-	sleep,
+	LoggerProxy as Logger,
+	NodeOperationError
 } from 'n8n-workflow';
-import { LoggerProxy as Logger } from 'n8n-workflow';
+
+// Local sleep helper (avoid relying on n8n-workflow export that may not exist in all versions)
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 // Custom error classes for better error handling
 class MastodonApiError extends Error {
@@ -226,19 +223,17 @@ export class RequestQueue {
 
 	private cleanupExpiredRequests(): void {
 		const now = Date.now();
-		const expiredRequests = this.queue.filter(item =>
-			now - item.timestamp > this.REQUEST_TIMEOUT,
+		const expiredRequests = this.queue.filter(
+			(item) => now - item.timestamp > this.REQUEST_TIMEOUT,
 		);
 
 		// Reject expired requests
-		expiredRequests.forEach(item => {
+		expiredRequests.forEach((item) => {
 			item.reject(new Error('Request timeout: queued too long'));
 		});
 
 		// Remove expired requests from queue
-		this.queue = this.queue.filter(item =>
-			now - item.timestamp <= this.REQUEST_TIMEOUT,
-		);
+		this.queue = this.queue.filter((item) => now - item.timestamp <= this.REQUEST_TIMEOUT);
 	}
 
 	private async processQueue(): Promise<void> {
@@ -252,7 +247,7 @@ export class RequestQueue {
 				if (this.rateLimitRemaining <= 0 && now < this.rateLimitReset) {
 					const delay = this.rateLimitReset - now;
 					Logger.debug(`[Mastodon] Queue waiting for rate limit reset: ${delay}ms`);
-					await new Promise(resolve => setTimeout(resolve, delay));
+					await new Promise((resolve) => setTimeout(resolve, delay));
 
 					// After waiting, reset our tracking
 					this.rateLimitRemaining = 300;
@@ -283,7 +278,7 @@ export class RequestQueue {
 				}
 
 				// Add delay between requests to be respectful
-				await new Promise(resolve => setTimeout(resolve, 100));
+				await new Promise((resolve) => setTimeout(resolve, 100));
 			}
 		} catch (error) {
 			Logger.error('Error in queue processing', error);
@@ -519,8 +514,33 @@ interface IMastodonOAuth2ApiCredentials {
 	accessToken?: string;
 }
 
-/* tslint:disable:no-any -- handleApiRequest needs permissive return typing for many dynamic API callers; callers perform their own casts */
-export async function handleApiRequest(
+// Export a shared type for bound, typed calls to handleApiRequest to avoid repeating
+// the inline `as unknown as` assertion across modules.
+export type HandleApiRequestFn = <U = IDataObject>(
+	method: string,
+	endpoint: string,
+	body?: IDataObject,
+	qs?: IDataObject,
+	options?: IDataObject,
+	retryAttempt?: number,
+	/** Optional runtime validator/type-guard for cached responses */
+	validator?: (data: unknown) => data is U,
+) => Promise<U>;
+
+/**
+ * Helper that returns a bound handleApiRequest function for the provided `this` context.
+ * Use like: `const apiRequest = bindHandleApiRequest(this); await apiRequest<T>(...)`.
+ */
+export function bindHandleApiRequest<TThis extends IExecuteFunctions>(
+	ctx: TThis,
+): HandleApiRequestFn {
+	// bind returns a function whose `this` is already fixed; cast to the exported
+	// HandleApiRequestFn so callers get the generic typing without needing `as unknown`.
+	return handleApiRequest.bind(ctx) as HandleApiRequestFn;
+}
+
+/* tslint:disable:no-any -- handleApiRequest is generic; default `any` kept for incremental migration */
+export async function handleApiRequest<T = any>(
 	this: IExecuteFunctions,
 	method: string,
 	endpoint: string,
@@ -528,7 +548,8 @@ export async function handleApiRequest(
 	qs: IDataObject = {},
 	options: IDataObject = {},
 	retryAttempt = 0,
-): Promise<any> {
+	validator?: (data: unknown) => data is T,
+): Promise<T> {
 	const logger = MastodonLogger.getInstance();
 	const monitor = PerformanceMonitor.getInstance();
 	const cache = ResponseCache.getInstance();
@@ -536,7 +557,9 @@ export async function handleApiRequest(
 	const startTime = Date.now();
 
 	// Always use the baseUrl from the OAuth2 credential
-	const credentials = (await this.getCredentials('mastodonOAuth2Api')) as IMastodonOAuth2ApiCredentials;
+	const credentials = (await this.getCredentials(
+		'mastodonOAuth2Api',
+	)) as IMastodonOAuth2ApiCredentials;
 	logger.debug('Mastodon credentials at runtime', credentials); // Debug log for credential structure
 	if (!credentials?.baseUrl) {
 		throw new NodeOperationError(
@@ -573,17 +596,41 @@ export async function handleApiRequest(
 		: `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
 
 	const metrics = ApiMetrics.getInstance();
-	return monitor.trackOperation(operationName, async (): Promise<any> => {
+
+	// Provide a local bound helper for internal recursion/queueing convenience
+	const ha = bindHandleApiRequest(this);
+	return monitor.trackOperation(operationName, async (): Promise<T> => {
 		const queue = RequestQueue.getInstance();
-	return queue.add(async (): Promise<any> => {
+		return queue.add(async (): Promise<T> => {
 			// Only cache GET requests
 			if (method === 'GET') {
 				const params = JSON.stringify({ ...qs, ...options });
 				const cachedResponse = cache.get(method, fullUrl, params);
-					if (cachedResponse) {
-						logger.debug('Cache hit', { endpoint: fullUrl });
-						return cachedResponse as any;
+				if (cachedResponse) {
+					logger.debug('Cache hit', { endpoint: fullUrl });
+
+					if (typeof validator === 'function') {
+						try {
+							if (validator(cachedResponse)) {
+								return cachedResponse as T;
+							}
+							logger.warn('Cached response failed validation; invalidating cache and fetching fresh data', {
+								endpoint: fullUrl,
+							});
+							cache.invalidate(method, fullUrl, params);
+						} catch (err) {
+							logger.warn('Validator threw an error while validating cached response; invalidating cache', {
+								endpoint: fullUrl,
+								error: err instanceof Error ? err.message : String(err),
+							});
+							cache.invalidate(method, fullUrl, params);
+						}
+					} else {
+						// No validator provided: return cached response as-is
+						logger.debug('Cache hit (no validator)', { endpoint: fullUrl });
+						return cachedResponse as T;
 					}
+				}
 			}
 
 			const maxRetries = 5; // Increased from 3 to 5
@@ -659,14 +706,47 @@ export async function handleApiRequest(
 					}
 				}
 
-				// Cache successful GET responses
+				// Validate response before returning. Use provided validator if available,
+				// otherwise perform a minimal sanity check to ensure we don't blindly cast arbitrary values.
+				if (typeof validator === 'function') {
+					try {
+						if (!validator(responseBody)) {
+							// Validation failed - do not cache and surface an error with details
+							const msg = `API response validation failed for ${method} ${fullUrl}`;
+							logger.error(msg, undefined, { responseBody });
+							throw new NodeOperationError(this.getNode(), msg, {
+								description: 'The API response did not match the expected shape. Consider updating the validator schema or handling unexpected responses.',
+							});
+						}
+					} catch (err) {
+						const msg = `Validator threw an error while validating response for ${method} ${fullUrl}`;
+						logger.error(msg, err instanceof Error ? err : undefined, { responseBody });
+						throw new NodeOperationError(this.getNode(), msg, {
+							description: 'The provided validator threw an error while validating the API response.',
+						});
+					}
+				} else {
+					// Minimal sanity check: response should be an object or an array. This avoids casting primitives to structured types.
+					const ok = responseBody !== null && (typeof responseBody === 'object');
+					if (!ok) {
+						const msg = `Unexpected API response type for ${method} ${fullUrl}`;
+						logger.error(msg, undefined, { responseBody });
+						throw new NodeOperationError(this.getNode(), msg, {
+							description: 'Expected an object or array from the Mastodon API, but received a primitive value. Provide a validator if you need custom shape validation.',
+						});
+					}
+				}
+
+				// Cache successful GET responses (only after validation passed)
 				if (method === 'GET') {
 					const paramsJson = JSON.stringify({ ...qs, ...options });
 					cache.set(method, fullUrl, paramsJson, responseBody);
 				}
 
 				metrics.trackRequest(operationName, Date.now() - startTime);
-				return responseBody as unknown;
+
+				// Safe to cast now: either validator guaranteed type or we performed minimal sanity check.
+				return responseBody as unknown as T;
 			} catch (error) {
 				metrics.trackError(operationName, error.statusCode || 500);
 				const errorDetails = {
@@ -694,15 +774,7 @@ export async function handleApiRequest(
 							`Retrying request after ${delay}ms (attempt ${retryAttempt + 1}/${maxRetries})`,
 						);
 						await new Promise((resolve) => setTimeout(resolve, delay));
-						return handleApiRequest.call(
-							this,
-							method,
-							endpoint,
-							body,
-							qs,
-							options,
-							retryAttempt + 1,
-						);
+						return ha<T>(method, endpoint, body, qs, options, retryAttempt + 1, validator);
 					}
 					throw new NodeOperationError(
 						this.getNode(),
@@ -741,15 +813,11 @@ export async function handleApiRequest(
 						const queue = RequestQueue.getInstance();
 						queue.updateRateLimits(0, Math.floor(Date.now() / 1000) + retryAfter);
 
-						// If this is not a retry, queue the request instead of failing immediately
-						if (retryAttempt === 0) {
-							logger.info(`Rate limit hit, queuing request for retry after ${retryAfter}s`);
-							return queue.add(() =>
-								handleApiRequest.call(this, method, endpoint, body, qs, options, 1),
-							) as Promise<unknown>;
-						}
-
-						throw new MastodonRateLimitError(retryAfter);
+					// If this is not a retry, queue the request instead of failing immediately
+					if (retryAttempt === 0) {
+						logger.info(`Rate limit hit, queuing request for retry after ${retryAfter}s`);
+						return queue.add(() => ha<T>(method, endpoint, body, qs, options, 1, validator));
+					}						throw new MastodonRateLimitError(retryAfter);
 					case 502:
 					case 503:
 					case 504:
@@ -760,15 +828,7 @@ export async function handleApiRequest(
 								`Retrying request after ${delay}ms (attempt ${retryAttempt + 1}/${maxRetries})`,
 							);
 							await new Promise((resolve) => setTimeout(resolve, delay));
-							return handleApiRequest.call(
-								this,
-								method,
-								endpoint,
-								body,
-								qs,
-								options,
-								retryAttempt + 1,
-							);
+							return ha<T>(method, endpoint, body, qs, options, retryAttempt + 1, validator);
 						}
 						throw new NodeOperationError(
 							this.getNode(),
@@ -808,6 +868,8 @@ export async function uploadAttachments(
 	i: number,
 ): Promise<IDataObject[]> {
 	const uploadUrl = `${url}/api/v2/media`;
+	// Bind a typed version of handleApiRequest for use in this helper
+	const ha = bindHandleApiRequest(this);
 	const media: IDataObject[] = [];
 
 	for (const binaryPropertyName of binaryProperties) {
@@ -835,14 +897,14 @@ export async function uploadAttachments(
 		};
 
 		const formData = { file };
-		const response = await handleApiRequest.call(this, 'POST', uploadUrl, {}, {}, { formData });
+		const response = await ha<IDataObject>('POST', uploadUrl, {}, {}, { formData });
 		let responseUrl = (response as IDataObject).url as string;
 
 		const mediaStatusUrl = `${url}/api/v1/media/${(response as IDataObject).id}`;
 		let attempts = 0;
 
 		while (!responseUrl && attempts < 10) {
-			const statusResponse = await handleApiRequest.call(this, 'GET', mediaStatusUrl);
+			const statusResponse = await ha<IDataObject>('GET', mediaStatusUrl);
 			responseUrl = (statusResponse as IDataObject).url as string;
 			attempts++;
 			await sleep(5000);
@@ -867,7 +929,7 @@ export class ValidationUtils {
 
 	/* Character count that Mastodon uses for all URLs regardless of actual length
 	 * https://github.com/mastodon/mastodon/blob/0219b7cad7d9ef800f82cc561571b70da040433f/app/validators/status_length_validator.rb#L5
-	*/
+	 */
 	static readonly MASTODON_URL_LENGTH = 23;
 
 	/**
@@ -941,7 +1003,10 @@ export class ValidationUtils {
 	 * When truncation would break a URL in half, the entire URL is removed instead,
 	 * since partial URLs don't help and might make it harder to debug.
 	 */
-	static truncateWithUrlPreservation(text: string, maxLength: number = ValidationUtils.MASTODON_MAX_STATUS_LENGTH): string {
+	static truncateWithUrlPreservation(
+		text: string,
+		maxLength: number = ValidationUtils.MASTODON_MAX_STATUS_LENGTH,
+	): string {
 		if (typeof text !== 'string') {
 			throw new Error(`Expected string parameter, got ${typeof text}`);
 		}
@@ -984,7 +1049,10 @@ export class ValidationUtils {
 		}
 	}
 
-	static sanitizeStringParam(value: unknown, maxLength: number = ValidationUtils.MASTODON_MAX_STATUS_LENGTH): string {
+	static sanitizeStringParam(
+		value: unknown,
+		maxLength: number = ValidationUtils.MASTODON_MAX_STATUS_LENGTH,
+	): string {
 		if (typeof value !== 'string') {
 			throw new Error(`Expected string parameter, got ${typeof value}`);
 		}

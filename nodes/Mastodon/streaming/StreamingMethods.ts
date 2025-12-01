@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 import { IStreamingParams, IStreamingResponse } from './StreamingInterfaces';
 
 /**
@@ -20,7 +20,8 @@ export async function streamPublic(
 		qs.local = additionalFields.local;
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/streaming/public`, {}, qs, {
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IStreamingResponse>('GET', `${baseUrl}/api/v1/streaming/public`, {}, qs, {
 		encoding: null,
 	});
 }
@@ -44,7 +45,8 @@ export async function streamHashtag(
 		qs.local = additionalFields.local;
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/streaming/hashtag`, {}, qs, {
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IStreamingResponse>('GET', `${baseUrl}/api/v1/streaming/hashtag`, {}, qs, {
 		encoding: null,
 	});
 }
@@ -60,8 +62,8 @@ export async function streamUser(
 	items: INodeExecutionData[],
 	i: number,
 ): Promise<IStreamingResponse> {
-	return await handleApiRequest.call(
-		this,
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IStreamingResponse>(
 		'GET',
 		`${baseUrl}/api/v1/streaming/user`,
 		{},

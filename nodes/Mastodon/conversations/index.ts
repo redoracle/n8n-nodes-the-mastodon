@@ -8,7 +8,7 @@ export const conversationProperties: INodeProperties[] = [
 ];
 
 export const conversationMethods = {
-	getConversations: Methods.getConversations,
+	get: Methods.get,
 	removeConversation: Methods.removeConversation,
 	markAsRead: Methods.markAsRead,
 };

@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 import { IAnnouncement } from './AnnouncementInterfaces';
 
 /**
@@ -12,5 +12,6 @@ export async function list(
 	items: INodeExecutionData[],
 	i: number,
 ): Promise<IAnnouncement[]> {
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/announcements`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest('GET', `${baseUrl}/api/v1/announcements`);
 }

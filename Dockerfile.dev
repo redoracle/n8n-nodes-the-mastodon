@@ -1,0 +1,46 @@
+
+FROM n8nio/n8n:latest AS base-dev
+
+# Accept a tarball build-arg pointing to a tar produced by `npm pack`
+ARG PLUGIN_TARBALL
+
+USER root
+WORKDIR /tmp/plugin
+
+# This Dockerfile supports two final targets:
+# - final: default dev image without plugin installed
+# - final-plugin: dev image with plugin installed (requires building with --target final-plugin and --build-arg PLUGIN_TARBALL=...)
+
+FROM node:24.12-bookworm-slim AS plugin-builder-dev
+ARG PLUGIN_TARBALL
+WORKDIR /tmp
+
+# Copy the tarball into the builder stage. This COPY will fail if you ask to
+# build the plugin target but don't provide PLUGIN_TARBALL; for normal no-plugin
+# builds you should not use the final-plugin target.
+COPY ${PLUGIN_TARBALL} /tmp/plugin.tgz
+
+RUN mkdir -p /opt/plugins && mkdir -p /tmp/plugin && cd /tmp && npm init -y >/dev/null 2>&1 && npm i /tmp/plugin.tgz --no-audit --no-fund && \
+	# copy node_modules entries into /opt/plugins so runtime can use them
+	PKG_DIR=$(node -p "Object.keys(require('./package.json').dependencies||{})[0]") || true; \
+	if [ -d "node_modules" ]; then \
+	mkdir -p /opt/plugins/node_modules; \
+	for d in node_modules/*; do \
+	[ -d "$d" ] && cp -r "$d" "/opt/plugins/node_modules/$(basename $d)"; \
+	done; \
+	fi; \
+	chown -R root:root /opt/plugins && rm -f /tmp/plugin.tgz || true
+
+FROM base-dev AS final
+USER root
+RUN mkdir -p /home/node/.n8n/custom && chown -R node:node /home/node/.n8n || true
+ENV N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom
+USER node
+
+FROM base-dev AS final-plugin
+USER root
+# Copy prepared /opt/plugins from plugin-builder-dev
+COPY --from=plugin-builder-dev /opt/plugins /opt/plugins
+RUN mkdir -p /home/node/.n8n/custom && chown -R node:node /home/node/.n8n || true
+ENV N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom
+USER node

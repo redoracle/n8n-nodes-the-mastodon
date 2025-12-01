@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../../Mastodon_Methods';
 import { IAdminIp } from '../AdminInterfaces';
 
 export async function listIps(
@@ -14,7 +14,8 @@ export async function listIps(
 	if (additionalFields.max_id) qs.max_id = additionalFields.max_id;
 	if (additionalFields.since_id) qs.since_id = additionalFields.since_id;
 	if (additionalFields.min_id) qs.min_id = additionalFields.min_id;
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/admin/ips`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminIp[]>('GET', `${baseUrl}/api/v1/admin/ips`, {}, qs);
 }
 
 export async function getIp(
@@ -24,5 +25,6 @@ export async function getIp(
 	i: number,
 ): Promise<IAdminIp> {
 	const ipRecordId = this.getNodeParameter('ipRecordId', i) as string;
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/admin/ips/${ipRecordId}`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminIp>('GET', `${baseUrl}/api/v1/admin/ips/${ipRecordId}`);
 }

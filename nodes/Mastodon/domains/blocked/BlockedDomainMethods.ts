@@ -1,6 +1,6 @@
 // Modularized Blocked Domain methods for Mastodon node
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest } from '../../Mastodon_Methods';
 import { IAdminDomainBlock } from '../../admin/AdminInterfaces';
 
 export async function listBlockedDomains(
@@ -25,7 +25,8 @@ export async function listBlockedDomains(
 		qs.min_id = additionalFields.min_id;
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/admin/domain_blocks`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminDomainBlock[]>('GET', `${baseUrl}/api/v1/admin/domain_blocks`, {}, qs);
 }
 
 export async function getBlockedDomain(
@@ -35,11 +36,8 @@ export async function getBlockedDomain(
 	i: number,
 ): Promise<IAdminDomainBlock> {
 	const domainId = this.getNodeParameter('domainId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`${baseUrl}/api/v1/admin/domain_blocks/${domainId}`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminDomainBlock>('GET', `${baseUrl}/api/v1/admin/domain_blocks/${domainId}`);
 }
 
 export async function blockDomain(
@@ -72,5 +70,6 @@ export async function blockDomain(
 		body.obfuscate = blockOptions.obfuscate;
 	}
 
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/admin/domain_blocks`, body);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAdminDomainBlock>('POST', `${baseUrl}/api/v1/admin/domain_blocks`, body);
 }

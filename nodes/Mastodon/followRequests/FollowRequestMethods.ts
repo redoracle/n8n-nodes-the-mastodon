@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 import { IAccount } from '../account/AccountInterfaces';
 import { IRelationship } from '../relationship/RelationshipInterfaces';
 
@@ -14,7 +14,8 @@ export async function list(
 	items: INodeExecutionData[],
 	i: number,
 ): Promise<IAccount[]> {
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/follow_requests`);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IAccount[]>('GET', `${baseUrl}/api/v1/follow_requests`);
 }
 
 /**
@@ -29,8 +30,8 @@ export async function acceptRequest(
 	i: number,
 ): Promise<IRelationship> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	return await handleApiRequest.call(
-		this,
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IRelationship>(
 		'POST',
 		`${baseUrl}/api/v1/follow_requests/${accountId}/authorize`,
 	);
@@ -48,9 +49,6 @@ export async function rejectRequest(
 	i: number,
 ): Promise<IRelationship> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
-	return await handleApiRequest.call(
-		this,
-		'POST',
-		`${baseUrl}/api/v1/follow_requests/${accountId}/reject`,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IRelationship>('POST', `${baseUrl}/api/v1/follow_requests/${accountId}/reject`);
 }

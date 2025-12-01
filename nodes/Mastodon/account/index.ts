@@ -1,5 +1,5 @@
 // Aggregated account module for Mastodon node
-import { INodeProperties } from 'n8n-workflow';
+import { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import * as Props from './AccountProperties';
 import * as Methods from './AccountMethods';
 
@@ -8,7 +8,13 @@ export const accountProperties: INodeProperties[] = [
 	...Props.accountFields,
 ];
 
-export const accountMethods = {
+type AccountMethod = (
+	this: IExecuteFunctions,
+	items: INodeExecutionData[],
+	i: number,
+) => Promise<unknown>;
+
+export const accountMethods: { [K in keyof typeof Methods]: AccountMethod } = {
 	follow: Methods.follow,
 	unfollow: Methods.unfollow,
 	block: Methods.block,

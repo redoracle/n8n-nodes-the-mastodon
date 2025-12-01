@@ -1,6 +1,6 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
-import { IMarkerResponse, IMarkerParams, IMarkerPayload } from './MarkerInterfaces';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
+import { IMarkerParams, IMarkerPayload, IMarkerResponse } from './MarkerInterfaces';
 
 /**
  * Retrieve Markers
@@ -18,13 +18,8 @@ export async function getMarkers(
 		timeline: timelines,
 	};
 
-	return await handleApiRequest.call(
-		this,
-		'GET',
-		`${baseUrl}/api/v1/markers`,
-		{},
-		params as unknown as IDataObject,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IMarkerResponse>('GET', `${baseUrl}/api/v1/markers`, {}, params as unknown as IDataObject);
 }
 
 /**
@@ -49,10 +44,6 @@ export async function saveMarkers(
 		body['notifications[last_read_id]'] = notificationsLastReadId as string;
 	}
 
-	return await handleApiRequest.call(
-		this,
-		'POST',
-		`${baseUrl}/api/v1/markers`,
-		body as IDataObject,
-	);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IMarkerResponse>('POST', `${baseUrl}/api/v1/markers`, body as IDataObject);
 }

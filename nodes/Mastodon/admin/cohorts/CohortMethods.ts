@@ -1,5 +1,5 @@
-import { IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { handleApiRequest } from '../../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { bindHandleApiRequest, handleApiRequest } from '../../Mastodon_Methods';
 import { ICohort } from '../AdminInterfaces';
 
 export async function getRetentionData(
@@ -18,5 +18,6 @@ export async function getRetentionData(
 		qs.start_at = additionalFields.startDate;
 	}
 
-	return await handleApiRequest.call(this, 'GET', `${baseUrl}/api/v1/admin/retention`, {}, qs);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<ICohort>('GET', `${baseUrl}/api/v1/admin/retention`, {}, qs);
 }

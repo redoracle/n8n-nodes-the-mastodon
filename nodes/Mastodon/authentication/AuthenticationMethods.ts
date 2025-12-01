@@ -4,7 +4,7 @@ import {
 	INodeExecutionData,
 	NodeOperationError,
 } from 'n8n-workflow';
-import { handleApiRequest } from '../Mastodon_Methods';
+import { bindHandleApiRequest, handleApiRequest } from '../Mastodon_Methods';
 
 interface IOAuthServerConfig extends IDataObject {
 	issuer: string;
@@ -21,12 +21,12 @@ export async function discoverOAuthConfig(
 	baseUrl: string,
 ): Promise<IOAuthServerConfig | null> {
 	try {
-		const response = await handleApiRequest.call(
-			this,
+		const apiRequest = bindHandleApiRequest(this);
+		const response = await apiRequest<IOAuthServerConfig>(
 			'GET',
 			`${baseUrl}/.well-known/oauth-authorization-server`,
 		);
-		return response as IOAuthServerConfig;
+		return response;
 	} catch (error) {
 		// Endpoint not available (pre-4.3.0), return null
 		return null;
@@ -71,7 +71,8 @@ async function registerApp(
 	};
 
 	// Register the application
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/api/v1/apps`, body);
+	const apiRequest = bindHandleApiRequest(this);
+	return await apiRequest<IDataObject>('POST', `${baseUrl}/api/v1/apps`, body);
 }
 
 async function obtainToken(
@@ -106,16 +107,11 @@ async function obtainToken(
 	}
 
 	// Exchange the authorization code for an access token
-	const response = (await handleApiRequest.call(
-		this,
-		'POST',
-		`${baseUrl}/oauth/token`,
-		body,
-	)) as IDataObject;
+	const apiRequest = bindHandleApiRequest(this);
+	const response = await apiRequest<IDataObject>('POST', `${baseUrl}/oauth/token`, body);
 
 	// Get the granted scopes from verify_credentials endpoint
-	const verifyResponse = (await handleApiRequest.call(
-		this,
+	const verifyResponse = await apiRequest<{ scopes: string[] }>(
 		'GET',
 		`${baseUrl}/api/v1/apps/verify_credentials`,
 		{},
@@ -125,7 +121,7 @@ async function obtainToken(
 				Authorization: `Bearer ${response.access_token}`,
 			},
 		},
-	)) as { scopes: string[] };
+	);
 
 	response.scopes = verifyResponse.scopes;
 
@@ -165,7 +161,8 @@ async function revokeToken(
 	};
 
 	// Revoke the access token
-	return await handleApiRequest.call(this, 'POST', `${baseUrl}/oauth/revoke`, body);
+	const apiRequest2 = bindHandleApiRequest(this);
+	return await apiRequest2<IDataObject>('POST', `${baseUrl}/oauth/revoke`, body);
 }
 
 export const authenticationMethods = {

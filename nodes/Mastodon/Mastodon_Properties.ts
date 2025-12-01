@@ -3,48 +3,48 @@
 import { INodeProperties } from 'n8n-workflow';
 
 // Import modularized properties
-import { accountOperations, accountFields } from './account/AccountProperties';
+import { accountFields, accountOperations } from './account/AccountProperties';
 import {
-	authenticationOperations,
-	authenticationFields,
-} from './authentication/AuthenticationProperties';
-import { appsOperations, appsFields } from './apps/AppsProperties';
-import { bookmarksOperations, bookmarksFields } from './bookmarks/BookmarksProperties';
-import { favouritesOperations, favouritesFields } from './favourites/FavouritesProperties';
-import { mutesOperations, mutesFields } from './mutes/MutesProperties';
-import { blocksOperations, blocksFields } from './blocks/BlocksProperties';
-import { domainBlocksOperations, domainBlocksFields } from './domainBlocks/DomainBlocksProperties';
-import { filtersOperations, filtersFields } from './filters/FiltersProperties';
-import {
-	followRequestOperations,
-	followRequestFields,
-} from './followRequests/FollowRequestProperties';
-import { featuredTagOperations, featuredTagFields } from './featuredTags/FeaturedTagProperties';
-import { preferenceOperations, preferenceFields } from './preferences/PreferenceProperties';
-import { timelineOperations, timelineFields } from './timeline/TimelineProperties';
-import { mediaOperations, mediaFields } from './media/MediaProperties';
-import { pollOperations, pollFields } from './polls/PollProperties';
-import { listOperations, listFields } from './lists/ListProperties';
-import { searchOperations, searchFields } from './search/SearchProperties';
-import { pushOperations, pushFields } from './push/PushProperties';
-import { streamingOperations, streamingFields } from './streaming/StreamingProperties';
-import { directoryOperations, directoryFields } from './directory/DirectoryProperties';
-import { notificationOperations, notificationFields } from './notifications/NotificationProperties';
-import { announcementOperations, announcementFields } from './announcements/AnnouncementProperties';
-import {
-	emailBlockedDomainOperations,
-	emailBlockedDomainFields,
-} from './domains/email-blocked/EmailBlockedDomainProperties';
-import {
-	allowedDomainOperations,
-	allowedDomainFields,
-} from './domains/allowed/AllowedDomainProperties';
-import { cohortOperations, cohortFields } from './admin/cohorts/CohortProperties';
-import { dimensionOperations, dimensionFields } from './admin/dimensions/DimensionProperties';
-import {
-	canonicalEmailBlockOperations,
-	canonicalEmailBlockFields,
+    canonicalEmailBlockFields,
+    canonicalEmailBlockOperations,
 } from './admin/canonical-email-blocks/CanonicalEmailBlockProperties';
+import { cohortFields, cohortOperations } from './admin/cohorts/CohortProperties';
+import { dimensionFields, dimensionOperations } from './admin/dimensions/DimensionProperties';
+import { announcementFields, announcementOperations } from './announcements/AnnouncementProperties';
+import { appsFields, appsOperations } from './apps/AppsProperties';
+import {
+    authenticationFields,
+    authenticationOperations,
+} from './authentication/AuthenticationProperties';
+import { blocksFields, blocksOperations } from './blocks/BlocksProperties';
+import { bookmarksFields, bookmarksOperations } from './bookmarks/BookmarksProperties';
+import { directoryFields, directoryOperations } from './directory/DirectoryProperties';
+import { domainBlocksFields, domainBlocksOperations } from './domainBlocks/DomainBlocksProperties';
+import {
+    allowedDomainFields,
+    allowedDomainOperations,
+} from './domains/allowed/AllowedDomainProperties';
+import {
+    emailBlockedDomainFields,
+    emailBlockedDomainOperations,
+} from './domains/email-blocked/EmailBlockedDomainProperties';
+import { favouritesFields, favouritesOperations } from './favourites/FavouritesProperties';
+import { featuredTagFields, featuredTagOperations } from './featuredTags/FeaturedTagProperties';
+import { filtersFields, filtersOperations } from './filters/FiltersProperties';
+import {
+    followRequestFields,
+    followRequestOperations,
+} from './followRequests/FollowRequestProperties';
+import { listFields, listOperations } from './lists/ListProperties';
+import { mediaFields, mediaOperations } from './media/MediaProperties';
+import { mutesFields, mutesOperations } from './mutes/MutesProperties';
+import { notificationFields, notificationOperations } from './notifications/NotificationProperties';
+import { pollFields, pollOperations } from './polls/PollProperties';
+import { preferenceFields, preferenceOperations } from './preferences/PreferenceProperties';
+import { pushFields, pushOperations } from './push/PushProperties';
+import { searchFields, searchOperations } from './search/SearchProperties';
+import { streamingFields, streamingOperations } from './streaming/StreamingProperties';
+import { timelineFields, timelineOperations } from './timeline/TimelineProperties';
 
 // Core connection property
 export const properties = {
@@ -64,6 +64,7 @@ export const properties = {
 		noDataExpression: true,
 		options: [
 			{ name: 'Account', value: 'account' },
+			{ name: 'Announcements', value: 'announcements' },
 			{ name: 'Authentication', value: 'authentication' },
 			{ name: 'Blocks', value: 'blocks' },
 			{ name: 'Bookmarks', value: 'bookmarks' },
@@ -72,14 +73,18 @@ export const properties = {
 			{ name: 'Directory', value: 'directory' },
 			{ name: 'Endorsements', value: 'endorsements' },
 			{ name: 'Featured Tags', value: 'featuredTags' },
+			{ name: 'Filters', value: 'filters' },
 			{ name: 'Follow Requests', value: 'followRequests' },
 			{ name: 'Favourites', value: 'favourites' },
+			{ name: 'Instance', value: 'instance' },
 			{ name: 'Lists', value: 'lists' },
 			{ name: 'Media', value: 'media' },
 			{ name: 'Mutes', value: 'mutes' },
 			{ name: 'Notifications', value: 'notifications' },
 			{ name: 'Polls', value: 'polls' },
+			{ name: 'Search', value: 'search' },
 			{ name: 'Status', value: 'status' },
+			{ name: 'Suggestions', value: 'suggestions' },
 			{ name: 'Timeline', value: 'timeline' },
 		].sort((a, b) => a.name.localeCompare(b.name)),
 		default: 'status',
@@ -88,58 +93,6 @@ export const properties = {
 
 // Export the modularized properties
 export {
-	accountOperations,
-	accountFields,
-	authenticationOperations,
-	authenticationFields,
-	appsOperations,
-	appsFields,
-	bookmarksOperations,
-	bookmarksFields,
-	favouritesOperations,
-	favouritesFields,
-	mutesOperations,
-	mutesFields,
-	blocksOperations,
-	blocksFields,
-	domainBlocksOperations,
-	domainBlocksFields,
-	filtersOperations,
-	filtersFields,
-	followRequestOperations,
-	followRequestFields,
-	featuredTagOperations,
-	featuredTagFields,
-	preferenceOperations,
-	preferenceFields,
-	timelineOperations,
-	timelineFields,
-	mediaOperations,
-	mediaFields,
-	pollOperations,
-	pollFields,
-	listOperations,
-	listFields,
-	searchOperations,
-	searchFields,
-	pushOperations,
-	pushFields,
-	streamingOperations,
-	streamingFields,
-	directoryOperations,
-	directoryFields,
-	notificationOperations,
-	notificationFields,
-	announcementOperations,
-	announcementFields,
-	emailBlockedDomainOperations,
-	emailBlockedDomainFields,
-	allowedDomainOperations,
-	allowedDomainFields,
-	cohortOperations,
-	cohortFields,
-	dimensionOperations,
-	dimensionFields,
-	canonicalEmailBlockOperations,
-	canonicalEmailBlockFields,
+    accountFields, accountOperations, allowedDomainFields, allowedDomainOperations, announcementFields, announcementOperations, appsFields, appsOperations, authenticationFields, authenticationOperations, blocksFields, blocksOperations, bookmarksFields, bookmarksOperations, canonicalEmailBlockFields, canonicalEmailBlockOperations, cohortFields, cohortOperations, dimensionFields, dimensionOperations, directoryFields, directoryOperations, domainBlocksFields, domainBlocksOperations, emailBlockedDomainFields, emailBlockedDomainOperations, favouritesFields, favouritesOperations, featuredTagFields, featuredTagOperations, filtersFields, filtersOperations, followRequestFields, followRequestOperations, listFields, listOperations, mediaFields, mediaOperations, mutesFields, mutesOperations, notificationFields, notificationOperations, pollFields, pollOperations, preferenceFields, preferenceOperations, pushFields, pushOperations, searchFields, searchOperations, streamingFields, streamingOperations, timelineFields, timelineOperations
 };
+

@@ -6,9 +6,7 @@ import {
 	ICredentialType,
 	IDataObject,
 	IHttpRequestHelper,
-	INodeCredentialTestResult,
-	INodeProperties,
-	JsonObject,
+	INodeProperties
 } from 'n8n-workflow';
 import { generatePKCE } from '../src/utils/pkceWrapper';
 
@@ -34,6 +32,16 @@ interface IMastodonCredentials extends ICredentialDataDecryptedObject {
 	clientSecret: string;
 	baseUrl: string;
 	// Removed oauth2 property to fix TS2411 error
+}
+
+// Lightweight shape for credential data we commonly access at runtime.
+// Keep permissive with an index signature for other unknown fields.
+interface ICredsRecord {
+	oauth2?: { accessToken?: string };
+	oauthTokenData?: { access_token?: string };
+	access_token?: string;
+	accessToken?: string;
+	[key: string]: unknown;
 }
 
 export class MastodonOAuth2Api implements ICredentialType {
@@ -148,9 +156,9 @@ export class MastodonOAuth2Api implements ICredentialType {
 				response_type: 'code',
 				client_id: '={{$credentials.clientId}}',
 				redirect_uri: '={{$credentials.redirectUri}}',
-					// Use granted/current scopes when available, otherwise fall back to configured scope or sensible default
-					// This avoids requesting deprecated/unsupported scopes (e.g. follow) when the instance doesn't accept them
-					scope: '={{$credentials.currentScopes || $credentials.scope || "read write"}}',
+				// Use granted/current scopes when available, otherwise fall back to configured scope or sensible default
+				// This avoids requesting deprecated/unsupported scopes (e.g. follow) when the instance doesn't accept them
+				scope: '={{$credentials.currentScopes || $credentials.scope || "read write"}}',
 				state: '={{Date.now()}}',
 				force_login: true, // Always force login to support multiple accounts
 			},
@@ -163,10 +171,10 @@ export class MastodonOAuth2Api implements ICredentialType {
 	): Promise<IDataObject> {
 		const mastodonCredentials = credentials as IMastodonCredentials;
 
-	// Generate and store PKCE values
-	const { code_verifier, code_challenge } = await generatePKCE();
-	const codeVerifier = code_verifier;
-	MastodonOAuth2Api.storePKCE(mastodonCredentials.clientId, codeVerifier);
+		// Generate and store PKCE values
+		const { code_verifier, code_challenge } = await generatePKCE();
+		const codeVerifier = code_verifier;
+		MastodonOAuth2Api.storePKCE(mastodonCredentials.clientId, codeVerifier);
 
 		// Check if server supports PKCE
 		try {
@@ -195,18 +203,20 @@ export class MastodonOAuth2Api implements ICredentialType {
 	): Promise<IDataObject> {
 		const mastodonCredentials = credentials as IMastodonCredentials;
 		let accessToken: string | undefined;
-		const creds = credentials as unknown as Record<string, unknown>;
-		if (
-			creds &&
-			typeof creds === 'object' &&
-			'oauth2' in creds &&
-			typeof creds['oauth2'] === 'object' &&
-			creds['oauth2'] !== null &&
-			'accessToken' in (creds['oauth2'] as Record<string, unknown>)
-		) {
-			accessToken = (creds['oauth2'] as Record<string, unknown>)['accessToken'] as string | undefined;
-		} else if (creds && typeof creds === 'object' && 'accessToken' in creds) {
-			accessToken = creds['accessToken'] as string | undefined;
+		const creds = credentials as unknown as ICredsRecord;
+		if (creds && typeof creds === 'object') {
+			if (creds.oauth2 && typeof creds.oauth2 === 'object' && 'accessToken' in creds.oauth2) {
+				accessToken = creds.oauth2.accessToken;
+			} else {
+				// Check all possible token locations, matching applyCredentials logic
+				const oauthTokenData = creds.oauthTokenData;
+				accessToken =
+					(oauthTokenData && typeof oauthTokenData === 'object'
+						? (oauthTokenData['access_token'] as string | undefined)
+						: undefined) ||
+					(creds.access_token as string | undefined) ||
+					(creds.accessToken as string | undefined);
+			}
 		}
 		if (!accessToken) return {};
 
@@ -272,17 +282,19 @@ export class MastodonOAuth2Api implements ICredentialType {
 		}
 
 		// Ensure access token is available under credentials.oauth2.accessToken
-		const credRecord = credentials as unknown as Record<string, unknown>;
-		const oauth2 = credRecord['oauth2'] as Record<string, unknown> | undefined;
+		const credRecord = credentials as unknown as ICredsRecord;
+		const oauth2 = credRecord.oauth2;
 		if (!oauth2 || !('accessToken' in oauth2)) {
 			// Map from oauthTokenData if present (n8n default for OAuth2)
-			const oauthTokenData = credRecord['oauthTokenData'] as Record<string, unknown> | undefined;
+			const oauthTokenData = credRecord.oauthTokenData;
 			const accessToken =
-				oauthTokenData?.['access_token'] as string | undefined ||
-				(credRecord['access_token'] as string | undefined) ||
-				(credRecord['accessToken'] as string | undefined);
+				(oauthTokenData && typeof oauthTokenData === 'object'
+					? (oauthTokenData['access_token'] as string | undefined)
+					: undefined) ||
+				(credRecord.access_token as string | undefined) ||
+				(credRecord.accessToken as string | undefined);
 			if (accessToken) {
-				credRecord['oauth2'] = { accessToken } as unknown as Record<string, unknown>;
+				credRecord.oauth2 = { accessToken };
 			}
 		}
 
