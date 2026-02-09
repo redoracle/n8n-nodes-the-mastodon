@@ -1,12 +1,12 @@
 // Mastodon Node for n8n
 // Organized and optimized for maintainability and Mastodon API compliance
 import {
-	IDataObject,
-	IExecuteFunctions,
-	INodeExecutionData,
-	INodeProperties,
-	INodeType,
-	INodeTypeDescription
+    IDataObject,
+    IExecuteFunctions,
+    INodeExecutionData,
+    INodeProperties,
+    INodeType,
+    INodeTypeDescription
 } from 'n8n-workflow';
 
 // Define core interfaces
@@ -114,7 +114,11 @@ export class Mastodon implements INodeType {
 		credentials: [
 			{
 				name: 'mastodonOAuth2Api',
-				required: true,
+				required: false,
+			},
+			{
+				name: 'mastodonTokenApi',
+				required: false,
 			},
 		],
 		properties: [
@@ -168,7 +172,13 @@ export class Mastodon implements INodeType {
 
 		let executionData: IDataObject | IDataObject[] | null = null;
 		// Determine base URL: use credential baseUrl for auth, configured URL for API actions
-		const credentials = await this.getCredentials('mastodonOAuth2Api');
+		// Try to get OAuth2 credentials first, fall back to Token credentials
+		let credentials;
+		try {
+			credentials = await this.getCredentials('mastodonOAuth2Api');
+		} catch {
+			credentials = await this.getCredentials('mastodonTokenApi');
+		}
 		const credentialBaseUrl = credentials.baseUrl as string;
 		const nodeBaseUrl = this.getNodeParameter('url', 0) as string;
 		const url = resource === 'authentication' ? credentialBaseUrl : nodeBaseUrl;

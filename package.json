@@ -52,7 +52,8 @@
 	"n8n": {
 		"n8nNodesApiVersion": 1,
 		"credentials": [
-			"dist/credentials/MastodonOAuth2Api.credentials.js"
+			"dist/credentials/MastodonOAuth2Api.credentials.js",
+			"dist/credentials/MastodonTokenApi.credentials.js"
 		],
 		"nodes": [
 			"dist/nodes/Mastodon/Mastodon.node.js"
