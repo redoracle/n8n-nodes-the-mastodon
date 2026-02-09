@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-the-mastodon-neo",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Mastodon is a decentralized, open-source software that allows users to set up servers to communicate with each other.",
 	"keywords": [
 		"n8n",
@@ -9,14 +9,14 @@
 		"mastodon"
 	],
 	"license": "MIT",
-	"homepage": "https://github.com/redoracle/n8n-nodes-the-mastodon#readme",
+	"homepage": "https://github.com/kongken/n8n-nodes-the-mastodon#readme",
 	"author": {
 		"name": "Community Effort!",
-		"email": "n8n-support@redoracle.com"
+		"email": "n8n-support@kongken.com"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/redoracle/n8n-nodes-the-mastodon.git"
+		"url": "https://github.com/kongken/n8n-nodes-the-mastodon.git"
 	},
 	"main": "index.js",
 	"type": "commonjs",
