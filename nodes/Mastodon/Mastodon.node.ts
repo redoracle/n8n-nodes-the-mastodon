@@ -114,13 +114,20 @@ export class Mastodon implements INodeType {
 		credentials: [
 			{
 				name: 'mastodonOAuth2Api',
-				required: false,
+				required: true,
 			},
 			{
 				name: 'mastodonTokenApi',
-				required: false,
+				required: true,
 			},
 		],
+		requestDefaults: {
+			baseURL: '={{$credentials.baseUrl}}',
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/json',
+			},
+		},
 		properties: [
 			// Core Properties
 			properties.url,
@@ -172,13 +179,15 @@ export class Mastodon implements INodeType {
 
 		let executionData: IDataObject | IDataObject[] | null = null;
 		// Determine base URL: use credential baseUrl for auth, configured URL for API actions
-		// Try to get OAuth2 credentials first, fall back to Token credentials
-		let credentials;
-		try {
-			credentials = await this.getCredentials('mastodonOAuth2Api');
-		} catch {
-			credentials = await this.getCredentials('mastodonTokenApi');
+		// Get credentials - n8n will provide whichever type the user selected
+		const credentials = await this.getCredentials('mastodonOAuth2Api').catch(() => 
+			this.getCredentials('mastodonTokenApi')
+		);
+		
+		if (!credentials) {
+			throw new Error('No valid Mastodon credentials found. Please configure either OAuth2 or Token authentication.');
 		}
+		
 		const credentialBaseUrl = credentials.baseUrl as string;
 		const nodeBaseUrl = this.getNodeParameter('url', 0) as string;
 		const url = resource === 'authentication' ? credentialBaseUrl : nodeBaseUrl;
