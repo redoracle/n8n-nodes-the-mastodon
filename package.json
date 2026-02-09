@@ -1,92 +1,92 @@
 {
-	"name": "n8n-nodes-the-mastodon",
-	"version": "0.0.1",
-	"description": "Mastodon is a decentralized, open-source software that allows users to set up servers to communicate with each other.",
-	"keywords": [
-		"n8n",
-		"n8n-community-node",
-		"n8n-community-node-package",
-		"mastodon"
-	],
-	"license": "MIT",
-	"homepage": "https://github.com/redoracle/n8n-nodes-the-mastodon#readme",
-	"author": {
-		"name": "Community Effort!",
-		"email": "n8n-support@redoracle.com"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/redoracle/n8n-nodes-the-mastodon.git"
-	},
-	"main": "index.js",
-	"type": "commonjs",
-	"scripts": {
-		"deps:ensure": "node -e \"const fs=require('fs'); const req=['node_modules/.bin/tsc','node_modules/.bin/jest','node_modules/.bin/eslint','node_modules/@typescript-eslint/parser']; const ok=req.every(p=>{try{fs.accessSync(p);return true}catch(e){return false}}); if(!ok) process.exit(1);\" || pnpm install --include=dev --no-audit --no-fund",
-		"build": "pnpm run deps:ensure && tsc && gulp build:icons",
-		"dev": "tsc --watch",
-		"pack": "pnpm run build && pnpm pack",
-		"dev:bind": "docker compose -f docker-compose.bind.yml up --build",
-		"dev:plugin": "bash -lc 'export PLUGIN_TARBALL=$(ls n8n-nodes-the-mastodon-*.tgz | tail -n1) && docker compose -f docker-compose.plugin.yml up --build'",
-		"docker:build": "docker build -t n8n-with-mastodon:dev . -f Dockerfile",
-		"docker:up": "docker compose -f docker-compose.dev.yml up --build",
-		"format": "prettier --write .",
-		"format:ts": "prettier --write '**/*.ts'",
-		"lint": "pnpm run deps:ensure && eslint --config eslint.config.js .",
-		"lintfix": "pnpm run deps:ensure && eslint --config eslint.config.js nodes credentials package.json --fix",
-		"prepublishOnly": "pnpm run build && pnpm run lint",
-		"test": "pnpm run deps:ensure && jest",
-		"clean": "rm -rf dist node_modules pnpm-lock.yaml",
-		"fresh-install": "pnpm run clean && pnpm install",
-		"update-deps": "pnpm update && pnpm audit"
-	},
-	"files": [
-		"dist"
-	],
-	"dependencies": {
-		"pkce-challenge": "^2.2.0"
-	},
-	"peerDependencies": {
-		"n8n-core": ">=1.14.0",
-		"n8n-workflow": ">=1.82.0"
-	},
-	"n8n": {
-		"n8nNodesApiVersion": 1,
-		"credentials": [
-			"dist/credentials/MastodonOAuth2Api.credentials.js",
-			"dist/credentials/MastodonTokenApi.credentials.js"
-		],
-		"nodes": [
-			"dist/nodes/Mastodon/Mastodon.node.js"
-		]
-	},
-	"devDependencies": {
-		"@types/express": "^5.0.6",
-		"@types/jest": "^29.5.14",
-		"@types/node": "^25.2.2",
-		"@types/request-promise-native": "~1.0.21",
-		"@typescript-eslint/eslint-plugin": "^8.54.0",
-		"@typescript-eslint/parser": "^8.54.0",
-		"eslint": "^9.39.2",
-		"eslint-plugin-n8n-nodes-base": "^1.16.6",
-		"globals": "^16.5.0",
-		"gulp": "^5.0.1",
-		"jest": "^29.7.0",
-		"n8n": "^2.6.4",
-		"n8n-core": "^1.122.14",
-		"n8n-workflow": "^1.120.8",
-		"prettier": "^3.8.1",
-		"ts-jest": "^29.4.6",
-		"typescript": "^5.9.3"
-	},
-	"overrides": {
-		"gm": false,
-		"@azure/core-http": false,
-		"@aws-sdk/node-http-handler": "@smithy/node-http-handler",
-		"dommatrix": "@thednp/dommatrix",
-		"semver": "^7.7.4",
-		"glob": "^10.0.0",
-		"rimraf": "^5.0.0",
-		"eslint": "^9.39.2"
-	},
-	"packageManager": "pnpm@10.28.2+sha512.41872f037ad22f7348e3b1debbaf7e867cfd448f2726d9cf74c08f19507c31d2c8e7a11525b983febc2df640b5438dee6023ebb1f84ed43cc2d654d2bc326264"
+  "name": "n8n-nodes-the-mastodon",
+  "version": "0.0.26",
+  "description": "Mastodon is a decentralized, open-source software that allows users to set up servers to communicate with each other.",
+  "keywords": [
+    "n8n",
+    "n8n-community-node",
+    "n8n-community-node-package",
+    "mastodon"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/redoracle/n8n-nodes-the-mastodon#readme",
+  "author": {
+    "name": "Community Effort!",
+    "email": "n8n-support@redoracle.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/redoracle/n8n-nodes-the-mastodon.git"
+  },
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "deps:ensure": "node -e \"const fs=require('fs'); const req=['node_modules/.bin/tsc','node_modules/.bin/jest','node_modules/.bin/eslint','node_modules/@typescript-eslint/parser']; const ok=req.every(p=>{try{fs.accessSync(p);return true}catch(e){return false}}); if(!ok) process.exit(1);\" || pnpm install --include=dev --no-audit --no-fund",
+    "build": "pnpm run deps:ensure && tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "pack": "pnpm run build && pnpm pack",
+    "dev:bind": "docker compose -f docker-compose.bind.yml up --build",
+    "dev:plugin": "bash -lc 'export PLUGIN_TARBALL=$(ls n8n-nodes-the-mastodon-*.tgz | tail -n1) && docker compose -f docker-compose.plugin.yml up --build'",
+    "docker:build": "docker build -t n8n-with-mastodon:dev . -f Dockerfile",
+    "docker:up": "docker compose -f docker-compose.dev.yml up --build",
+    "format": "prettier --write .",
+    "format:ts": "prettier --write '**/*.ts'",
+    "lint": "pnpm run deps:ensure && eslint --config eslint.config.js .",
+    "lintfix": "pnpm run deps:ensure && eslint --config eslint.config.js nodes credentials package.json --fix",
+    "prepublishOnly": "pnpm run build && pnpm run lint",
+    "test": "pnpm run deps:ensure && jest",
+    "clean": "rm -rf dist node_modules pnpm-lock.yaml",
+    "fresh-install": "pnpm run clean && pnpm install",
+    "update-deps": "pnpm update && pnpm audit"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "pkce-challenge": "^2.2.0"
+  },
+  "peerDependencies": {
+    "n8n-core": ">=1.14.0",
+    "n8n-workflow": ">=1.82.0"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/MastodonOAuth2Api.credentials.js",
+      "dist/credentials/MastodonTokenApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Mastodon/Mastodon.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^25.2.2",
+    "@types/request-promise-native": "~1.0.21",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^9.39.2",
+    "eslint-plugin-n8n-nodes-base": "^1.16.6",
+    "globals": "^16.5.0",
+    "gulp": "^5.0.1",
+    "jest": "^29.7.0",
+    "n8n": "^2.6.4",
+    "n8n-core": "^1.122.14",
+    "n8n-workflow": "^1.120.8",
+    "prettier": "^3.8.1",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "gm": false,
+    "@azure/core-http": false,
+    "@aws-sdk/node-http-handler": "@smithy/node-http-handler",
+    "dommatrix": "@thednp/dommatrix",
+    "semver": "^7.7.4",
+    "glob": "^10.0.0",
+    "rimraf": "^5.0.0",
+    "eslint": "^9.39.2"
+  },
+  "packageManager": "pnpm@10.28.2+sha512.41872f037ad22f7348e3b1debbaf7e867cfd448f2726d9cf74c08f19507c31d2c8e7a11525b983febc2df640b5438dee6023ebb1f84ed43cc2d654d2bc326264"
 }
