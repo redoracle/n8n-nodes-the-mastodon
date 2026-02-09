@@ -80,7 +80,11 @@ export async function updateList(
 	if (exclusive !== undefined) body.exclusive = exclusive;
 
 	const apiRequest = bindHandleApiRequest(this);
-	const result = await apiRequest<IList | IList[]>('PUT', `${baseUrl}/api/v1/lists/${listId}`, body);
+	const result = await apiRequest<IList | IList[]>(
+		'PUT',
+		`${baseUrl}/api/v1/lists/${listId}`,
+		body,
+	);
 	return Array.isArray(result) ? result : [result as IList];
 }
 
@@ -123,7 +127,12 @@ export async function getAccountsInList(
 	if (minId) qs.min_id = minId;
 	if (limit !== undefined) qs.limit = limit;
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IDataObject[]>('GET', `${baseUrl}/api/v1/lists/${listId}/accounts`, {}, qs);
+	return await apiRequest<IDataObject[]>(
+		'GET',
+		`${baseUrl}/api/v1/lists/${listId}/accounts`,
+		{},
+		qs,
+	);
 }
 
 /**

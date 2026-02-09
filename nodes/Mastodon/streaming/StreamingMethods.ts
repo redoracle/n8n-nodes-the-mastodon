@@ -46,9 +46,15 @@ export async function streamHashtag(
 	}
 
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IStreamingResponse>('GET', `${baseUrl}/api/v1/streaming/hashtag`, {}, qs, {
-		encoding: null,
-	});
+	return await apiRequest<IStreamingResponse>(
+		'GET',
+		`${baseUrl}/api/v1/streaming/hashtag`,
+		{},
+		qs,
+		{
+			encoding: null,
+		},
+	);
 }
 
 /**

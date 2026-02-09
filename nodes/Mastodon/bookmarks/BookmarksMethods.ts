@@ -52,5 +52,7 @@ export async function removeBookmark(
 		throw new NodeOperationError(this.getNode(), 'Status ID is required to remove a bookmark');
 	}
 	const apiRequest = bindHandleApiRequest(this);
-	return [await apiRequest<IDataObject>('POST', `${baseUrl}/api/v1/statuses/${statusId}/unbookmark`)];
+	return [
+		await apiRequest<IDataObject>('POST', `${baseUrl}/api/v1/statuses/${statusId}/unbookmark`),
+	];
 }

@@ -1,67 +1,162 @@
 {
+	"name": "Mastodon Node Template (Reusable Patterns)",
 	"nodes": [
 		{
-			"parameters": {
-				"url": "https://mastodon.social",
-				"resource": "status",
-				"operation": "create",
-				"text": "Test post from n8n Mastodon node! #n8n #automation",
-				"additionalFields": {
-					"language": "en",
-					"spoilerText": "Test post"
-				}
-			},
-			"name": "Create Mastodon Post",
-			"type": "n8n-nodes-mastodon",
+			"parameters": {},
+			"id": "4f7412fe-6882-4ec6-ad89-9429b745c101",
+			"name": "Manual Trigger",
+			"type": "n8n-nodes-base.manualTrigger",
 			"typeVersion": 1,
-			"position": [500, 300],
-			"credentials": {
-				"mastodonOAuth2Api": {
-					"id": null,
-					"name": "Mastodon account"
-				}
-			}
+			"position": [280, 360]
 		},
 		{
 			"parameters": {
-				"url": "https://mastodon.social",
+				"mode": "runOnceForAllItems",
+				"jsCode": "return [{ json: { baseUrl: 'https://mastodon.social', hashtag: 'n8n', searchQuery: 'automation', listTitle: `n8n-template-${Date.now()}` } }];"
+			},
+			"id": "a96703ec-4f8f-43bc-a339-2b04e64d5f02",
+			"name": "Template Inputs",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [520, 360]
+		},
+		{
+			"parameters": {
+				"url": "={{ $('Template Inputs').item.json.baseUrl }}",
+				"authType": "token",
 				"resource": "timeline",
 				"operation": "home"
 			},
+			"id": "7b5c8eb0-7260-4df8-8ebb-c74d8586d203",
 			"name": "Get Home Timeline",
-			"type": "n8n-nodes-mastodon",
+			"type": "n8n-nodes-the-mastodon.mastodon",
 			"typeVersion": 1,
-			"position": [700, 300],
+			"position": [780, 360],
 			"credentials": {
-				"mastodonOAuth2Api": {
+				"mastodonTokenApi": {
 					"id": null,
-					"name": "Mastodon account"
+					"name": "Mastodon Access Token API"
 				}
 			}
 		},
 		{
 			"parameters": {
-				"url": "https://mastodon.social",
-				"resource": "status",
+				"url": "={{ $('Template Inputs').item.json.baseUrl }}",
+				"authType": "token",
+				"resource": "search",
 				"operation": "search",
-				"searchText": "#n8n",
-				"returnAll": false,
-				"limit": 5
+				"query": "={{ $('Template Inputs').item.json.searchQuery }}",
+				"additionalFields": {
+					"type": "statuses",
+					"limit": 5
+				}
 			},
-			"name": "Search Posts",
-			"type": "n8n-nodes-mastodon",
+			"id": "11f29ca7-044a-4f2b-b177-2f87db6a5a04",
+			"name": "Search Statuses",
+			"type": "n8n-nodes-the-mastodon.mastodon",
 			"typeVersion": 1,
-			"position": [900, 300],
+			"position": [1040, 360],
 			"credentials": {
-				"mastodonOAuth2Api": {
+				"mastodonTokenApi": {
 					"id": null,
-					"name": "Mastodon account"
+					"name": "Mastodon Access Token API"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"url": "={{ $('Template Inputs').item.json.baseUrl }}",
+				"authType": "token",
+				"resource": "tags",
+				"operation": "follow",
+				"tagId": "={{ $('Template Inputs').item.json.hashtag }}"
+			},
+			"id": "d287f0f7-f626-4a5d-a355-2192db2f6b05",
+			"name": "Follow Tag",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [1300, 360],
+			"credentials": {
+				"mastodonTokenApi": {
+					"id": null,
+					"name": "Mastodon Access Token API"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"url": "={{ $('Template Inputs').item.json.baseUrl }}",
+				"authType": "token",
+				"resource": "tags",
+				"operation": "unfollow",
+				"tagId": "={{ $('Template Inputs').item.json.hashtag }}"
+			},
+			"id": "35a2036f-2ade-4fdf-913d-bf28ed2b4506",
+			"name": "Unfollow Tag Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [1560, 360],
+			"credentials": {
+				"mastodonTokenApi": {
+					"id": null,
+					"name": "Mastodon Access Token API"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"url": "={{ $('Template Inputs').item.json.baseUrl }}",
+				"authType": "token",
+				"resource": "lists",
+				"operation": "createList",
+				"title": "={{ $('Template Inputs').item.json.listTitle }}"
+			},
+			"id": "b7a1f8fd-8dd7-4e72-941f-090ff7707307",
+			"name": "Create List",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [1820, 360],
+			"credentials": {
+				"mastodonTokenApi": {
+					"id": null,
+					"name": "Mastodon Access Token API"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"url": "={{ $('Template Inputs').item.json.baseUrl }}",
+				"authType": "token",
+				"resource": "lists",
+				"operation": "deleteList",
+				"listId": "={{ $('Create List').item.json.id }}"
+			},
+			"id": "6bef6cb5-fae0-478d-b152-86f6b1900408",
+			"name": "Delete List Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [2080, 360],
+			"credentials": {
+				"mastodonTokenApi": {
+					"id": null,
+					"name": "Mastodon Access Token API"
 				}
 			}
 		}
 	],
 	"connections": {
-		"Create Mastodon Post": {
+		"Manual Trigger": {
+			"main": [
+				[
+					{
+						"node": "Template Inputs",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Template Inputs": {
 			"main": [
 				[
 					{
@@ -76,7 +171,51 @@
 			"main": [
 				[
 					{
-						"node": "Search Posts",
+						"node": "Search Statuses",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Search Statuses": {
+			"main": [
+				[
+					{
+						"node": "Follow Tag",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Follow Tag": {
+			"main": [
+				[
+					{
+						"node": "Unfollow Tag Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Unfollow Tag Cleanup": {
+			"main": [
+				[
+					{
+						"node": "Create List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Create List": {
+			"main": [
+				[
+					{
+						"node": "Delete List Cleanup",
 						"type": "main",
 						"index": 0
 					}
@@ -84,6 +223,11 @@
 			]
 		}
 	},
+	"active": false,
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"pinData": {},
 	"meta": {
 		"templateCredsSetupLink": "https://docs.n8n.io/integrations/builtin/credentials/mastodon/"
 	}

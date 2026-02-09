@@ -6,7 +6,8 @@ import {
 	INodeExecutionData,
 	INodeProperties,
 	INodeType,
-	INodeTypeDescription
+	INodeTypeDescription,
+	NodeOperationError,
 } from 'n8n-workflow';
 
 // Define core interfaces
@@ -64,6 +65,10 @@ type ExecutionResult = IDataObject | IDataObject[] | null;
 
 // Import modularized components
 import { accountMethods, accountProperties } from './account';
+import * as CanonicalEmailBlockMethods from './admin/canonical-email-blocks/CanonicalEmailBlockMethods';
+import * as CohortMethods from './admin/cohorts/CohortMethods';
+import * as DimensionMethods from './admin/dimensions/DimensionMethods';
+import * as IpMethods from './admin/ips/IpMethods';
 import { announcementMethods, announcementProperties } from './announcements';
 import { appsMethods, appsProperties } from './apps/index';
 import { authenticationMethods, authenticationProperties } from './authentication/index';
@@ -73,15 +78,28 @@ import { conversationMethods, conversationProperties } from './conversations';
 import { customEmojisMethods, customEmojisProperties } from './customEmojis';
 import { directoryMethods, directoryProperties } from './directory';
 import { domainBlocksMethods, domainBlocksProperties } from './domainBlocks';
+import { domainMethods, domainProperties } from './domains';
+import { emailsMethods, emailsProperties } from './emails';
 import { endorsementMethods, endorsementProperties } from './endorsements';
 import { favouritesMethods, favouritesProperties } from './favourites';
 import { featuredTagMethods, featuredTagProperties } from './featuredTags';
 import { filterMethods, filterProperties } from './filters';
+import { followedTagsMethods, followedTagsProperties } from './followedTags';
 import { followRequestsMethods, followRequestsProperties } from './followRequests';
 import { instanceMethods, instanceProperties } from './instance';
 import { listMethods, listProperties } from './lists';
 import { markerMethods, markerProperties } from './markers';
-import { properties } from './Mastodon_Properties';
+import {
+	canonicalEmailBlockFields,
+	canonicalEmailBlockOperations,
+	cohortFields,
+	cohortOperations,
+	dimensionFields,
+	dimensionOperations,
+	ipFields,
+	ipOperations,
+	properties,
+} from './Mastodon_Properties';
 import { measureMethods, measureProperties } from './measures';
 import { mediaMethods, mediaProperties } from './media';
 import { mutesMethods, mutesProperties } from './mutes';
@@ -89,12 +107,17 @@ import { notificationMethods, notificationProperties } from './notifications';
 import { oembedMethods, oembedProperties } from './oembed';
 import { pollMethods, pollProperties } from './polls';
 import { preferenceMethods, preferenceProperties } from './preferences';
+import { profileMethods, profileProperties } from './profile';
 import { proofMethods, proofProperties } from './proofs';
+import { pushMethods, pushProperties } from './push';
 import { reportMethods, reportProperties } from './reports';
 import { retentionMethods, retentionProperties } from './retention';
+import { scheduledStatusMethods, scheduledStatusProperties } from './scheduledStatuses';
 import { searchMethods, searchProperties } from './search';
 import { statusMethods, statusProperties } from './status';
+import { streamingMethods, streamingProperties } from './streaming';
 import { suggestionMethods, suggestionProperties } from './suggestions';
+import { tagMethods, tagProperties } from './tags';
 import { timelineMethods, timelineProperties } from './timeline';
 
 export class Mastodon implements INodeType {
@@ -115,17 +138,40 @@ export class Mastodon implements INodeType {
 			{
 				name: 'mastodonOAuth2Api',
 				required: true,
+				displayOptions: {
+					show: {
+						authType: ['oauth2'],
+					},
+				},
+			},
+			{
+				name: 'mastodonTokenApi',
+				required: true,
+				displayOptions: {
+					show: {
+						authType: ['token'],
+					},
+				},
 			},
 		],
+		requestDefaults: {
+			baseURL: '={{$credentials.baseUrl}}',
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/json',
+			},
+		},
 		properties: [
 			// Core Properties
 			properties.url,
+			properties.authType,
 			properties.resources,
 
 			// Modularized Components
 			...statusProperties,
 			...accountProperties,
 			...announcementProperties,
+			...appsProperties,
 			...timelineProperties,
 			...mediaProperties,
 			...pollProperties,
@@ -138,9 +184,11 @@ export class Mastodon implements INodeType {
 			...mutesProperties,
 			...blocksProperties,
 			...domainBlocksProperties,
+			...domainProperties,
 			...filterProperties,
 			...followRequestsProperties,
 			...featuredTagProperties,
+			...followedTagsProperties,
 			...listProperties,
 			...instanceProperties,
 			...preferenceProperties,
@@ -149,14 +197,25 @@ export class Mastodon implements INodeType {
 			...searchProperties,
 			...suggestionProperties,
 			...authenticationProperties,
-			...appsProperties,
-
-			// Admin & Special Features
-			...measureProperties,
+			...scheduledStatusProperties,
+			...tagProperties,
+			...profileProperties,
+			...pushProperties,
+			...streamingProperties,
+			...emailsProperties,
+			...oembedProperties,
+			...proofProperties,
 			...reportProperties,
 			...retentionProperties,
-			...proofProperties,
-			...oembedProperties,
+			...measureProperties,
+			...canonicalEmailBlockOperations,
+			...canonicalEmailBlockFields,
+			...cohortOperations,
+			...cohortFields,
+			...dimensionOperations,
+			...dimensionFields,
+			...ipOperations,
+			...ipFields,
 		] as INodeProperties[],
 	};
 
@@ -165,12 +224,51 @@ export class Mastodon implements INodeType {
 		const returnData: INodeExecutionData[] = [];
 		const resource = this.getNodeParameter('resource', 0) as string;
 		const operation = this.getNodeParameter('operation', 0) as string;
+		const authType = this.getNodeParameter('authType', 0) as string;
 
 		let executionData: IDataObject | IDataObject[] | null = null;
 		// Determine base URL: use credential baseUrl for auth, configured URL for API actions
-		const credentials = await this.getCredentials('mastodonOAuth2Api');
-		const credentialBaseUrl = credentials.baseUrl as string;
-		const nodeBaseUrl = this.getNodeParameter('url', 0) as string;
+		// Get credentials based on user-selected auth type
+		let credentials;
+		let credentialType: 'mastodonOAuth2Api' | 'mastodonTokenApi';
+
+		if (authType === 'token') {
+			try {
+				credentials = await this.getCredentials('mastodonTokenApi');
+				credentialType = 'mastodonTokenApi';
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error);
+				throw new NodeOperationError(
+					this.getNode(),
+					`No Mastodon Access Token credential selected. Please select a credential to authenticate. ${errorMessage}`,
+					{ cause: error },
+				);
+			}
+		} else {
+			try {
+				credentials = await this.getCredentials('mastodonOAuth2Api');
+				credentialType = 'mastodonOAuth2Api';
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error);
+				throw new NodeOperationError(
+					this.getNode(),
+					`No Mastodon OAuth2 credential selected. Please select a credential to authenticate. ${errorMessage}`,
+					{ cause: error },
+				);
+			}
+		}
+
+		if (resource === 'authentication' && credentialType !== 'mastodonOAuth2Api') {
+			throw new NodeOperationError(
+				this.getNode(),
+				'Authentication operations require OAuth2 credentials. Please select OAuth2 as the Authentication Type.',
+			);
+		}
+
+		// Normalize baseUrl by removing trailing slashes (consistent with credential test)
+		const credentialBaseUrl = (credentials.baseUrl as string).replace(/\/+$/, '');
+		const nodeBaseUrlParam = this.getNodeParameter('url', 0, '') as string;
+		const nodeBaseUrl = nodeBaseUrlParam ? nodeBaseUrlParam.replace(/\/+$/, '') : credentialBaseUrl;
 		const url = resource === 'authentication' ? credentialBaseUrl : nodeBaseUrl;
 
 		// Handle authentication operations
@@ -206,6 +304,39 @@ export class Mastodon implements INodeType {
 				throw error;
 			}
 		}
+
+		const callMethod = async (
+			methods: Record<string, (...args: unknown[]) => Promise<ExecutionResult | void>>,
+			methodName: string,
+			args: unknown[],
+		): Promise<ExecutionResult> => {
+			const fn = methods[methodName];
+
+			// Runtime validation: ensure the method exists and is callable
+			if (typeof fn !== 'function') {
+				throw new NodeOperationError(
+					this.getNode(),
+					`Method "${methodName}" is not a valid function in the provided methods object. Available methods: ${Object.keys(methods).join(', ')}`,
+				);
+			}
+
+			const result = await fn.call(this, ...args);
+
+			// Handle void returns (e.g., DELETE operations) by normalizing to null
+			if (result === undefined) {
+				return null;
+			}
+
+			// Validate the result shape matches ExecutionResult
+			if (result !== null && typeof result !== 'object') {
+				throw new NodeOperationError(
+					this.getNode(),
+					`Method "${methodName}" returned an invalid result type. Expected IDataObject, IDataObject[], or null, but got ${typeof result}`,
+				);
+			}
+
+			return result;
+		};
 
 		try {
 			for (let i = 0; i < items.length; i++) {
@@ -352,6 +483,24 @@ export class Mastodon implements INodeType {
 						].call(this, url, items, i)) as unknown as ExecutionResult;
 						break;
 
+					case 'allowedDomains':
+					case 'blockedDomains':
+					case 'emailBlockedDomains':
+						if (!(operation in domainMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = await callMethod(
+							domainMethods as Record<
+								string,
+								(...args: unknown[]) => Promise<ExecutionResult | void>
+							>,
+							operation,
+							[url, items, i],
+						);
+						break;
+
 					case 'filters':
 						if (!(operation in filterMethods)) {
 							throw new Error(
@@ -425,6 +574,163 @@ export class Mastodon implements INodeType {
 						].call(this, url, items, i)) as unknown as ExecutionResult;
 						break;
 
+					case 'scheduledStatuses':
+						if (!(operation in scheduledStatusMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = await callMethod(
+							scheduledStatusMethods as Record<
+								string,
+								(...args: unknown[]) => Promise<ExecutionResult | void>
+							>,
+							operation,
+							[url, items, i],
+						);
+						break;
+
+					case 'tags':
+						if (!(operation in tagMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await tagMethods[operation as keyof typeof tagMethods].call(
+							this,
+							url,
+							i,
+						)) as unknown as ExecutionResult;
+						break;
+
+					case 'profile':
+						if (!(operation in profileMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = await callMethod(
+							profileMethods as Record<
+								string,
+								(...args: unknown[]) => Promise<ExecutionResult | void>
+							>,
+							operation,
+							[url],
+						);
+						break;
+
+					case 'push':
+						if (!(operation in pushMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await pushMethods[operation as keyof typeof pushMethods].call(
+							this,
+							url,
+							items,
+							i,
+						)) as unknown as ExecutionResult;
+						break;
+
+					case 'streaming':
+						if (!(operation in streamingMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await streamingMethods[
+							operation as keyof typeof streamingMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
+						break;
+
+					case 'followedTags':
+						if (!(operation in followedTagsMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = (await followedTagsMethods[
+							operation as keyof typeof followedTagsMethods
+						].call(this, url, items, i)) as unknown as ExecutionResult;
+						break;
+
+					case 'emails':
+						if (!(operation in emailsMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = await callMethod(
+							emailsMethods as Record<
+								string,
+								(...args: unknown[]) => Promise<ExecutionResult | void>
+							>,
+							operation,
+							[url],
+						);
+						break;
+
+					case 'canonicalEmailBlocks':
+						if (!(operation in CanonicalEmailBlockMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = await callMethod(
+							CanonicalEmailBlockMethods as Record<
+								string,
+								(...args: unknown[]) => Promise<ExecutionResult | void>
+							>,
+							operation,
+							[url, items, i],
+						);
+						break;
+
+					case 'cohorts':
+						if (!(operation in CohortMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = await callMethod(
+							CohortMethods as Record<
+								string,
+								(...args: unknown[]) => Promise<ExecutionResult | void>
+							>,
+							operation,
+							[url, items, i],
+						);
+						break;
+
+					case 'dimensions':
+						if (!(operation in DimensionMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = await callMethod(
+							DimensionMethods as Record<
+								string,
+								(...args: unknown[]) => Promise<ExecutionResult | void>
+							>,
+							operation,
+							[url, items, i],
+						);
+						break;
+
+					case 'ips':
+						if (!(operation in IpMethods)) {
+							throw new Error(
+								`The operation "${operation}" for resource "${resource}" is not implemented!`,
+							);
+						}
+						executionData = await callMethod(
+							IpMethods as Record<string, (...args: unknown[]) => Promise<ExecutionResult | void>>,
+							operation,
+							[url, items, i],
+						);
+						break;
 					case 'apps':
 						if (!(operation in appsMethods)) {
 							throw new Error(
@@ -437,23 +743,6 @@ export class Mastodon implements INodeType {
 							items,
 							i,
 						)) as unknown as ExecutionResult;
-						break;
-
-					case 'authentication':
-						if (!(operation in authenticationMethods)) {
-							throw new Error(
-								`The operation "${operation}" for resource "${resource}" is not implemented!`,
-							);
-						}
-						const authResult = await (
-							authenticationMethods[operation as keyof typeof authenticationMethods] as (
-								this: IExecuteFunctions,
-								baseUrl: string,
-								items: INodeExecutionData[],
-								i: number,
-							) => Promise<IDataObject>
-						).call(this, url, items, i);
-						executionData = authResult;
 						break;
 
 					case 'measures':
@@ -631,9 +920,12 @@ export class Mastodon implements INodeType {
 								`The operation "${operation}" for resource "${resource}" is not implemented!`,
 							);
 						}
-						executionData = (await instanceMethods[
-							operation as keyof typeof instanceMethods
-						].call(this, url, items, i)) as unknown as ExecutionResult;
+						executionData = (await instanceMethods[operation as keyof typeof instanceMethods].call(
+							this,
+							url,
+							items,
+							i,
+						)) as unknown as ExecutionResult;
 						break;
 
 					default:

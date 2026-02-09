@@ -6,7 +6,7 @@ import {
 	ICredentialType,
 	IDataObject,
 	IHttpRequestHelper,
-	INodeProperties
+	INodeProperties,
 } from 'n8n-workflow';
 import { generatePKCE } from '../src/utils/pkceWrapper';
 
@@ -65,20 +65,21 @@ export class MastodonOAuth2Api implements ICredentialType {
 			default: 'https://mastodon.social',
 			placeholder: 'https://mastodon.social',
 			required: true,
-			description: 'The base URL of your Mastodon instance (e.g., https://mastodon.social)',
+			description:
+				'The base URL of your Mastodon instance (e.g., https://mastodon.social). Trailing slashes will be automatically normalized.',
 		},
 		{
 			displayName: 'Authorization URL',
 			name: 'authUrl',
 			type: 'hidden',
-			default: '={{$self.baseUrl}}/oauth/authorize',
+			default: '={{$self.baseUrl.replace(/\\/+$/, "")}}/oauth/authorize',
 			required: true,
 		},
 		{
 			displayName: 'Access Token URL',
 			name: 'accessTokenUrl',
 			type: 'hidden',
-			default: '={{$self.baseUrl}}/oauth/token',
+			default: '={{$self.baseUrl.replace(/\\/+$/, "")}}/oauth/token',
 			required: true,
 		},
 		{
@@ -246,7 +247,7 @@ export class MastodonOAuth2Api implements ICredentialType {
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: '={{$credentials?.baseUrl}}',
+			baseURL: '={{$credentials?.baseUrl.replace(/\/+$/, "")}}',
 			url: '/api/v1/apps/verify_credentials',
 			method: 'GET',
 			headers: {

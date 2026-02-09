@@ -19,7 +19,12 @@ export async function getMarkers(
 	};
 
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IMarkerResponse>('GET', `${baseUrl}/api/v1/markers`, {}, params as unknown as IDataObject);
+	return await apiRequest<IMarkerResponse>(
+		'GET',
+		`${baseUrl}/api/v1/markers`,
+		{},
+		params as unknown as IDataObject,
+	);
 }
 
 /**
@@ -45,5 +50,9 @@ export async function saveMarkers(
 	}
 
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IMarkerResponse>('POST', `${baseUrl}/api/v1/markers`, body as IDataObject);
+	return await apiRequest<IMarkerResponse>(
+		'POST',
+		`${baseUrl}/api/v1/markers`,
+		body as IDataObject,
+	);
 }

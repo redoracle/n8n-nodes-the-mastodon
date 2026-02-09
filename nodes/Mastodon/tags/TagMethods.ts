@@ -15,11 +15,7 @@ interface ITag {
  * Gets information about a tag
  * GET /api/v1/tags/:id
  */
-export async function get(
-	this: IExecuteFunctions,
-	baseUrl: string,
-	i: number,
-): Promise<ITag> {
+export async function get(this: IExecuteFunctions, baseUrl: string, i: number): Promise<ITag> {
 	const tagId = this.getNodeParameter('tagId', i) as string;
 	const apiRequest = bindHandleApiRequest(this);
 	return await apiRequest<ITag>('GET', `${baseUrl}/api/v1/tags/${tagId}`);
@@ -29,11 +25,7 @@ export async function get(
  * Follows a hashtag
  * POST /api/v1/tags/:id/follow
  */
-export async function follow(
-	this: IExecuteFunctions,
-	baseUrl: string,
-	i: number,
-): Promise<ITag> {
+export async function follow(this: IExecuteFunctions, baseUrl: string, i: number): Promise<ITag> {
 	const tagId = this.getNodeParameter('tagId', i) as string;
 	const apiRequest = bindHandleApiRequest(this);
 	return await apiRequest<ITag>('POST', `${baseUrl}/api/v1/tags/${tagId}/follow`);
@@ -43,11 +35,7 @@ export async function follow(
  * Unfollows a hashtag
  * POST /api/v1/tags/:id/unfollow
  */
-export async function unfollow(
-	this: IExecuteFunctions,
-	baseUrl: string,
-	i: number,
-): Promise<ITag> {
+export async function unfollow(this: IExecuteFunctions, baseUrl: string, i: number): Promise<ITag> {
 	const tagId = this.getNodeParameter('tagId', i) as string;
 	const apiRequest = bindHandleApiRequest(this);
 	return await apiRequest<ITag>('POST', `${baseUrl}/api/v1/tags/${tagId}/unfollow`);

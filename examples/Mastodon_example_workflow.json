@@ -1,65 +1,168 @@
 {
-	"name": "Mastodon Example Workflow",
+	"name": "Mastodon Example Workflow (Create + Cleanup)",
 	"nodes": [
 		{
+			"parameters": {},
+			"id": "0a6f98d1-0f89-4b7d-97c7-0f29fd9ad201",
+			"name": "Manual Trigger",
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [300, 260]
+		},
+		{
 			"parameters": {
+				"url": "https://mastodon.social",
+				"authType": "oauth2",
 				"resource": "status",
 				"operation": "create",
-				"url": "=https://mastodon.example",
-				"text": "Hello from n8n!",
-				"additionalFields": {}
+				"status": "=Hello from n8n! Test post at {{$now.toISO()}}",
+				"additionalFields": {
+					"visibility": "unlisted"
+				}
 			},
-			"id": "37912c74-5a1e-42c1-9978-a671cd228935",
-			"name": "Mastodon",
-			"type": "n8n-nodes-mastodon",
+			"id": "aef5f54f-b14a-4729-8cff-8a4f4dfaf002",
+			"name": "Create Status",
+			"type": "n8n-nodes-the-mastodon.mastodon",
 			"typeVersion": 1,
-			"position": [885, 335]
+			"position": [560, 260],
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			}
 		},
 		{
 			"parameters": {
-				"keepOnlySet": true,
-				"values": {
-					"string": [
-						{
-							"name": "text",
-							"value": "Hello from n8n!"
-						}
-					]
-				},
-				"options": {}
+				"url": "https://mastodon.social",
+				"authType": "oauth2",
+				"resource": "status",
+				"operation": "context",
+				"statusId": "={{ $('Create Status').item.json.id }}"
 			},
-			"id": "89e7e1c7-3e74-4525-9f5a-06f01e45ddac",
-			"name": "Set",
-			"type": "n8n-nodes-base.set",
-			"typeVersion": 2,
-			"position": [660, 335]
+			"id": "9c2e52b4-a6a5-4f75-b7b8-95b8a0a2af03",
+			"name": "Get Status Context",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [820, 260],
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			}
 		},
 		{
-			"parameters": {},
-			"id": "b825b174-de06-4716-b3ea-6bb0019fccd5",
-			"name": "Start",
-			"type": "n8n-nodes-base.start",
+			"parameters": {
+				"url": "https://mastodon.social",
+				"authType": "oauth2",
+				"resource": "bookmarks",
+				"operation": "addBookmark",
+				"statusId": "={{ $('Create Status').item.json.id }}"
+			},
+			"id": "3b173ce1-8e79-4213-b125-0418d131b904",
+			"name": "Add Bookmark",
+			"type": "n8n-nodes-the-mastodon.mastodon",
 			"typeVersion": 1,
-			"position": [455, 335]
+			"position": [1080, 260],
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"url": "https://mastodon.social",
+				"authType": "oauth2",
+				"resource": "bookmarks",
+				"operation": "removeBookmark",
+				"statusId": "={{ $('Create Status').item.json.id }}"
+			},
+			"id": "b8ea870d-e8f4-4f6e-a8d9-5fd5abe6d905",
+			"name": "Remove Bookmark Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [1340, 260],
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"url": "https://mastodon.social",
+				"authType": "oauth2",
+				"resource": "status",
+				"operation": "delete",
+				"statusId": "={{ $('Create Status').item.json.id }}"
+			},
+			"id": "f54cb657-f16e-466b-b479-3cf74c7cbf06",
+			"name": "Delete Status Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [1600, 260],
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			}
 		}
 	],
 	"connections": {
-		"Set": {
+		"Manual Trigger": {
 			"main": [
 				[
 					{
-						"node": "Mastodon",
+						"node": "Create Status",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Start": {
+		"Create Status": {
 			"main": [
 				[
 					{
-						"node": "Set",
+						"node": "Get Status Context",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Get Status Context": {
+			"main": [
+				[
+					{
+						"node": "Add Bookmark",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Add Bookmark": {
+			"main": [
+				[
+					{
+						"node": "Remove Bookmark Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Remove Bookmark Cleanup": {
+			"main": [
+				[
+					{
+						"node": "Delete Status Cleanup",
 						"type": "main",
 						"index": 0
 					}
@@ -71,15 +174,14 @@
 	"settings": {
 		"executionOrder": "v1"
 	},
+	"pinData": {},
+	"meta": {
+		"templateCredsSetupLink": "https://docs.n8n.io/integrations/builtin/credentials/mastodon/"
+	},
 	"tags": [
 		{
 			"name": "example",
 			"color": "#55ff55"
 		}
-	],
-	"pinData": {},
-	"versionId": "b825b174-de06-4716-b3ea-6bb0019fccd5",
-	"meta": {
-		"instanceId": "b825b174-de06-4716-b3ea-6bb0019fccd5"
-	}
+	]
 }

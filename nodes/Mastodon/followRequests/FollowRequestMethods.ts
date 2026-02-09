@@ -50,5 +50,8 @@ export async function rejectRequest(
 ): Promise<IRelationship> {
 	const accountId = this.getNodeParameter('accountId', i) as string;
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IRelationship>('POST', `${baseUrl}/api/v1/follow_requests/${accountId}/reject`);
+	return await apiRequest<IRelationship>(
+		'POST',
+		`${baseUrl}/api/v1/follow_requests/${accountId}/reject`,
+	);
 }

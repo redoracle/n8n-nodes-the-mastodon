@@ -24,7 +24,7 @@ interface IScheduledStatus {
 export async function list(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
+	_items: INodeExecutionData[],
 	i: number,
 ): Promise<IScheduledStatus[]> {
 	const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
@@ -44,7 +44,12 @@ export async function list(
 	}
 
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IScheduledStatus[]>('GET', `${baseUrl}/api/v1/scheduled_statuses`, {}, qs);
+	return await apiRequest<IScheduledStatus[]>(
+		'GET',
+		`${baseUrl}/api/v1/scheduled_statuses`,
+		{},
+		qs,
+	);
 }
 
 /**
@@ -54,12 +59,15 @@ export async function list(
 export async function view(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
+	_items: INodeExecutionData[],
 	i: number,
 ): Promise<IScheduledStatus> {
 	const statusId = this.getNodeParameter('statusId', i) as string;
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IScheduledStatus>('GET', `${baseUrl}/api/v1/scheduled_statuses/${statusId}`);
+	return await apiRequest<IScheduledStatus>(
+		'GET',
+		`${baseUrl}/api/v1/scheduled_statuses/${statusId}`,
+	);
 }
 
 /**
@@ -69,16 +77,20 @@ export async function view(
 export async function update(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
+	_items: INodeExecutionData[],
 	i: number,
 ): Promise<IScheduledStatus> {
 	const statusId = this.getNodeParameter('statusId', i) as string;
 	const scheduledAt = this.getNodeParameter('scheduledAt', i) as string;
 
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IScheduledStatus>('PUT', `${baseUrl}/api/v1/scheduled_statuses/${statusId}`, {
-		scheduled_at: scheduledAt,
-	});
+	return await apiRequest<IScheduledStatus>(
+		'PUT',
+		`${baseUrl}/api/v1/scheduled_statuses/${statusId}`,
+		{
+			scheduled_at: scheduledAt,
+		},
+	);
 }
 
 /**
@@ -88,10 +100,11 @@ export async function update(
 export async function cancel(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
+	_items: INodeExecutionData[],
 	i: number,
-): Promise<{}> {
+): Promise<IDataObject> {
 	const statusId = this.getNodeParameter('statusId', i) as string;
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<{}>('DELETE', `${baseUrl}/api/v1/scheduled_statuses/${statusId}`);
+	await apiRequest<void>('DELETE', `${baseUrl}/api/v1/scheduled_statuses/${statusId}`);
+	return {};
 }

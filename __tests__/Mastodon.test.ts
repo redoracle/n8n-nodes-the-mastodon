@@ -15,11 +15,18 @@ describe('Mastodon Node - Core', () => {
 		expect(mastodonNode.description.version).toBe(1);
 	});
 
-	test('should define required OAuth2 credentials', () => {
+	test('should define both OAuth2 and Token credential types', () => {
 		const creds = mastodonNode.description.credentials;
 		expect(creds).toBeDefined();
+		expect(creds).toHaveLength(2);
 		expect(creds?.[0].name).toBe('mastodonOAuth2Api');
 		expect(creds?.[0].required).toBe(true);
+		expect(creds?.[0].displayOptions).toBeDefined();
+		expect(creds?.[0].displayOptions?.show).toEqual({ authType: ['oauth2'] });
+		expect(creds?.[1].name).toBe('mastodonTokenApi');
+		expect(creds?.[1].required).toBe(true);
+		expect(creds?.[1].displayOptions).toBeDefined();
+		expect(creds?.[1].displayOptions?.show).toEqual({ authType: ['token'] });
 	});
 
 	test('should include URL property as required string', () => {
@@ -28,6 +35,14 @@ describe('Mastodon Node - Core', () => {
 		expect(urlProp).toBeDefined();
 		expect(urlProp?.type).toBe('string');
 		expect(urlProp?.required).toBe(true);
+	});
+
+	test('should include authentication type selector with OAuth2 default', () => {
+		const props = mastodonNode.description.properties as INodeProperties[];
+		const authTypeProp = props.find((p) => p.name === 'authType');
+		expect(authTypeProp).toBeDefined();
+		expect(authTypeProp?.type).toBe('options');
+		expect(authTypeProp?.default).toBe('oauth2');
 	});
 });
 

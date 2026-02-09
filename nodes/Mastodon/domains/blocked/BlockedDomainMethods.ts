@@ -6,7 +6,7 @@ import { IAdminDomainBlock } from '../../admin/AdminInterfaces';
 export async function listBlockedDomains(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
+	_items: INodeExecutionData[],
 	i: number,
 ): Promise<IAdminDomainBlock[]> {
 	const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
@@ -26,24 +26,32 @@ export async function listBlockedDomains(
 	}
 
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IAdminDomainBlock[]>('GET', `${baseUrl}/api/v1/admin/domain_blocks`, {}, qs);
+	return await apiRequest<IAdminDomainBlock[]>(
+		'GET',
+		`${baseUrl}/api/v1/admin/domain_blocks`,
+		{},
+		qs,
+	);
 }
 
 export async function getBlockedDomain(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
+	_items: INodeExecutionData[],
 	i: number,
 ): Promise<IAdminDomainBlock> {
 	const domainId = this.getNodeParameter('domainId', i) as string;
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IAdminDomainBlock>('GET', `${baseUrl}/api/v1/admin/domain_blocks/${domainId}`);
+	return await apiRequest<IAdminDomainBlock>(
+		'GET',
+		`${baseUrl}/api/v1/admin/domain_blocks/${domainId}`,
+	);
 }
 
 export async function blockDomain(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
+	_items: INodeExecutionData[],
 	i: number,
 ): Promise<IAdminDomainBlock> {
 	const domain = this.getNodeParameter('domain', i) as string;

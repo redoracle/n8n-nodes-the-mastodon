@@ -5,15 +5,15 @@ declare function it(name: string, fn: () => any, timeout?: number): void;
 
 // Support test() and test.each()
 declare namespace _jestInternalShim {
-  type EachTable<T> = ReadonlyArray<T>;
-  interface TestEachFn {
-    <T>(cases: EachTable<T>): (name: string, fn: (arg: T) => any) => void;
-  }
+	type EachTable<T> = ReadonlyArray<T>;
+	interface TestEachFn {
+		<T>(cases: EachTable<T>): (name: string, fn: (arg: T) => any) => void;
+	}
 }
 
 declare const test: {
-  (name: string, fn: () => any, timeout?: number): void;
-  each: _jestInternalShim.TestEachFn;
+	(name: string, fn: () => any, timeout?: number): void;
+	each: _jestInternalShim.TestEachFn;
 };
 
 declare function beforeAll(fn: () => any, timeout?: number): void;
@@ -28,30 +28,31 @@ declare function fail(message?: string): never;
 // These are intentionally partial; the project uses Jest at runtime with dev deps.
 // If full typings are needed, install dev deps or run `npm run deps:ensure`.
 declare namespace jest {
-  interface Matchers<R> {
-    toBeTruthy(): R;
-    toBeFalsy(): R;
-    toEqual(expected: any): R;
-    toMatchSnapshot(): R;
-  }
+	interface Matchers<R> {
+		toBeTruthy(): R;
+		toBeFalsy(): R;
+		toEqual(expected: any): R;
+		toMatchSnapshot(): R;
+	}
 
-  interface Mock {
-    (...args: any[]): any;
-    mockImplementation(fn: (...args: any[]) => any): Mock;
-    mockResolvedValue(value: any): Mock;
-    mockRejectedValue(value: any): Mock;
-    mockReturnValue(value: any): Mock;
-    mock: { calls: any[] };
-  }
+	interface Mock {
+		(...args: any[]): any;
+		mockImplementation(fn: (...args: any[]) => any): Mock;
+		mockResolvedValue(value: any): Mock;
+		mockRejectedValue(value: any): Mock;
+		mockReturnValue(value: any): Mock;
+		mock: { calls: any[] };
+	}
 
-  interface JestLike {
-    fn<T extends (...args: any[]) => any = (...args: any[]) => any>(impl?: T): Mock;
-    mock: (moduleName: string, factory?: any) => void;
-    clearAllTimers(): void;
-    useRealTimers(): void;
-    useFakeTimers(): void;
-    spyOn(obj: any, key: string): Mock;
-  }
+	interface JestLike {
+		fn<T extends (...args: any[]) => any = (...args: any[]) => any>(impl?: T): Mock;
+		mock: (moduleName: string, factory?: any) => void;
+		clearAllMocks(): void;
+		clearAllTimers(): void;
+		useRealTimers(): void;
+		useFakeTimers(): void;
+		spyOn(obj: any, key: string): Mock;
+	}
 }
 
 // Provide a value-like `jest` for sites that call jest.fn(), jest.mock(), etc.

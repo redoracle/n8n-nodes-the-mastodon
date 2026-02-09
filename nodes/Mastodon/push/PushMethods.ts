@@ -30,7 +30,11 @@ export async function subscribe(
 	}
 
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IWebPushSubscription>('POST', `${baseUrl}/api/v1/push/subscription`, body);
+	return await apiRequest<IWebPushSubscription>(
+		'POST',
+		`${baseUrl}/api/v1/push/subscription`,
+		body,
+	);
 }
 
 /**

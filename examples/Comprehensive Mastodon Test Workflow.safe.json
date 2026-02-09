@@ -1,0 +1,2408 @@
+{
+	"name": "Comprehensive Mastodon Test Workflow (Safe Mode - Compatibility)",
+	"nodes": [
+		{
+			"id": "node-001",
+			"name": "Manual Trigger",
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [
+				-1600,
+				0
+			],
+			"parameters": {}
+		},
+		{
+			"id": "node-002",
+			"name": "01 Test Data",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [
+				-1360,
+				0
+			],
+			"parameters": {
+				"mode": "runOnceForAllItems",
+				"jsCode": "// IMPORTANT: Set MASTODON_TEST_URL environment variable to your test Mastodon instance\n// Example: MASTODON_TEST_URL=https://your-test-instance.example.com\n// Fallback uses mastodon.social so workflow can run even when env access is denied.\nlet baseUrl = 'https://mastodon.social';\ntry {\n  const envUrl = $env.MASTODON_TEST_URL;\n  if (typeof envUrl === 'string' && envUrl.trim()) {\n    baseUrl = envUrl.trim();\n  }\n} catch (_error) {\n  // Env var access can be denied in some n8n deployments; keep fallback.\n}\n\nreturn [{ json: {\n  safeMode: true,\n  baseUrl,\n  searchQuery: 'mastodon',\n  hashtag: 'n8n',\n  externalUrl: 'https://n8n.io',\n  testDomain: 'example.invalid',\n  testEmailDomain: 'mail.example.invalid',\n  testTag: 'n8n',\n  pendingFollowAccountId: '',\n  followerAccountId: '',\n  pinAccountId: '',\n  notificationId: '',\n  conversationId: '',\n  allowedDomainId: '',\n  blockedDomainId: '',\n  emailBlockedDomainId: '',\n  canonicalEmailBlockId: '',\n  dimensionId: '',\n  ipRecordId: '',\n  measureId: '',\n  mediaId: '',\n  pollId: '',\n  scheduledStatusId: '',\n  oauthClientId: '',\n  oauthClientSecret: '',\n  oauthCode: '',\n  oauthTokenToRevoke: '',\n  pushEndpoint: 'https://example.invalid/push',\n  pushP256dh: 'BMkFakeP256dhKeyForTestingOnly',\n  pushAuth: 'FakeAuthSecretForTestingOnly'\n}}];"
+			}
+		},
+		{
+			"id": "node-003",
+			"name": "02 Verify Credentials",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-1120,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "account",
+				"operation": "verifyCredentials"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-004",
+			"name": "03 View Profile",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-900,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "account",
+				"operation": "viewProfile",
+				"accountId": "={{ $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-005",
+			"name": "04 Account Followers",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-680,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "account",
+				"operation": "getAccountFollowers",
+				"accountId": "={{ $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-006",
+			"name": "05 Account Following",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-460,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "account",
+				"operation": "getAccountFollowing",
+				"accountId": "={{ $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-007",
+			"name": "06 Account Statuses",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-240,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "account",
+				"operation": "getAccountStatuses",
+				"accountId": "={{ $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-008",
+			"name": "07 Account Lists",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-20,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "account",
+				"operation": "getAccountLists",
+				"accountId": "={{ $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-009",
+			"name": "08 Account Featured Tags",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				200,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "account",
+				"operation": "getAccountFeaturedTags",
+				"accountId": "={{ $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-011",
+			"name": "10 Pin Account",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				640,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "account",
+				"operation": "pinAccount",
+				"accountId": "={{ $items('01 Test Data', 0, 0)[0].json.pinAccountId || $items('05 Account Following', 0, 0)[0]?.json?.id || '' }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-012",
+			"name": "11 Unpin Account Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				860,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "account",
+				"operation": "unpinAccount",
+				"accountId": "={{ $items('01 Test Data', 0, 0)[0].json.pinAccountId || $items('05 Account Following', 0, 0)[0]?.json?.id || '' }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-014",
+			"name": "13 Search Accounts",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1300,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "account",
+				"operation": "searchAccounts",
+				"query": "mastodon",
+				"limit": 5
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-015",
+			"name": "14 Create Status",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1520,
+				0
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "status",
+				"operation": "create",
+				"status": "=Comprehensive test status {{ $now.toISO() }}",
+				"additionalFields": {
+					"visibility": "public"
+				}
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-016",
+			"name": "15 View Status",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-1120,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "status",
+				"operation": "view",
+				"statusId": "={{ $items('14 Create Status', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-017",
+			"name": "16 Edit Status",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-900,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "status",
+				"operation": "edit",
+				"statusId": "={{ $items('14 Create Status', 0, 0)[0].json.id }}",
+				"status": "=Edited comprehensive test status {{ $now.toISO() }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-018",
+			"name": "17 Status Context",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-680,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "status",
+				"operation": "context",
+				"statusId": "={{ $items('14 Create Status', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-019",
+			"name": "18 Add Bookmark",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-460,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "bookmarks",
+				"operation": "addBookmark",
+				"statusId": "={{ $items('14 Create Status', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-020",
+			"name": "19 Get Bookmarks",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-240,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "bookmarks",
+				"operation": "getBookmarks"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-021",
+			"name": "20 Remove Bookmark Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-20,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "bookmarks",
+				"operation": "removeBookmark",
+				"statusId": "={{ $items('14 Create Status', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-022",
+			"name": "21 Favourite Status",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				200,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "favourites",
+				"operation": "favourite",
+				"statusId": "={{ $items('14 Create Status', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-023",
+			"name": "22 Get Favourites",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				420,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "favourites",
+				"operation": "getFavourites"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-024",
+			"name": "23 Unfavourite Status Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				640,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "favourites",
+				"operation": "unfavourite",
+				"statusId": "={{ $items('14 Create Status', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-025",
+			"name": "24 Create List",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				860,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "lists",
+				"operation": "createList",
+				"title": "=Mastodon Test List {{ $now.toUnix() }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-026",
+			"name": "25 Get Lists",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1080,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "lists",
+				"operation": "getLists"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-027",
+			"name": "26 Get List",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1300,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "lists",
+				"operation": "getList",
+				"listId": "={{ $items('24 Create List', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-028",
+			"name": "27 Update List",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1520,
+				220
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "lists",
+				"operation": "updateList",
+				"listId": "={{ $items('24 Create List', 0, 0)[0].json.id }}",
+				"title": "=Updated Test List {{ $now.toUnix() }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-029",
+			"name": "28 Add Accounts To List",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-1120,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "lists",
+				"operation": "addAccountsToList",
+				"listId": "={{ $items('24 Create List', 0, 0)[0].json.id }}",
+				"accountIds": "={{ $items('05 Account Following', 0, 0)[0]?.json?.id || $items('01 Test Data', 0, 0)[0].json.followerAccountId || $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-030",
+			"name": "29 Get Accounts In List",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-900,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "lists",
+				"operation": "getAccountsInList",
+				"listId": "={{ $items('24 Create List', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-031",
+			"name": "30 Remove Accounts From List Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-680,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "lists",
+				"operation": "removeAccountsFromList",
+				"listId": "={{ $items('24 Create List', 0, 0)[0].json.id }}",
+				"accountIds": "={{ $items('05 Account Following', 0, 0)[0]?.json?.id || $items('01 Test Data', 0, 0)[0].json.followerAccountId || $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-032",
+			"name": "31 Create Filter",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-460,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "filters",
+				"operation": "create",
+				"phrase": "=n8n-test-{{ $now.toUnix() }}",
+				"context": [
+					"home"
+				],
+				"additionalFields": {}
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-033",
+			"name": "32 Update Filter",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-240,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "filters",
+				"operation": "update",
+				"filterId": "={{ $items('31 Create Filter', 0, 0)[0].json.id }}",
+				"updateFields": {
+					"phrase": "=n8n-test-updated-{{ $now.toUnix() }}"
+				}
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-034",
+			"name": "33 Delete Filter Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-20,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "filters",
+				"operation": "delete",
+				"filterId": "={{ $items('31 Create Filter', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-035",
+			"name": "34 Block Account",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				200,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "blocks",
+				"operation": "block",
+				"accountId": "={{ $items('05 Account Following', 0, 0)[0]?.json?.id || $items('04 Account Followers', 0, 0)[0]?.json?.id || $items('01 Test Data', 0, 0)[0].json.followerAccountId || $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-036",
+			"name": "35 Unblock Account Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				420,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "blocks",
+				"operation": "unblock",
+				"accountId": "={{ $items('05 Account Following', 0, 0)[0]?.json?.id || $items('04 Account Followers', 0, 0)[0]?.json?.id || $items('01 Test Data', 0, 0)[0].json.followerAccountId || $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-037",
+			"name": "36 Mute Account",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				640,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "mutes",
+				"operation": "mute",
+				"accountId": "={{ $items('05 Account Following', 0, 0)[0]?.json?.id || $items('04 Account Followers', 0, 0)[0]?.json?.id || $items('01 Test Data', 0, 0)[0].json.followerAccountId || $items('02 Verify Credentials', 0, 0)[0].json.id }}",
+				"options": {
+					"notifications": false
+				}
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-038",
+			"name": "37 Unmute Account Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				860,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "mutes",
+				"operation": "unmute",
+				"accountId": "={{ $items('05 Account Following', 0, 0)[0]?.json?.id || $items('04 Account Followers', 0, 0)[0]?.json?.id || $items('01 Test Data', 0, 0)[0].json.followerAccountId || $items('02 Verify Credentials', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-039",
+			"name": "38 Feature Tag",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1080,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "featuredTags",
+				"operation": "feature",
+				"name": "={{ $items('01 Test Data', 0, 0)[0].json.testTag }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-040",
+			"name": "39 Get Featured Tags",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1300,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "featuredTags",
+				"operation": "list"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-041",
+			"name": "40 Unfeature Tag Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1520,
+				440
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "featuredTags",
+				"operation": "unfeature",
+				"tagId": "={{ $items('38 Feature Tag', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-045",
+			"name": "44 Home Timeline",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-460,
+				660
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "timeline",
+				"operation": "home"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-046",
+			"name": "45 Public Timeline",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-240,
+				660
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "timeline",
+				"operation": "public"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-047",
+			"name": "46 Hashtag Timeline",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-20,
+				660
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "timeline",
+				"operation": "hashtag",
+				"hashtag": "={{ $items('01 Test Data', 0, 0)[0].json.hashtag }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-048",
+			"name": "47 Public Timeline (Link Fallback)",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				200,
+				660
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"authType": "oauth2",
+				"resource": "timeline",
+				"operation": "public",
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-049",
+			"name": "48 List Timeline",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				420,
+				660
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "timeline",
+				"operation": "list",
+				"listId": "={{ $items('24 Create List', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-050",
+			"name": "49 Search",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				640,
+				660
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "search",
+				"operation": "search",
+				"query": "={{ $items('01 Test Data', 0, 0)[0].json.searchQuery }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-051",
+			"name": "50 Notifications Get",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				860,
+				660
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "notifications",
+				"operation": "get",
+				"returnAll": false,
+				"limit": 10
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-052",
+			"name": "51 Notifications Unread Count",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1080,
+				660
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "notifications",
+				"operation": "unreadCount"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-054",
+			"name": "53 Conversations Get",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1520,
+				660
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "conversations",
+				"operation": "get"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-057",
+			"name": "56 Follow Requests List",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-680,
+				880
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "followRequests",
+				"operation": "list"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-060",
+			"name": "59 Suggestions Get",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-20,
+				880
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "suggestions",
+				"operation": "get"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-062",
+			"name": "61 Instance Server Info",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				420,
+				880
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "instance",
+				"operation": "getServerInfo"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-063",
+			"name": "62 Preferences",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				640,
+				880
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "preferences",
+				"operation": "get"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-064",
+			"name": "63 Custom Emojis",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				860,
+				880
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "customEmojis",
+				"operation": "list"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-065",
+			"name": "64 Directory",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1080,
+				880
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "directory",
+				"operation": "view"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-066",
+			"name": "65 Endorsements",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1300,
+				880
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "endorsements",
+				"operation": "get"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-067",
+			"name": "66 Announcements",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1520,
+				880
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "announcements",
+				"operation": "list"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-069",
+			"name": "68 Domain Blocks Block",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-900,
+				1100
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "domainBlocks",
+				"operation": "block",
+				"domain": "={{ $items('01 Test Data', 0, 0)[0].json.testDomain }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-070",
+			"name": "69 Domain Blocks Unblock Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-680,
+				1100
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "domainBlocks",
+				"operation": "unblock",
+				"domain": "={{ $items('01 Test Data', 0, 0)[0].json.testDomain }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-086",
+			"name": "85 Reports List",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				-20,
+				1320
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "reports",
+				"operation": "listReports"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-087",
+			"name": "86 Markers Get",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				200,
+				1320
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "markers",
+				"operation": "get",
+				"timeline": [
+					"home"
+				]
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-089",
+			"name": "88 Measures List",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				640,
+				1320
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "measures",
+				"operation": "listMeasures"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-090",
+			"name": "89 Measures Get Metrics",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				860,
+				1320
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "measures",
+				"operation": "getMeasureMetrics",
+				"measureId": "={{ $items('01 Test Data', 0, 0)[0].json.measureId }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-091",
+			"name": "90 Retention Stats",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1080,
+				1320
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "retention",
+				"operation": "viewStatistics"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-118",
+			"name": "117 Delete List Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1300,
+				1760
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "lists",
+				"operation": "deleteList",
+				"listId": "={{ $items('24 Create List', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-119",
+			"name": "118 Delete Status Cleanup",
+			"type": "n8n-nodes-the-mastodon.mastodon",
+			"typeVersion": 1,
+			"position": [
+				1520,
+				1760
+			],
+			"continueOnFail": true,
+			"parameters": {
+				"url": "={{ $items('01 Test Data', 0, 0)[0].json.baseUrl }}",
+				"authType": "oauth2",
+				"resource": "status",
+				"operation": "delete",
+				"statusId": "={{ $items('14 Create Status', 0, 0)[0].json.id }}"
+			},
+			"alwaysOutputData": true,
+			"credentials": {
+				"mastodonOAuth2Api": {
+					"id": null,
+					"name": "Mastodon OAuth2 API"
+				}
+			},
+			"executeOnce": true
+		},
+		{
+			"id": "node-120",
+			"name": "119 Collect Results",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [
+				-1120,
+				1980
+			],
+			"parameters": {
+				"mode": "runOnceForAllItems",
+				"jsCode": "// NOTE: n8n Code nodes do not expose workflow nodes for dynamic discovery.\n// Keep this list in sync or extract to a shared snippet if you copy it elsewhere.\nconst nodeNames = [\n  \"02 Verify Credentials\",\n  \"03 View Profile\",\n  \"04 Account Followers\",\n  \"05 Account Following\",\n  \"06 Account Statuses\",\n  \"07 Account Lists\",\n  \"08 Account Featured Tags\",\n  \"10 Pin Account\",\n  \"11 Unpin Account Cleanup\",\n  \"13 Search Accounts\",\n  \"14 Create Status\",\n  \"15 View Status\",\n  \"16 Edit Status\",\n  \"17 Status Context\",\n  \"18 Add Bookmark\",\n  \"19 Get Bookmarks\",\n  \"20 Remove Bookmark Cleanup\",\n  \"21 Favourite Status\",\n  \"22 Get Favourites\",\n  \"23 Unfavourite Status Cleanup\",\n  \"24 Create List\",\n  \"25 Get Lists\",\n  \"26 Get List\",\n  \"27 Update List\",\n  \"28 Add Accounts To List\",\n  \"29 Get Accounts In List\",\n  \"30 Remove Accounts From List Cleanup\",\n  \"31 Create Filter\",\n  \"32 Update Filter\",\n  \"33 Delete Filter Cleanup\",\n  \"34 Block Account\",\n  \"35 Unblock Account Cleanup\",\n  \"36 Mute Account\",\n  \"37 Unmute Account Cleanup\",\n  \"38 Feature Tag\",\n  \"39 Get Featured Tags\",\n  \"40 Unfeature Tag Cleanup\",\n  \"44 Home Timeline\",\n  \"45 Public Timeline\",\n  \"46 Hashtag Timeline\",\n  \"47 Public Timeline (Link Fallback)\",\n  \"48 List Timeline\",\n  \"49 Search\",\n  \"50 Notifications Get\",\n  \"51 Notifications Unread Count\",\n  \"53 Conversations Get\",\n  \"56 Follow Requests List\",\n  \"59 Suggestions Get\",\n  \"61 Instance Server Info\",\n  \"62 Preferences\",\n  \"63 Custom Emojis\",\n  \"64 Directory\",\n  \"65 Endorsements\",\n  \"66 Announcements\",\n  \"68 Domain Blocks Block\",\n  \"69 Domain Blocks Unblock Cleanup\",\n  \"85 Reports List\",\n  \"86 Markers Get\",\n  \"88 Measures List\",\n  \"89 Measures Get Metrics\",\n  \"90 Retention Stats\",\n  \"117 Delete List Cleanup\",\n  \"118 Delete Status Cleanup\"\n];\n\n// Operations that can validly return an empty object on success.\nconst allowEmptyPayloadNodes = new Set([\n  \"05 Account Following\",\n  \"07 Account Lists\",\n  \"08 Account Featured Tags\",\n  \"10 Pin Account\",\n  \"11 Unpin Account Cleanup\",\n  \"20 Remove Bookmark Cleanup\",\n  \"28 Add Accounts To List\",\n  \"30 Remove Accounts From List Cleanup\",\n  \"33 Delete Filter Cleanup\",\n  \"35 Unblock Account Cleanup\",\n  \"37 Unmute Account Cleanup\",\n  \"40 Unfeature Tag Cleanup\",\n  \"45 Public Timeline\",\n  \"47 Public Timeline (Link Fallback)\",\n  \"48 List Timeline\",\n  \"50 Notifications Get\",\n  \"51 Notifications Unread Count\",\n  \"53 Conversations Get\",\n  \"56 Follow Requests List\",\n  \"65 Endorsements\",\n  \"66 Announcements\",\n  \"68 Domain Blocks Block\",\n  \"69 Domain Blocks Unblock Cleanup\",\n  \"85 Reports List\",\n  \"86 Markers Get\",\n  \"88 Measures List\",\n  \"89 Measures Get Metrics\",\n  \"90 Retention Stats\",\n  \"117 Delete List Cleanup\",\n  \"118 Delete Status Cleanup\"\n]);\n\nconst results = [];\n\nfor (const nodeName of nodeNames) {\n  let nodeItems;\n  try {\n    nodeItems = $items(nodeName, 0, 0);\n  } catch (e) {\n    results.push({\n      test: nodeName,\n      status: 'NOT_EXECUTED',\n      itemCount: 0,\n      errorCount: 1,\n      errors: [String(e)],\n      items: [],\n    });\n    continue;\n  }\n\n  const itemResults = (nodeItems || []).map((item, index) => {\n    const json = item?.json ?? {};\n    const statusCode = typeof json.statusCode === 'number' ? json.statusCode : undefined;\n    const errorMessages = [];\n\n    if (json.message) errorMessages.push(String(json.message));\n    if (json.errorMessage) errorMessages.push(String(json.errorMessage));\n    if (json.error) {\n      if (json.error.message) {\n        errorMessages.push(String(json.error.message));\n      } else if (typeof json.error === 'string') {\n        errorMessages.push(json.error);\n      } else {\n        errorMessages.push(JSON.stringify(json.error));\n      }\n    }\n    if (statusCode !== undefined && statusCode >= 400) {\n      errorMessages.push('HTTP ' + statusCode);\n    }\n\n    const isEmptyPayload = json && typeof json === 'object' && Object.keys(json).length === 0;\n    if (isEmptyPayload && !allowEmptyPayloadNodes.has(nodeName)) {\n      errorMessages.push('EMPTY_PAYLOAD');\n    }\n\n    const isAllowedEmpty = isEmptyPayload && allowEmptyPayloadNodes.has(nodeName);\n    const hasError = errorMessages.length > 0;\n\n    return {\n      index,\n      status: hasError ? 'FAIL' : (isAllowedEmpty ? 'PASS_EMPTY_OK' : 'PASS'),\n      error: hasError ? errorMessages.join(' | ') : null,\n      keys: Object.keys(json).slice(0, 10),\n    };\n  });\n\n  const errors = itemResults.filter(r => r.status === 'FAIL').map(r => r.error).filter(Boolean);\n\n  results.push({\n    test: nodeName,\n    status: errors.length > 0 ? 'FAIL' : 'PASS',\n    itemCount: itemResults.length,\n    errorCount: errors.length,\n    errors,\n    items: itemResults,\n  });\n}\n\nconst passed = results.filter(r => r.status === 'PASS').length;\nconst failed = results.filter(r => r.status === 'FAIL').length;\nconst notExecuted = results.filter(r => r.status === 'NOT_EXECUTED').length;\nconst totalErrors = results.reduce((sum, r) => sum + (r.errorCount || 0), 0);\nconst totalItems = results.reduce((sum, r) => sum + (r.itemCount || 0), 0);\n\nreturn [{\n  json: {\n    summary: {\n      totalTests: results.length,\n      passed,\n      failed,\n      notExecuted,\n      totalErrors,\n      totalItems,\n      successRate: results.length ? Number(((passed / results.length) * 100).toFixed(2)) : 0,\n      timestamp: new Date().toISOString(),\n    },\n    results,\n  },\n}];"
+			}
+		}
+	],
+	"connections": {
+		"Manual Trigger": {
+			"main": [
+				[
+					{
+						"node": "01 Test Data",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"01 Test Data": {
+			"main": [
+				[
+					{
+						"node": "02 Verify Credentials",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"02 Verify Credentials": {
+			"main": [
+				[
+					{
+						"node": "03 View Profile",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"03 View Profile": {
+			"main": [
+				[
+					{
+						"node": "04 Account Followers",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"04 Account Followers": {
+			"main": [
+				[
+					{
+						"node": "05 Account Following",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"05 Account Following": {
+			"main": [
+				[
+					{
+						"node": "06 Account Statuses",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"06 Account Statuses": {
+			"main": [
+				[
+					{
+						"node": "07 Account Lists",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"07 Account Lists": {
+			"main": [
+				[
+					{
+						"node": "08 Account Featured Tags",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"08 Account Featured Tags": {
+			"main": [
+				[
+					{
+						"node": "10 Pin Account",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"10 Pin Account": {
+			"main": [
+				[
+					{
+						"node": "11 Unpin Account Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"11 Unpin Account Cleanup": {
+			"main": [
+				[
+					{
+						"node": "13 Search Accounts",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"13 Search Accounts": {
+			"main": [
+				[
+					{
+						"node": "14 Create Status",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"14 Create Status": {
+			"main": [
+				[
+					{
+						"node": "15 View Status",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"15 View Status": {
+			"main": [
+				[
+					{
+						"node": "16 Edit Status",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"16 Edit Status": {
+			"main": [
+				[
+					{
+						"node": "17 Status Context",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"17 Status Context": {
+			"main": [
+				[
+					{
+						"node": "18 Add Bookmark",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"18 Add Bookmark": {
+			"main": [
+				[
+					{
+						"node": "19 Get Bookmarks",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"19 Get Bookmarks": {
+			"main": [
+				[
+					{
+						"node": "20 Remove Bookmark Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"20 Remove Bookmark Cleanup": {
+			"main": [
+				[
+					{
+						"node": "21 Favourite Status",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"21 Favourite Status": {
+			"main": [
+				[
+					{
+						"node": "22 Get Favourites",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"22 Get Favourites": {
+			"main": [
+				[
+					{
+						"node": "23 Unfavourite Status Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"23 Unfavourite Status Cleanup": {
+			"main": [
+				[
+					{
+						"node": "24 Create List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"24 Create List": {
+			"main": [
+				[
+					{
+						"node": "25 Get Lists",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"25 Get Lists": {
+			"main": [
+				[
+					{
+						"node": "26 Get List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"26 Get List": {
+			"main": [
+				[
+					{
+						"node": "27 Update List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"27 Update List": {
+			"main": [
+				[
+					{
+						"node": "28 Add Accounts To List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"28 Add Accounts To List": {
+			"main": [
+				[
+					{
+						"node": "29 Get Accounts In List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"29 Get Accounts In List": {
+			"main": [
+				[
+					{
+						"node": "30 Remove Accounts From List Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"30 Remove Accounts From List Cleanup": {
+			"main": [
+				[
+					{
+						"node": "31 Create Filter",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"31 Create Filter": {
+			"main": [
+				[
+					{
+						"node": "32 Update Filter",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"32 Update Filter": {
+			"main": [
+				[
+					{
+						"node": "33 Delete Filter Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"33 Delete Filter Cleanup": {
+			"main": [
+				[
+					{
+						"node": "34 Block Account",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"34 Block Account": {
+			"main": [
+				[
+					{
+						"node": "35 Unblock Account Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"35 Unblock Account Cleanup": {
+			"main": [
+				[
+					{
+						"node": "36 Mute Account",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"36 Mute Account": {
+			"main": [
+				[
+					{
+						"node": "37 Unmute Account Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"37 Unmute Account Cleanup": {
+			"main": [
+				[
+					{
+						"node": "38 Feature Tag",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"38 Feature Tag": {
+			"main": [
+				[
+					{
+						"node": "39 Get Featured Tags",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"39 Get Featured Tags": {
+			"main": [
+				[
+					{
+						"node": "40 Unfeature Tag Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"40 Unfeature Tag Cleanup": {
+			"main": [
+				[
+					{
+						"node": "44 Home Timeline",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"44 Home Timeline": {
+			"main": [
+				[
+					{
+						"node": "45 Public Timeline",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"45 Public Timeline": {
+			"main": [
+				[
+					{
+						"node": "46 Hashtag Timeline",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"46 Hashtag Timeline": {
+			"main": [
+				[
+					{
+						"node": "47 Public Timeline (Link Fallback)",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"47 Public Timeline (Link Fallback)": {
+			"main": [
+				[
+					{
+						"node": "48 List Timeline",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"48 List Timeline": {
+			"main": [
+				[
+					{
+						"node": "49 Search",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"49 Search": {
+			"main": [
+				[
+					{
+						"node": "50 Notifications Get",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"50 Notifications Get": {
+			"main": [
+				[
+					{
+						"node": "51 Notifications Unread Count",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"51 Notifications Unread Count": {
+			"main": [
+				[
+					{
+						"node": "53 Conversations Get",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"53 Conversations Get": {
+			"main": [
+				[
+					{
+						"node": "56 Follow Requests List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"56 Follow Requests List": {
+			"main": [
+				[
+					{
+						"node": "59 Suggestions Get",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"59 Suggestions Get": {
+			"main": [
+				[
+					{
+						"node": "61 Instance Server Info",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"61 Instance Server Info": {
+			"main": [
+				[
+					{
+						"node": "62 Preferences",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"62 Preferences": {
+			"main": [
+				[
+					{
+						"node": "63 Custom Emojis",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"63 Custom Emojis": {
+			"main": [
+				[
+					{
+						"node": "64 Directory",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"64 Directory": {
+			"main": [
+				[
+					{
+						"node": "65 Endorsements",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"65 Endorsements": {
+			"main": [
+				[
+					{
+						"node": "66 Announcements",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"66 Announcements": {
+			"main": [
+				[
+					{
+						"node": "68 Domain Blocks Block",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"68 Domain Blocks Block": {
+			"main": [
+				[
+					{
+						"node": "69 Domain Blocks Unblock Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"69 Domain Blocks Unblock Cleanup": {
+			"main": [
+				[
+					{
+						"node": "85 Reports List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"85 Reports List": {
+			"main": [
+				[
+					{
+						"node": "86 Markers Get",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"86 Markers Get": {
+			"main": [
+				[
+					{
+						"node": "88 Measures List",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"88 Measures List": {
+			"main": [
+				[
+					{
+						"node": "89 Measures Get Metrics",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"89 Measures Get Metrics": {
+			"main": [
+				[
+					{
+						"node": "90 Retention Stats",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"90 Retention Stats": {
+			"main": [
+				[
+					{
+						"node": "117 Delete List Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"117 Delete List Cleanup": {
+			"main": [
+				[
+					{
+						"node": "118 Delete Status Cleanup",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"118 Delete Status Cleanup": {
+			"main": [
+				[
+					{
+						"node": "119 Collect Results",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"active": false,
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"pinData": {},
+	"tags": [],
+	"meta": {
+		"templateCredsSetupLink": "https://docs.n8n.io/integrations/builtin/credentials/mastodon/"
+	}
+}

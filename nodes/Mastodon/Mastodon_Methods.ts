@@ -1,13 +1,14 @@
 // Core helper methods for Mastodon API interactions
 import {
 	IBinaryKeyData,
+	ICredentialDataDecryptedObject,
 	IDataObject,
 	IExecuteFunctions,
 	IHttpRequestMethods,
 	INodeExecutionData,
 	IRequestOptions,
 	LoggerProxy as Logger,
-	NodeOperationError
+	NodeOperationError,
 } from 'n8n-workflow';
 
 // Local sleep helper (avoid relying on n8n-workflow export that may not exist in all versions)
@@ -330,10 +331,11 @@ class RateLimitHandler {
 	}
 }
 
-class ResponseCache {
+export class ResponseCache {
 	private static instance: ResponseCache;
 	private cache: Map<string, { data: unknown; timestamp: number }> = new Map();
 	private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes default TTL
+	private readonly MAX_ENTRIES = 1000; // Maximum cache entries before LRU eviction
 
 	private constructor() {}
 
@@ -362,15 +364,35 @@ class ResponseCache {
 			return null;
 		}
 
+		// Move to most recent position (LRU: delete and re-insert)
+		this.cache.delete(key);
+		this.cache.set(key, cached);
+
 		return cached.data;
 	}
 
 	set(method: string, endpoint: string, params: string, data: unknown): void {
 		const key = this.generateCacheKey(method, endpoint, params);
+
+		// If key already exists, delete it first to update position
+		if (this.cache.has(key)) {
+			this.cache.delete(key);
+		}
+
+		// Insert/update entry at most recent position
 		this.cache.set(key, {
 			data,
 			timestamp: Date.now(),
 		});
+
+		// Enforce max entries limit using LRU eviction
+		if (this.cache.size > this.MAX_ENTRIES) {
+			// Remove least recently used entry (first entry in Map)
+			const oldestKey = this.cache.keys().next().value;
+			if (oldestKey !== undefined) {
+				this.cache.delete(oldestKey);
+			}
+		}
 	}
 
 	invalidate(method: string, endpoint: string, params: string): void {
@@ -384,6 +406,10 @@ class ResponseCache {
 				this.cache.delete(key);
 			}
 		}
+	}
+
+	clear(): void {
+		this.cache.clear();
 	}
 }
 
@@ -528,6 +554,32 @@ export type HandleApiRequestFn = <U = IDataObject>(
 ) => Promise<U>;
 
 /**
+ * Type guard to check if an error is an HTTP error with common properties
+ */
+function isHttpError(err: unknown): err is {
+	statusCode?: number;
+	code?: string;
+	name?: string;
+	message?: string;
+	stack?: string;
+	response?: {
+		body?: any;
+		headers?: Record<string, string>;
+	};
+} {
+	return (
+		typeof err === 'object' &&
+		err !== null &&
+		('statusCode' in err ||
+			'code' in err ||
+			('response' in err &&
+				typeof (err as any).response === 'object' &&
+				(err as any).response !== null &&
+				('body' in (err as any).response || 'headers' in (err as any).response)))
+	);
+}
+
+/**
  * Helper that returns a bound handleApiRequest function for the provided `this` context.
  * Use like: `const apiRequest = bindHandleApiRequest(this); await apiRequest<T>(...)`.
  */
@@ -556,40 +608,92 @@ export async function handleApiRequest<T = any>(
 	const operationName = `${method}:${endpoint.split('/').slice(-2).join('/')}`;
 	const startTime = Date.now();
 
-	// Always use the baseUrl from the OAuth2 credential
-	const credentials = (await this.getCredentials(
-		'mastodonOAuth2Api',
-	)) as IMastodonOAuth2ApiCredentials;
-	logger.debug('Mastodon credentials at runtime', credentials); // Debug log for credential structure
+	// Always use the baseUrl from the selected credential (OAuth2 or Token)
+	const authTypeParam =
+		typeof (this as IExecuteFunctions).getNodeParameter === 'function'
+			? ((this as IExecuteFunctions).getNodeParameter('authType', 0) as string)
+			: 'oauth2';
+	const authType: 'oauth2' | 'token' = authTypeParam === 'token' ? 'token' : 'oauth2';
+	let credentials: IMastodonOAuth2ApiCredentials | ICredentialDataDecryptedObject;
+
+	if (authType === 'token') {
+		credentials = (await this.getCredentials('mastodonTokenApi')) as ICredentialDataDecryptedObject;
+	} else {
+		credentials = (await this.getCredentials('mastodonOAuth2Api')) as IMastodonOAuth2ApiCredentials;
+	}
+
+	logger.debug('Mastodon credentials loaded', {
+		authType,
+		hasCredentials: !!credentials,
+		hasBaseUrl: !!credentials?.baseUrl,
+		baseUrlDomain: credentials?.baseUrl
+			? (() => {
+					try {
+						return new URL(credentials.baseUrl as string).hostname;
+					} catch {
+						return credentials.baseUrl as string; // Return raw URL if parsing fails
+					}
+				})()
+			: undefined,
+	});
 	if (!credentials?.baseUrl) {
 		throw new NodeOperationError(
 			this.getNode(),
-			'No Mastodon OAuth2 credentials found or baseUrl missing. Please ensure you have selected a valid Mastodon OAuth2 credential in the node.',
+			'No Mastodon credentials found or baseUrl missing. Please ensure you have selected a valid Mastodon credential in the node.',
 		);
 	}
 
-	// Fallback: Ensure access token is available under credentials.oauth2.accessToken
-	if (!credentials.oauth2?.accessToken) {
-		const accessToken =
-			credentials.oauthTokenData?.access_token ||
-			credentials.access_token ||
-			credentials.accessToken;
-		if (accessToken) {
-			credentials.oauth2 = { accessToken };
+	// List of endpoints that don't require authentication (OAuth flow endpoints)
+	const unauthenticatedPaths = new Set([
+		'/.well-known/oauth-authorization-server',
+		'/api/v1/apps',
+		'/oauth/token',
+		'/oauth/revoke',
+	]);
+
+	const endpointPath = (() => {
+		if (endpoint.startsWith('http')) {
+			try {
+				return new URL(endpoint).pathname;
+			} catch {
+				return endpoint;
+			}
 		}
+		if (endpoint.startsWith('/')) return endpoint;
+		return `/${endpoint}`;
+	})();
+
+	// Check if this endpoint requires authentication (exact path match)
+	const requiresAuth = !unauthenticatedPaths.has(endpointPath);
+
+	let accessToken: string | undefined;
+	if (authType === 'oauth2') {
+		const oauthCreds = credentials as IMastodonOAuth2ApiCredentials;
+		// Compute fallback token from alternative locations without mutating credentials
+		const fallbackToken =
+			oauthCreds.oauthTokenData?.access_token || oauthCreds.access_token || oauthCreds.accessToken;
+		// Use token from oauth2.accessToken if available, otherwise use fallback
+		accessToken = oauthCreds.oauth2?.accessToken || fallbackToken;
+	} else {
+		accessToken = (credentials as IDataObject).accessToken as string | undefined;
 	}
 
-	// Verify we have an access token
-	if (!credentials.oauth2?.accessToken) {
-		logger.error('No valid access token found in credentials', undefined, credentials);
+	// Verify we have an access token (only for endpoints that require authentication)
+	if (requiresAuth && !accessToken) {
+		logger.error('No valid access token found in credentials', undefined, {
+			authType,
+			hasCredentials: !!credentials,
+			hasOAuth2Object: !!(credentials as IMastodonOAuth2ApiCredentials).oauth2,
+			hasAccessTokenField: !!(credentials as IDataObject).accessToken,
+		});
 		throw new NodeOperationError(
 			this.getNode(),
-			'No valid access token found. Please reconnect your Mastodon account, ensure you have selected the correct OAuth2 credential, and that it is not expired.',
+			'No valid access token found. Please reconnect your Mastodon account and ensure you have selected the correct credential.',
 		);
 	}
 
-	let baseUrl = credentials.baseUrl;
-	if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
+	// Normalize baseUrl by removing all trailing slashes (consistent with credential test)
+	const baseUrl = (credentials.baseUrl as string).replace(/\/+$/, '');
 
 	const fullUrl = endpoint.startsWith('http')
 		? endpoint
@@ -602,8 +706,9 @@ export async function handleApiRequest<T = any>(
 	return monitor.trackOperation(operationName, async (): Promise<T> => {
 		const queue = RequestQueue.getInstance();
 		return queue.add(async (): Promise<T> => {
-			// Only cache GET requests
-			if (method === 'GET') {
+			// Only cache GET requests for non-admin endpoints to avoid stale auth-sensitive data.
+			const shouldUseCache = method === 'GET' && !endpointPath.startsWith('/api/v1/admin/');
+			if (shouldUseCache) {
 				const params = JSON.stringify({ ...qs, ...options });
 				const cachedResponse = cache.get(method, fullUrl, params);
 				if (cachedResponse) {
@@ -614,15 +719,21 @@ export async function handleApiRequest<T = any>(
 							if (validator(cachedResponse)) {
 								return cachedResponse as T;
 							}
-							logger.warn('Cached response failed validation; invalidating cache and fetching fresh data', {
-								endpoint: fullUrl,
-							});
+							logger.warn(
+								'Cached response failed validation; invalidating cache and fetching fresh data',
+								{
+									endpoint: fullUrl,
+								},
+							);
 							cache.invalidate(method, fullUrl, params);
 						} catch (err) {
-							logger.warn('Validator threw an error while validating cached response; invalidating cache', {
-								endpoint: fullUrl,
-								error: err instanceof Error ? err.message : String(err),
-							});
+							logger.warn(
+								'Validator threw an error while validating cached response; invalidating cache',
+								{
+									endpoint: fullUrl,
+									error: err instanceof Error ? err.message : String(err),
+								},
+							);
 							cache.invalidate(method, fullUrl, params);
 						}
 					} else {
@@ -636,14 +747,27 @@ export async function handleApiRequest<T = any>(
 			const maxRetries = 5; // Increased from 3 to 5
 			const baseDelay = 3000; // Increased from 2000 to 3000ms
 
+			const MAX_SOCKETS_LIMIT = 200;
+			// Configure socket pool: use env var if set, otherwise default to more conservative 25
+			let maxSockets = 25;
+			if (process.env.MASTODON_MAX_SOCKETS) {
+				const parsed = parseInt(process.env.MASTODON_MAX_SOCKETS, 10);
+				if (Number.isFinite(parsed) && parsed > 0) {
+					maxSockets = Math.min(Math.floor(parsed), MAX_SOCKETS_LIMIT);
+				}
+			}
+
+			const requestHeaders: Record<string, string> = {
+				'Content-Type': 'application/json',
+				'User-Agent': 'n8n-nodes-mastodon',
+				Accept: 'application/json',
+				Connection: 'keep-alive',
+				// Avoid sending "Bearer undefined" for endpoints that don't require auth.
+				...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+			};
+
 			let requestOptions: IRequestOptions = {
-				headers: {
-					'Content-Type': 'application/json',
-					'User-Agent': 'n8n-nodes-mastodon',
-					Accept: 'application/json',
-					Connection: 'keep-alive',
-					Authorization: `Bearer ${credentials?.oauth2?.accessToken ?? ''}`,
-				},
+				headers: requestHeaders,
 				method: method.toUpperCase() as IHttpRequestMethods,
 				body,
 				qs,
@@ -656,7 +780,7 @@ export async function handleApiRequest<T = any>(
 				maxRedirects: 5,
 				forever: true,
 				gzip: true, // Enable compression
-				pool: { maxSockets: 100 },
+				pool: { maxSockets },
 			} as IRequestOptions;
 
 			try {
@@ -683,11 +807,10 @@ export async function handleApiRequest<T = any>(
 
 				logger.debug('Making API request', { method, endpoint: fullUrl, retryAttempt });
 
-				const rawResponse = await this.helpers.requestOAuth2.call(
-					this,
-					'mastodonOAuth2Api',
-					requestOptions,
-				);
+				const rawResponse =
+					authType === 'oauth2'
+						? await this.helpers.requestOAuth2.call(this, 'mastodonOAuth2Api', requestOptions)
+						: await this.helpers.request.call(this, requestOptions);
 				// Jest mocks may return the body directly, so fallback to rawResponse
 				const responseBody: IDataObject =
 					rawResponse && rawResponse.body !== undefined ? rawResponse.body : rawResponse;
@@ -715,30 +838,33 @@ export async function handleApiRequest<T = any>(
 							const msg = `API response validation failed for ${method} ${fullUrl}`;
 							logger.error(msg, undefined, { responseBody });
 							throw new NodeOperationError(this.getNode(), msg, {
-								description: 'The API response did not match the expected shape. Consider updating the validator schema or handling unexpected responses.',
+								description:
+									'The API response did not match the expected shape. Consider updating the validator schema or handling unexpected responses.',
 							});
 						}
 					} catch (err) {
 						const msg = `Validator threw an error while validating response for ${method} ${fullUrl}`;
 						logger.error(msg, err instanceof Error ? err : undefined, { responseBody });
 						throw new NodeOperationError(this.getNode(), msg, {
-							description: 'The provided validator threw an error while validating the API response.',
+							description:
+								'The provided validator threw an error while validating the API response.',
 						});
 					}
 				} else {
 					// Minimal sanity check: response should be an object or an array. This avoids casting primitives to structured types.
-					const ok = responseBody !== null && (typeof responseBody === 'object');
+					const ok = responseBody !== null && typeof responseBody === 'object';
 					if (!ok) {
 						const msg = `Unexpected API response type for ${method} ${fullUrl}`;
 						logger.error(msg, undefined, { responseBody });
 						throw new NodeOperationError(this.getNode(), msg, {
-							description: 'Expected an object or array from the Mastodon API, but received a primitive value. Provide a validator if you need custom shape validation.',
+							description:
+								'Expected an object or array from the Mastodon API, but received a primitive value. Provide a validator if you need custom shape validation.',
 						});
 					}
 				}
 
 				// Cache successful GET responses (only after validation passed)
-				if (method === 'GET') {
+				if (shouldUseCache) {
 					const paramsJson = JSON.stringify({ ...qs, ...options });
 					cache.set(method, fullUrl, paramsJson, responseBody);
 				}
@@ -747,25 +873,34 @@ export async function handleApiRequest<T = any>(
 
 				// Safe to cast now: either validator guaranteed type or we performed minimal sanity check.
 				return responseBody as unknown as T;
-			} catch (error) {
-				metrics.trackError(operationName, error.statusCode || 500);
+			} catch (err) {
+				// Use type guard for safe property access
+				const hasStatusCode = isHttpError(err) && err.statusCode !== undefined;
+				const errStatus = isHttpError(err) ? (err.statusCode ?? 500) : 500;
+				const errCode = isHttpError(err) ? err.code : undefined;
+				const errName = isHttpError(err) ? err.name : undefined;
+				const errMessage = isHttpError(err) ? err.message : String(err);
+				const errStack = isHttpError(err) ? err.stack : undefined;
+				const errResponse = isHttpError(err) ? err.response : undefined;
+
+				metrics.trackError(operationName, errStatus);
 				const errorDetails = {
 					method,
 					endpoint: fullUrl,
 					retryAttempt,
-					errorName: error.name,
-					errorMessage: error.message,
-					statusCode: error.statusCode,
-					stack: error.stack,
-					response: error.response?.body,
+					errorName: errName,
+					errorMessage: errMessage,
+					statusCode: errStatus,
+					stack: errStack,
+					response: errResponse?.body,
 				};
 
 				// Connection/Network error handling
 				if (
-					!error.statusCode ||
-					error.code === 'ETIMEDOUT' ||
-					error.code === 'ECONNREFUSED' ||
-					error.code === 'ECONNRESET'
+					!hasStatusCode ||
+					errCode === 'ETIMEDOUT' ||
+					errCode === 'ECONNREFUSED' ||
+					errCode === 'ECONNRESET'
 				) {
 					logger.warn('Network error occurred', errorDetails);
 					if (retryAttempt < maxRetries) {
@@ -787,7 +922,7 @@ export async function handleApiRequest<T = any>(
 				}
 
 				// Enhanced error handling for common status codes
-				switch (error.statusCode) {
+				switch (errStatus) {
 					case 401:
 						throw new NodeOperationError(
 							this.getNode(),
@@ -798,30 +933,33 @@ export async function handleApiRequest<T = any>(
 							this.getNode(),
 							'Insufficient OAuth2 scope: Please ensure your Mastodon app and credentials have all required permissions for this operation.',
 						);
-					case 404:
+					case 404: {
 						const resourceType = endpoint.split('/').pop()?.replace(/s$/, '') || 'resource';
 						throw new NodeOperationError(
 							this.getNode(),
 							`The requested ${resourceType} was not found. Please verify the ID or handle is correct.`,
 							{ itemIndex: 0 },
 						);
-					case 429:
-						const retryAfter = parseInt(error.response?.headers?.['retry-after'] || '60', 10);
+					}
+					case 429: {
+						const retryAfter = parseInt(errResponse?.headers?.['retry-after'] || '60', 10);
 						metrics.trackRateLimit(operationName);
 
 						// Update queue with rate limit info
 						const queue = RequestQueue.getInstance();
 						queue.updateRateLimits(0, Math.floor(Date.now() / 1000) + retryAfter);
 
-					// If this is not a retry, queue the request instead of failing immediately
-					if (retryAttempt === 0) {
-						logger.info(`Rate limit hit, queuing request for retry after ${retryAfter}s`);
-						return queue.add(() => ha<T>(method, endpoint, body, qs, options, 1, validator));
-					}						throw new MastodonRateLimitError(retryAfter);
+						// If this is not a retry, queue the request instead of failing immediately
+						if (retryAttempt === 0) {
+							logger.info(`Rate limit hit, queuing request for retry after ${retryAfter}s`);
+							return queue.add(() => ha<T>(method, endpoint, body, qs, options, 1, validator));
+						}
+						throw new MastodonRateLimitError(retryAfter);
+					}
 					case 502:
 					case 503:
 					case 504:
-						logger.warn(`Received ${error.statusCode} error, retrying request`, errorDetails);
+						logger.warn(`Received ${errStatus} error, retrying request`, errorDetails);
 						if (retryAttempt < maxRetries) {
 							const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 30000);
 							logger.info(
@@ -832,7 +970,7 @@ export async function handleApiRequest<T = any>(
 						}
 						throw new NodeOperationError(
 							this.getNode(),
-							`Mastodon API is temporarily unavailable (${error.statusCode}). Please try again later.`,
+							`Mastodon API is temporarily unavailable (${errStatus}). Please try again later.`,
 							{
 								description:
 									'The server is experiencing high load or maintenance. This is usually temporary.',
@@ -841,10 +979,9 @@ export async function handleApiRequest<T = any>(
 					default:
 						throw new NodeOperationError(
 							this.getNode(),
-							`Mastodon API error (${error.statusCode || 'unknown'}): ${error.message}`,
+							`Mastodon API error (${errStatus || 'unknown'}): ${errMessage}`,
 							{
 								description:
-									error.description ||
 									'An unexpected error occurred while communicating with the Mastodon API.',
 							},
 						);

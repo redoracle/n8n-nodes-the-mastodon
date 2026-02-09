@@ -15,6 +15,7 @@ A community maintained n8n node pack for interacting with the Mastodon API. This
 - [Installation](#installation)
 - [Configuration & Credentials](#configuration--credentials)
 - [Usage Examples](#usage-examples)
+  - [Example Workflow Files](#example-workflow-files)
   - [Post a Status](#post-a-status)
   - [Fetch Public Timeline](#fetch-public-timeline)
   - [Manage Lists](#manage-lists)
@@ -28,6 +29,7 @@ A community maintained n8n node pack for interacting with the Mastodon API. This
 
 ## Features
 
+- **Dual Authentication**: Support for both OAuth2 and Token-based authentication methods.
 - **Statuses**: Create, delete, edit, search, favourite, boost (reblog), bookmark, and manage scheduled statuses.
 - **Accounts**: Follow, unfollow, block, mute, view profile, and manage relationships.
 - **Timelines**: Retrieve public, home, hashtag, list, and link timelines with advanced query options.
@@ -37,6 +39,8 @@ A community maintained n8n node pack for interacting with the Mastodon API. This
 - **Lists**: Create, update, delete lists and manage list membership.
 - **Notifications**: Fetch and dismiss notifications.
 - **Administration**: Admin level endpoints for reports, retention metrics, cohorts, and more.
+- **Enhanced Error Handling**: Type-safe error handling with detailed error messages and automatic retry logic.
+- **Security**: Credential sanitization in logs to prevent exposure of sensitive data.
 - **Customizable**: Leverage query parameters and additional fields for fine grained control.
 
 ---
@@ -44,7 +48,7 @@ A community maintained n8n node pack for interacting with the Mastodon API. This
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v14 or higher
-- [npm](https://www.npmjs.com/) v6 or higher
+- [pnpm](https://pnpm.io/) v10.28.2 or higher (recommended) or [npm](https://www.npmjs.com/) v6 or higher
 - An [n8n](https://n8n.io/) instance (self-hosted)
 
 ---
@@ -53,8 +57,12 @@ A community maintained n8n node pack for interacting with the Mastodon API. This
 
 ```bash
 # From your n8n project root:
+pnpm install n8n-nodes-the-mastodon
+# or with npm:
 npm install n8n-nodes-the-mastodon
 ```
+
+**Note**: This project uses pnpm as the recommended package manager for development. All scripts in `package.json` use pnpm commands.
 
 ### Building the image with or without the plugin
 
@@ -91,7 +99,31 @@ The node will automatically be detected by n8n after installation. Restart your 
 
 ## Configuration & Credentials
 
-Before using the Mastodon node, you must configure OAuth2 credentials for your target Mastodon instance:
+The Mastodon node supports two authentication methods:
+
+### Method 1: Token-based Authentication (Recommended for simplicity)
+
+Token-based authentication is simpler to set up and ideal for personal use or when you don't need OAuth2 flow.
+
+1. In your Mastodon instance, navigate to **Settings > Development** and create a new application.
+   - Name: e.g., `n8n`
+   - Scopes: Select `read`, `write`, and `push` as needed.
+   - After creating, copy the **Access Token** from the application details.
+
+2. In your n8n UI:
+   - Go to **Credentials** > **New** > **Mastodon Access Token API**.
+   - Fill in:
+     - **Mastodon Instance URL**: `https://mastodon.social` (or your custom instance)
+     - **Access Token**: from step 1
+   - Save the credential.
+
+3. In your Mastodon node:
+   - Select **Token** as the **Authentication Type**.
+   - Choose your saved token credential.
+
+### Method 2: OAuth2 Authentication (Required for authentication operations)
+
+OAuth2 is required if you need to perform authentication-specific operations or want users to authorize through the standard OAuth flow.
 
 1. In your Mastodon instance, navigate to **Settings > Development** and create a new application.
    - Name: e.g., `n8n`
@@ -107,6 +139,12 @@ Before using the Mastodon node, you must configure OAuth2 credentials for your t
      - **Client Secret**: from step 1
      - **Scope**: `read write push`
    - Save and **Connect**. Authorize when prompted.
+
+3. In your Mastodon node:
+   - Select **OAuth2** as the **Authentication Type**.
+   - Choose your saved OAuth2 credential.
+
+**Note**: Authentication resource operations (e.g., managing OAuth applications, creating/updating OAuth client apps, rotating client secrets, managing redirect URIs, revoking OAuth consent, and listing registered OAuth scopes) require OAuth2 credentials and will not work with token-based authentication.
 
 ### Note about deprecated scopes and server compatibility
 
@@ -126,6 +164,34 @@ The node will try to prefer the currently granted scopes when available to avoid
 ---
 
 ## Usage Examples
+
+### Example Workflow Files
+
+The repository includes ready-to-import n8n workflows under `examples/`:
+
+- `examples/Comprehensive Mastodon Test Workflow.json`
+  - **Safe mode** comprehensive compatibility run.
+  - Focuses on read operations and reversible write operations with cleanup.
+  - Best default for validating credentials, connectivity, and core functionality with lower risk.
+
+- `examples/Comprehensive Mastodon Test Workflow.safe.json`
+  - Same safe-mode workflow as above, kept as an explicit safe variant.
+  - Useful if you want to keep the safe profile while also maintaining a separate full-mode file.
+
+- `examples/Comprehensive Mastodon Test Workflow.full.json`
+  - Full coverage workflow for advanced testing.
+  - Includes additional admin/auth and higher-impact operations (for example profile deletion operations).
+  - Use only in controlled test environments and test accounts.
+
+- `examples/Mastodon_example_workflow.json`
+  - Minimal practical example: create a status, inspect context, add/remove bookmark, then delete the status.
+  - Good starting point for learning create-and-cleanup patterns.
+
+- `examples/Mastodon_node_template.json`
+  - Reusable template pattern with token auth and safe reversible flows.
+  - Demonstrates timeline fetch, search, follow/unfollow tag, and create/delete list in one pipeline.
+
+Import any file in n8n via **Workflows -> Import from File**.
 
 ### Post a Status
 
@@ -215,13 +281,22 @@ Automated tests are provided using [Jest](https://jestjs.io/).
 
 ```bash
 # Install dev dependencies
-npm install
+pnpm install
 
 # Run tests
-npm test
+pnpm test
+
+# Or using the Makefile
+make test
 ```
 
-Test files are located in the `__tests__` directory, covering each resource and operation.
+Test files are located in the `__tests__` directory, covering each resource and operation. The test suite includes:
+
+- Unit tests for API request handling
+- Resource-specific operation tests (accounts, statuses, timelines, etc.)
+- Rate limiting and queue management tests
+- Error handling and retry logic tests
+- URL truncation and extraction tests
 
 ---
 
@@ -231,16 +306,27 @@ Contributions are welcome! Please abide by our [Code of Conduct](CODE_OF_CONDUCT
 
 1. Fork the repository & clone locally.
 2. Create a feature branch: `git checkout -b feature-name`.
-3. Install dependencies: `npm install`.
-4. Build & lint: `npm run build && npm run lint`.
-5. Run tests: `npm test`.
+3. Install dependencies: `pnpm install`.
+4. Build & lint: `pnpm run build && pnpm run lint`.
+5. Run tests: `pnpm test`.
 6. Commit & push your changes, then open a Pull Request.
 
 **Code style**: ESLint and Prettier are configured. Run:
 
 ```bash
-npm run lint
-npm run format
+pnpm run lint
+pnpm run format
+```
+
+**Using the Makefile**: Common development tasks are available through make commands:
+
+```bash
+make install    # Install dependencies with pnpm
+make build      # Build the project
+make test       # Run tests
+make lint       # Run linter
+make clean      # Clean build artifacts and dependencies
+make deps       # Ensure dependencies are installed
 ```
 
 ### TypeScript Configuration

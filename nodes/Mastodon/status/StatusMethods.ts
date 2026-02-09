@@ -3,7 +3,7 @@ import {
 	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
-	NodeOperationError
+	NodeOperationError,
 } from 'n8n-workflow';
 import { bindHandleApiRequest, ValidationUtils } from '../Mastodon_Methods';
 import { IStatusMethods } from './StatusMethodsTypes';
@@ -226,7 +226,12 @@ const methods: IStatusMethods = {
 		}
 
 		const apiRequest = bindHandleApiRequest(this);
-		const result = await apiRequest('GET', `${baseUrl}/api/v2/search`, {}, { q: query, type: 'statuses' });
+		const result = await apiRequest(
+			'GET',
+			`${baseUrl}/api/v2/search`,
+			{},
+			{ q: query, type: 'statuses' },
+		);
 		return Array.isArray(result) ? result : [result || {}];
 	},
 

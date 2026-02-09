@@ -26,6 +26,9 @@ export async function create(
 	if (additionalFields.whole_word !== undefined) {
 		body.whole_word = additionalFields.whole_word as boolean;
 	}
+	if (additionalFields.expires_at !== undefined) {
+		body.expires_at = additionalFields.expires_at as string;
+	}
 
 	const apiRequest = bindHandleApiRequest(this);
 	return await apiRequest('POST', `${baseUrl}/api/v1/filters`, body);

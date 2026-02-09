@@ -24,6 +24,7 @@ export const domainMethods = {
 	// Blocked Domains
 	listBlockedDomains: BlockedMethods.listBlockedDomains,
 	getBlockedDomain: BlockedMethods.getBlockedDomain,
+	blockDomain: BlockedMethods.blockDomain,
 
 	// Email Blocked Domains
 	listEmailBlockedDomains: EmailBlockedMethods.listEmailBlockedDomains,

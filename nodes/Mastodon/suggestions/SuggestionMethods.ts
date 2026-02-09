@@ -20,7 +20,7 @@ export async function get(
 
 	const apiRequest = bindHandleApiRequest(this);
 	const result = await apiRequest('GET', `${baseUrl}/api/v2/suggestions`, {}, qs);
-	return Array.isArray(result) ? result : (result ? [result] : []);
+	return Array.isArray(result) ? result : result ? [result] : [];
 }
 
 /**

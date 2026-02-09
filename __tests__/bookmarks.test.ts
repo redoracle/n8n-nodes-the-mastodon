@@ -50,6 +50,29 @@ describe('Mastodon Node - Bookmarks', () => {
 		);
 	});
 
+	it('should get bookmarks', async () => {
+		(ctx.getNodeParameter as jest.Mock).mockImplementation((param, _index, defaultValue) => {
+			if (param === 'resource') return 'bookmarks';
+			if (param === 'operation') return 'getBookmarks';
+			if (param === 'max_id') return defaultValue;
+			if (param === 'since_id') return defaultValue;
+			if (param === 'min_id') return defaultValue;
+			if (param === 'limit') return defaultValue;
+			return undefined;
+		});
+		(ctx.helpers!.requestOAuth2 as jest.Mock).mockResolvedValue([{ id: 'b1' }]);
+
+		const result = await node.execute.call(ctx as IExecuteFunctions);
+		expect(ctx.helpers!.requestOAuth2).toHaveBeenCalledWith(
+			'mastodonOAuth2Api',
+			expect.objectContaining({
+				method: 'GET',
+				uri: expect.stringContaining('/api/v1/bookmarks'),
+			}),
+		);
+		expect(result[0][0].json).toEqual({ id: 'b1' });
+	});
+
 	it('should remove a bookmark', async () => {
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param) =>
 			param === 'resource'

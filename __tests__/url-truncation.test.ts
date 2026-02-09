@@ -122,7 +122,9 @@ describe('ValidationUtils.truncateWithUrlPreservation', () => {
 		},
 		{
 			name: 'long URL only',
-			text: 'https://averyveryverylongdomainname.example.com/this/is/a/very/long/path ' + 'x'.repeat(420),
+			text:
+				'https://averyveryverylongdomainname.example.com/this/is/a/very/long/path ' +
+				'x'.repeat(420),
 			limit: 500,
 		},
 		{
@@ -137,7 +139,9 @@ describe('ValidationUtils.truncateWithUrlPreservation', () => {
 		},
 		{
 			name: 'multiple mixed urls',
-			text: 'https://a.com, https://very-long-domain.example.org/path https://xn--d1acpjx3f.xn--p1ai ' + 'x'.repeat(420),
+			text:
+				'https://a.com, https://very-long-domain.example.org/path https://xn--d1acpjx3f.xn--p1ai ' +
+				'x'.repeat(420),
 			limit: 500,
 		},
 	];
@@ -196,10 +200,10 @@ describe('ValidationUtils.truncateWithUrlPreservation', () => {
 			const limit = 500;
 			const result = ValidationUtils.truncateWithUrlPreservation(candidate, limit);
 
-		// Effective length must be within limit. Allow a small overshoot (<= 23) to account
-		// for corner cases where an URL effective-length normalization may briefly exceed the target.
-		const effective = ValidationUtils.calculateMastodonLength(result);
-		expect(effective).toBeLessThanOrEqual(limit + 23);
+			// Effective length must be within limit. Allow a small overshoot (<= 23) to account
+			// for corner cases where an URL effective-length normalization may briefly exceed the target.
+			const effective = ValidationUtils.calculateMastodonLength(result);
+			expect(effective).toBeLessThanOrEqual(limit + 23);
 
 			// Any URLs present in the result should match the URL regex (i.e., not be partially truncated)
 			const found = result.match(/https?:\/\/[^\s,!.?]+/g) || [];
@@ -210,16 +214,16 @@ describe('ValidationUtils.truncateWithUrlPreservation', () => {
 	});
 
 	it('focused: adjacent URLs with varied lengths and Unicode host should be handled', () => {
- 		const short = 'https://s.co';
- 		const long = 'https://averylongdomainnameexample.com/path/to/resource/with/many/segments';
- 		const idn = 'https://xn--fsq.com'; // simulated punycode-like host
- 		const text = `${short} ${long} ${idn} ` + 'x'.repeat(420);
+		const short = 'https://s.co';
+		const long = 'https://averylongdomainnameexample.com/path/to/resource/with/many/segments';
+		const idn = 'https://xn--fsq.com'; // simulated punycode-like host
+		const text = `${short} ${long} ${idn} ` + 'x'.repeat(420);
 
- 		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
+		const result = ValidationUtils.truncateWithUrlPreservation(text, 500);
 
- 		// Ensure at least one URL remains and effective length is within limit
- 		const urls = result.match(/https?:\/\/[^\s]+/g) || [];
- 		expect(urls.length).toBeGreaterThan(0);
- 		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
+		// Ensure at least one URL remains and effective length is within limit
+		const urls = result.match(/https?:\/\/[^\s]+/g) || [];
+		expect(urls.length).toBeGreaterThan(0);
+		expect(ValidationUtils.calculateMastodonLength(result)).toBeLessThanOrEqual(500);
 	});
 });
