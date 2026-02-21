@@ -7,8 +7,8 @@ on:
       - main
     tags:
       - 'v*.*.*'
-  schedule:
-    - cron: '0 0 1 * *' # 1st of every month at midnight UTC
+#  schedule:
+# - cron: '0 0 1 * *' # 1st of every month at midnight UTC
 
 permissions:
   contents: write # Required to push tags and create releases
