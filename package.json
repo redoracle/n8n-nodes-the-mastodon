@@ -43,7 +43,7 @@
 		"dist"
 	],
 	"dependencies": {
-		"pkce-challenge": "^2.2.0"
+		"pkce-challenge": "^6.0.0"
 	},
 	"peerDependencies": {
 		"n8n-core": ">=1.14.0",
