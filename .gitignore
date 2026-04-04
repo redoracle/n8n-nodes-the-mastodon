@@ -9,3 +9,4 @@ yarn.lock
 
 # Environment variables
 .env
+.github/skills
