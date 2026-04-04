@@ -72,14 +72,16 @@ export class MastodonOAuth2Api implements ICredentialType {
 			displayName: 'Authorization URL',
 			name: 'authUrl',
 			type: 'hidden',
-			default: '={{$self.baseUrl.replace(/\\/+$/, "")}}/oauth/authorize',
+			default:
+				'={{(() => { let u = $self.baseUrl; while (u.endsWith("/")) u = u.slice(0, -1); return u; })()}}/oauth/authorize',
 			required: true,
 		},
 		{
 			displayName: 'Access Token URL',
 			name: 'accessTokenUrl',
 			type: 'hidden',
-			default: '={{$self.baseUrl.replace(/\\/+$/, "")}}/oauth/token',
+			default:
+				'={{(() => { let u = $self.baseUrl; while (u.endsWith("/")) u = u.slice(0, -1); return u; })()}}/oauth/token',
 			required: true,
 		},
 		{
@@ -171,6 +173,7 @@ export class MastodonOAuth2Api implements ICredentialType {
 		credentials: ICredentialDataDecryptedObject,
 	): Promise<IDataObject> {
 		const mastodonCredentials = credentials as IMastodonCredentials;
+		const cleanedBaseUrl = (mastodonCredentials.baseUrl as string).replace(/\/+$/, '');
 
 		// Generate and store PKCE values
 		const { code_verifier, code_challenge } = await generatePKCE();
@@ -180,7 +183,7 @@ export class MastodonOAuth2Api implements ICredentialType {
 		// Check if server supports PKCE
 		try {
 			const response = await fetch(
-				`${mastodonCredentials.baseUrl}/.well-known/oauth-authorization-server`,
+				`${cleanedBaseUrl}/.well-known/oauth-authorization-server`,
 			);
 			if (response.ok) {
 				const config = (await response.json()) as IOAuthServerConfig;
@@ -203,6 +206,7 @@ export class MastodonOAuth2Api implements ICredentialType {
 		credentials: ICredentialDataDecryptedObject,
 	): Promise<IDataObject> {
 		const mastodonCredentials = credentials as IMastodonCredentials;
+		const cleanedBaseUrl = (mastodonCredentials.baseUrl as string).replace(/\/+$/, '');
 		let accessToken: string | undefined;
 		const creds = credentials as unknown as ICredsRecord;
 		if (creds && typeof creds === 'object') {
@@ -223,7 +227,7 @@ export class MastodonOAuth2Api implements ICredentialType {
 
 		try {
 			const response = await fetch(
-				`${mastodonCredentials.baseUrl}/api/v1/apps/verify_credentials`,
+				`${cleanedBaseUrl}/api/v1/apps/verify_credentials`,
 				{
 					headers: {
 						Authorization: `Bearer ${accessToken}`,

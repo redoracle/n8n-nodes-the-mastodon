@@ -811,9 +811,24 @@ export async function handleApiRequest<T = any>(
 					authType === 'oauth2'
 						? await this.helpers.requestOAuth2.call(this, 'mastodonOAuth2Api', requestOptions)
 						: await this.helpers.request.call(this, requestOptions);
-				// Jest mocks may return the body directly, so fallback to rawResponse
-				const responseBody: IDataObject =
-					rawResponse && rawResponse.body !== undefined ? rawResponse.body : rawResponse;
+				// Jest mocks may return the body directly, so fallback to rawResponse.
+				// When json:true is removed (e.g. formData uploads) the response body is a raw
+				// JSON string — parse it so downstream validation sees an object, not a string.
+				const rawBody = rawResponse && rawResponse.body !== undefined ? rawResponse.body : rawResponse;
+				let responseBody: IDataObject;
+				if (typeof rawBody === 'string') {
+					try {
+						responseBody = JSON.parse(rawBody);
+					} catch {
+						throw new NodeOperationError(
+							this.getNode(),
+							`Invalid JSON response from ${method} ${fullUrl}`,
+							{ description: 'The API returned a non-JSON response that could not be parsed.' },
+						);
+					}
+				} else {
+					responseBody = rawBody;
+				}
 
 				// Handle rate limits
 				if (rawResponse.headers) {
@@ -874,6 +889,11 @@ export async function handleApiRequest<T = any>(
 				// Safe to cast now: either validator guaranteed type or we performed minimal sanity check.
 				return responseBody as unknown as T;
 			} catch (err) {
+				// Application-level errors thrown by our own code (e.g. validation failures)
+				// must propagate immediately — do not misclassify them as network errors.
+				if (err instanceof NodeOperationError) {
+					throw err;
+				}
 				// Use type guard for safe property access
 				const hasStatusCode = isHttpError(err) && err.statusCode !== undefined;
 				const errStatus = isHttpError(err) ? (err.statusCode ?? 500) : 500;

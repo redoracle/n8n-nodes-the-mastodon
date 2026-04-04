@@ -48,7 +48,7 @@ export class MastodonTokenApi implements ICredentialType {
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: '={{$credentials.baseUrl.replace(/\/+$/, "")}}',
+			baseURL: '={{(() => { let u = $credentials.baseUrl; while (u.endsWith("/")) u = u.slice(0, -1); return u; })()}}',
 			url: '/api/v1/accounts/verify_credentials',
 			method: 'GET',
 		},
