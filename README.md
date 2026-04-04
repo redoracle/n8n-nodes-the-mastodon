@@ -41,8 +41,8 @@ This is a community maintained n8n node pack for working with the Mastodon API. 
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) v14 or higher
-- [pnpm](https://pnpm.io/) v10.28.2 or higher (recommended), or [npm](https://www.npmjs.com/) v6 or higher
+- [Node.js](https://nodejs.org/) v20 or higher
+- [pnpm](https://pnpm.io/) v10.33.0 or higher (recommended), or [npm](https://www.npmjs.com/) v6 or higher
 - A self hosted [n8n](https://n8n.io/) instance
 
 ## Installation
