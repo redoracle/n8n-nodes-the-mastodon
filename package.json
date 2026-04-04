@@ -22,7 +22,7 @@
 	"type": "commonjs",
 	"scripts": {
 		"deps:ensure": "node -e \"const fs=require('fs'); const req=['node_modules/.bin/tsc','node_modules/.bin/jest','node_modules/.bin/eslint','node_modules/@typescript-eslint/parser']; const ok=req.every(p=>{try{fs.accessSync(p);return true}catch(e){return false}}); if(!ok) process.exit(1);\" || pnpm install --include=dev --no-audit --no-fund",
-		"build": "pnpm run deps:ensure && tsc && gulp build:icons",
+		"build": "pnpm run deps:ensure && tsc -p tsconfig.build.json && gulp build:icons",
 		"dev": "tsc --watch",
 		"pack": "pnpm run build && pnpm pack",
 		"dev:bind": "docker compose -f docker-compose.bind.yml up --build",
@@ -78,6 +78,9 @@
 		"ts-jest": "^29.4.9",
 		"typescript": "^5.9.3"
 	},
+	"engines": {
+		"node": ">=20"
+	},
 	"overrides": {
 		"gm": false,
 		"@azure/core-http": false,
@@ -86,8 +89,7 @@
 		"semver": "^7.7.4",
 		"glob": "^10.0.0",
 		"rimraf": "^5.0.0",
-		"eslint": "^9.39.2",
 		"ws": "^8.18.0"
 	},
-	"packageManager": "pnpm@10.28.2+sha512.41872f037ad22f7348e3b1debbaf7e867cfd448f2726d9cf74c08f19507c31d2c8e7a11525b983febc2df640b5438dee6023ebb1f84ed43cc2d654d2bc326264"
+	"packageManager": "pnpm@10.33.0"
 }
