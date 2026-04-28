@@ -348,3 +348,9 @@ This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for
 ## Frozen testing state
 
 On 2025-10-12, the plugin was validated against a locally built n8n image using the `docker-compose.dev.plugin.yml` flow. The package was packed, the image was built, the package was copied into n8n's runtime custom extensions folder, and a require test inside the container returned "require OK". See `DEV_SETUP.md` for step by step reproduction and recommended developer flows.
+
+## Support
+
+If you find this plugin useful and want to support its development, you can support me on Ko-fi.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/X8X71XF2G2)
