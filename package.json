@@ -76,7 +76,7 @@
 		"n8n-workflow": "^1.120.10",
 		"prettier": "^3.8.1",
 		"ts-jest": "^29.4.11",
-		"typescript": "^5.9.3"
+		"typescript": "^6.0.3"
 	},
 	"engines": {
 		"node": ">=20"
