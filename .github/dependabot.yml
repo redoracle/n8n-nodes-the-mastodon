@@ -8,6 +8,19 @@ updates:
     labels:
       - 'dependencies'
       - 'bot'
+    ignore:
+      # ESLint 10 introduced breaking config format changes — stick with 9.x
+      - dependency-name: 'eslint'
+        versions: ['>=10']
+      # n8n-core 2.x is incompatible with peerDep "n8n-core >=1.14.0"
+      - dependency-name: 'n8n-core'
+        versions: ['>=2']
+      # globals 17+ changes API — stay on 16.x until migration is planned
+      - dependency-name: 'globals'
+        versions: ['>=17']
+      # pkce-challenge 6.x has breaking API changes — stay on 2.x
+      - dependency-name: 'pkce-challenge'
+        versions: ['>=6']
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
