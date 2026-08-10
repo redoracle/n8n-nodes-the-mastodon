@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-the-mastodon",
-	"version": "0.0.1",
+	"version": "0.0.36",
 	"description": "Mastodon is a decentralized, open-source software that allows users to set up servers to communicate with each other.",
 	"keywords": [
 		"n8n",
@@ -66,6 +66,7 @@
 		"@types/request-promise-native": "~1.0.21",
 		"@typescript-eslint/eslint-plugin": "^8.58.0",
 		"@typescript-eslint/parser": "^8.61.0",
+		"conventional-changelog-conventionalcommits": "^10.2.1",
 		"eslint": "^9.39.4",
 		"eslint-plugin-n8n-nodes-base": "^1.16.6",
 		"globals": "^16.5.0",
@@ -75,6 +76,7 @@
 		"n8n-core": "^1.122.18",
 		"n8n-workflow": "^1.120.10",
 		"prettier": "^3.8.1",
+		"semantic-release": "^25.0.9",
 		"ts-jest": "^29.4.11",
 		"typescript": "^5.9.3"
 	},
