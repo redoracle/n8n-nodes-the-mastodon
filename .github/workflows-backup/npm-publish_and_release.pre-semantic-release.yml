@@ -1,3 +1,18 @@
+# =============================================================================
+# Original workflow:  npm-publish_and_release.yml
+# Migration date:     2026-08-10
+# Reason:             Migrated release pipeline to semantic-release
+#                      - Version calculation now uses conventional commit analysis
+#                      - No more GitHub Actions release commits (no technical contributor)
+#                      - No more recursive tag-push triggers
+#                      - Proper release notes generated from commit history
+# Rollback procedure:
+#   1. Copy this file back to .github/workflows/npm-publish_and_release.yml
+#   2. Remove .github/workflows/release.yml
+#   3. Remove .releaserc.json
+#   4. Merge and trigger workflow_dispatch if needed
+# =============================================================================
+
 name: Monthly Release and Publish
 
 on:
