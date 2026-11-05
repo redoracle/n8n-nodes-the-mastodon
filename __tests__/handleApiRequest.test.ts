@@ -45,7 +45,7 @@ describe('handleApiRequest helper', () => {
 			handleApiRequest.call(ctx as IExecuteFunctions, 'GET', '/api/v1/error'),
 		).rejects.toBeInstanceOf(NodeOperationError);
 	});
-}
+
 	it('isolates GET cache results between different access tokens', async () => {
 		const request = ctx.helpers!.requestOAuth2 as jest.Mock;
 		request.mockResolvedValueOnce({ body: { account: 'A' }, headers: {} })
