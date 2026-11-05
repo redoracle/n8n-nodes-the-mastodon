@@ -942,7 +942,7 @@ export class Mastodon implements INodeType {
 				returnData.push({
 					json: { error: error instanceof Error ? error.message : String(error) },
 					pairedItem: { item: i },
-				});
+				} as unknown as INodeExecutionData);
 			}
 		}
 		return [returnData];
