@@ -165,8 +165,8 @@ describe('Mastodon continueOnFail', () => {
 		};
 		const result = await new Mastodon().execute.call(ctx as unknown as import('n8n-workflow').IExecuteFunctions);
 		expect(result[0]).toHaveLength(2);
-		expect(result[0][0].pairedItem).toEqual({ item: 0 });
-		expect(result[0][1].pairedItem).toEqual({ item: 1 });
+		expect((result[0][0] as unknown as { pairedItem: { item: number } }).pairedItem).toEqual({ item: 0 });
+		expect((result[0][1] as unknown as { pairedItem: { item: number } }).pairedItem).toEqual({ item: 1 });
 		expect(result[0][0].json.error).toBeDefined();
 	});
 });
