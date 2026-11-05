@@ -8,7 +8,7 @@ services:
         PLUGIN_TARBALL: ${PLUGIN_TARBALL:?Set PLUGIN_TARBALL to the npm-packaged tarball}
     image: n8n-with-mastodon:dev
     ports:
-      - '5678:5678'
+      - '127.0.0.1:5678:5678'
     environment:
       - NODE_ENV=development
       - N8N_PORT=5678

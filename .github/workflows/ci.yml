@@ -29,3 +29,15 @@ jobs:
       - run: pnpm lint
       - run: pnpm test --runInBand
       - run: pnpm build
+
+  docker-smoke:
+    name: docker image smoke build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build hardened n8n image
+        run: docker build --pull --target final -f Dockerfile -t mastodon-n8n:ci .
+      - name: Build developer image
+        run: docker build --pull --target final -f Dockerfile.dev -t mastodon-n8n:dev-ci .

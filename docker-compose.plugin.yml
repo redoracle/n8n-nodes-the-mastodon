@@ -10,4 +10,4 @@ services:
       - N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom
       - N8N_LOG_LEVEL=debug
     ports:
-      - '5678:5678'
+      - '127.0.0.1:5678:5678'
