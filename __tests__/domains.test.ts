@@ -218,7 +218,7 @@ describe('Mastodon Node - Domains', () => {
 			await expect(node.execute.call(ctx as IExecuteFunctions)).rejects.toThrow();
 		});
 
-		it('should return empty result when error occurs and continueOnFail is true', async () => {
+		it('should return paired error item when error occurs and continueOnFail is true', async () => {
 			(ctx.getNodeParameter as jest.Mock).mockImplementation((param, _index, defaultValue) => {
 				if (param === 'resource') return 'blockedDomains';
 				if (param === 'operation') return 'blockDomain';
@@ -237,7 +237,8 @@ describe('Mastodon Node - Domains', () => {
 
 			const result = await node.execute.call(ctx as IExecuteFunctions);
 
-			expect(result[0]).toHaveLength(0);
+			expect(result[0]).toHaveLength(1);
+			expect(result[0][0].json.error).toBeDefined();
 			expect(ctx.continueOnFail).toHaveBeenCalled();
 		});
 	});

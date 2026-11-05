@@ -89,7 +89,8 @@ describe('Mastodon Node - oEmbed', () => {
 
 		const result = await node.execute.call(ctx as IExecuteFunctions);
 
-		expect(result[0]).toHaveLength(0);
+		expect(result[0]).toHaveLength(1);
+			expect(result[0][0].json.error).toBeDefined();
 		expect(ctx.continueOnFail).toHaveBeenCalled();
 	});
 

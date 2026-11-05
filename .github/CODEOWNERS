@@ -1,0 +1,2 @@
+# Default review owner; GitHub enforces owner review only when branch protection requires it.
+* @redoracle

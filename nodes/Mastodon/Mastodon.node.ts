@@ -269,7 +269,9 @@ export class Mastodon implements INodeType {
 		const credentialBaseUrl = (credentials.baseUrl as string).replace(/\/+$/, '');
 		const nodeBaseUrlParam = this.getNodeParameter('url', 0, '') as string;
 		const nodeBaseUrl = nodeBaseUrlParam ? nodeBaseUrlParam.replace(/\/+$/, '') : credentialBaseUrl;
-		const url = resource === 'authentication' ? credentialBaseUrl : nodeBaseUrl;
+		const url = resource === 'authentication' || (resource === 'timeline' && operation === 'link')
+			? credentialBaseUrl
+			: nodeBaseUrl;
 
 		// Handle authentication operations
 		if (resource === 'authentication') {

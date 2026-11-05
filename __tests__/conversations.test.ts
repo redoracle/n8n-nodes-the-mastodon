@@ -139,9 +139,9 @@ describe('Mastodon Node - Conversations', () => {
 
 			const result = await node.execute.call(ctx as IExecuteFunctions);
 
-			// When continueOnFail is true and an error occurs, the node returns
-			// whatever was successfully processed (empty array if error on first item)
-			expect(result[0]).toHaveLength(0);
+			// Failed items retain their place in the n8n output and contain an error.
+			expect(result[0]).toHaveLength(1);
+			expect(result[0][0].json.error).toBeDefined();
 			expect(ctx.continueOnFail).toHaveBeenCalled();
 		});
 	});

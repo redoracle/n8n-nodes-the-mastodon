@@ -42,7 +42,7 @@ Representation of the project includes using official email addresses, posting v
 
 ## Reporting Violations
 
-Instances of unacceptable behavior can be reported by contacting the project team at jan@n8n.io. All reports will be reviewed and investigated promptly and fairly. The project team is committed to maintaining confidentiality and ensuring the safety of the reporter.
+Instances of unacceptable behavior can be reported by contacting the project team at n8n-support@redoracle.com. All reports will be reviewed and investigated promptly and fairly. The project team is committed to maintaining confidentiality and ensuring the safety of the reporter.
 
 ## Enforcement
 

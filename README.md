@@ -5,7 +5,7 @@
 [![CI](https://github.com/redoracle/n8n-nodes-the-mastodon/actions/workflows/ci.yml/badge.svg)](https://github.com/redoracle/n8n-nodes-the-mastodon/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
 
-This is a community maintained n8n node pack for working with the Mastodon API. It provides full CRUD support across Mastodon resources, including statuses, accounts, timelines, media, polls, bookmarks, lists, and more, all within n8n workflows.
+This community-maintained n8n node adds Mastodon API operations for statuses, accounts, timelines, media, polls, bookmarks, lists and administration. Supported operations and permissions vary by Mastodon server version and credential scope. This project is not an official n8n or Mastodon integration.
 
 ## Table of Contents
 
@@ -37,13 +37,13 @@ This is a community maintained n8n node pack for working with the Mastodon API. 
 - **Notifications**: Fetch and dismiss notifications.
 - **Administration**: Admin level endpoints for reports, retention metrics, cohorts, and more.
 - **Enhanced Error Handling**: Type safe handling with detailed error messages and automatic retry logic.
-- **Security**: Sanitizes credentials in logs to prevent sensitive data exposure.
+- **Security-focused transport**: Restricts credential-bearing requests to the configured instance origin, disables redirects, isolates authenticated GET caches and avoids automatic retries for writes. See [Security policy](SECURITY.md) for limitations.
 - **Customizable**: Uses query parameters and additional fields for fine grained control.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) v20 or higher
-- [pnpm](https://pnpm.io/) v10.33.0 or higher (recommended), or [npm](https://www.npmjs.com/) v6 or higher
+- [Node.js](https://nodejs.org/) v22 or v24 LTS for development (tested by CI)
+- [pnpm](https://pnpm.io/) v10.33.0 (Corepack recommended for contributors)
 - A self hosted [n8n](https://n8n.io/) instance
 
 ## Installation
@@ -55,7 +55,7 @@ pnpm install n8n-nodes-the-mastodon
 npm install n8n-nodes-the-mastodon
 ```
 
-**Note**: pnpm is the recommended package manager for development. All scripts in `package.json` use pnpm commands.
+**Note**: pnpm is the single supported package manager for repository development and lockfile updates. npm users can install the published package in their n8n environment; do not regenerate a second lockfile in this repository.
 
 ### Build the image with or without the plugin
 
@@ -346,6 +346,24 @@ This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for
 - n8n Community Nodes Docs: <https://docs.n8n.io/integrations/community-nodes/>
 - OAuth2 Setup Guide: <https://docs.joinmastodon.org/client/token/>
 
+
+## Quick verification (contributors)
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm verify  # ESLint, Jest, build
+```
+
+CI verifies supported Node.js LTS versions. Runtime PKCE is generated with built-in Node.js cryptography; the published package has no direct third-party runtime dependencies. **Only the latest published package release is supported for security fixes.** Dependency upgrades are reviewed against `pnpm-lock.yaml` and CI; see [AUDIT.md](AUDIT.md).
+
+### Safety notes
+
+- Connect to the Mastodon instance configured in your credential. If you set the optional node URL, it must have the **same origin** as that credential.
+- Mastodon API calls carrying credentials do **not** follow HTTP redirects. A redirect error may require correcting the instance URL.
+- The repository includes destructive test workflows; only import the `.full.json` variants into a disposable instance and a dedicated test account.
+- Report potential vulnerabilities privately using [SECURITY.md](SECURITY.md). Never post tokens or private user content in public issues.
+
 ## Frozen testing state
 
 On 2025-10-12, the plugin was validated against a locally built n8n image using the `docker-compose.dev.plugin.yml` flow. The package was packed, the image was built, the package was copied into n8n's runtime custom extensions folder, and a require test inside the container returned "require OK". See `DEV_SETUP.md` for step by step reproduction and recommended developer flows.
@@ -358,4 +376,4 @@ If you find this plugin useful and want to support its development, you can supp
 
 ## Architecture and contributing
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for request scheduling, account-scoped caching, retry safety and design improvements. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, verification and the safe dependency upgrade policy.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for request scheduling, account-scoped caching and retry behavior; [AUDIT.md](AUDIT.md) for remediation status and residual risks; [SECURITY.md](SECURITY.md) for private vulnerability reporting; [SUPPORT.md](SUPPORT.md) for troubleshooting; and [CONTRIBUTING.md](CONTRIBUTING.md) for a reproducible development and dependency-update workflow.

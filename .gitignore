@@ -4,6 +4,21 @@ node_modules
 tmp
 dist
 npm-debug.log*
+pnpm-debug.log*
+*.log
+*.tgz
+coverage/
+.nyc_output/
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.secret
+package-lock.json
+
 yarn.lock
 .vscode/launch.json
 
