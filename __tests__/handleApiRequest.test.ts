@@ -124,7 +124,7 @@ describe('handleApiRequest helper', () => {
 		await handleApiRequest.call(ctx as IExecuteFunctions, 'GET', '/api/v1/instance');
 		const state = RequestQueue.getInstance().getStatus();
 		expect(state.rateLimitRemaining).toBe(17);
-		expect(state.rateLimitReset).toBe(Date.parse(timestamp));
+		expect(state.rateLimitReset).toBe(Math.floor(Date.parse(timestamp) / 1000) * 1000);
 	});
 
 	it('does not overwrite known rate limits when response headers are absent', async () => {
