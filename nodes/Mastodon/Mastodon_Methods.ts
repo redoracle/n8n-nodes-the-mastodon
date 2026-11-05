@@ -1,4 +1,5 @@
 // Core helper methods for Mastodon API interactions
+import { createHash } from 'crypto';
 import {
 	IBinaryKeyData,
 	ICredentialDataDecryptedObject,
@@ -591,6 +592,14 @@ export function bindHandleApiRequest<TThis extends IExecuteFunctions>(
 	return handleApiRequest.bind(ctx) as HandleApiRequestFn;
 }
 
+/** Retry signals are handled *after* releasing the serial queue slot. */
+class RetryRequestSignal extends Error {
+	constructor(readonly delayMs: number) {
+		super('Retry request outside the serial queue');
+		this.name = 'RetryRequestSignal';
+	}
+}
+
 /* tslint:disable:no-any -- handleApiRequest is generic; default `any` kept for incremental migration */
 export async function handleApiRequest<T = any>(
 	this: IExecuteFunctions,
@@ -699,18 +708,23 @@ export async function handleApiRequest<T = any>(
 		? endpoint
 		: `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
 
+	// Separate account caches without retaining raw bearer tokens in cache keys.
+	const scope = accessToken ? createHash('sha256').update(accessToken).digest('hex') : 'public';
+	const cacheEndpoint = `${fullUrl}#auth=${scope}`;
+	const canRetry = ['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase());
 	const metrics = ApiMetrics.getInstance();
 
 	// Provide a local bound helper for internal recursion/queueing convenience
 	const ha = bindHandleApiRequest(this);
 	return monitor.trackOperation(operationName, async (): Promise<T> => {
 		const queue = RequestQueue.getInstance();
-		return queue.add(async (): Promise<T> => {
+		try {
+			return await queue.add(async (): Promise<T> => {
 			// Only cache GET requests for non-admin endpoints to avoid stale auth-sensitive data.
 			const shouldUseCache = method === 'GET' && !endpointPath.startsWith('/api/v1/admin/');
 			if (shouldUseCache) {
 				const params = JSON.stringify({ ...qs, ...options });
-				const cachedResponse = cache.get(method, fullUrl, params);
+				const cachedResponse = cache.get(method, cacheEndpoint, params);
 				if (cachedResponse) {
 					logger.debug('Cache hit', { endpoint: fullUrl });
 
@@ -725,7 +739,7 @@ export async function handleApiRequest<T = any>(
 									endpoint: fullUrl,
 								},
 							);
-							cache.invalidate(method, fullUrl, params);
+							cache.invalidate(method, cacheEndpoint, params);
 						} catch (err) {
 							logger.warn(
 								'Validator threw an error while validating cached response; invalidating cache',
@@ -734,7 +748,7 @@ export async function handleApiRequest<T = any>(
 									error: err instanceof Error ? err.message : String(err),
 								},
 							);
-							cache.invalidate(method, fullUrl, params);
+							cache.invalidate(method, cacheEndpoint, params);
 						}
 					} else {
 						// No validator provided: return cached response as-is
@@ -881,7 +895,7 @@ export async function handleApiRequest<T = any>(
 				// Cache successful GET responses (only after validation passed)
 				if (shouldUseCache) {
 					const paramsJson = JSON.stringify({ ...qs, ...options });
-					cache.set(method, fullUrl, paramsJson, responseBody);
+					cache.set(method, cacheEndpoint, paramsJson, responseBody);
 				}
 
 				metrics.trackRequest(operationName, Date.now() - startTime);
@@ -923,13 +937,12 @@ export async function handleApiRequest<T = any>(
 					errCode === 'ECONNRESET'
 				) {
 					logger.warn('Network error occurred', errorDetails);
-					if (retryAttempt < maxRetries) {
+					if (canRetry && retryAttempt < maxRetries) {
 						const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 30000); // Cap at 30 seconds
 						logger.info(
 							`Retrying request after ${delay}ms (attempt ${retryAttempt + 1}/${maxRetries})`,
 						);
-						await new Promise((resolve) => setTimeout(resolve, delay));
-						return ha<T>(method, endpoint, body, qs, options, retryAttempt + 1, validator);
+						throw new RetryRequestSignal(delay);
 					}
 					throw new NodeOperationError(
 						this.getNode(),
@@ -969,24 +982,23 @@ export async function handleApiRequest<T = any>(
 						const queue = RequestQueue.getInstance();
 						queue.updateRateLimits(0, Math.floor(Date.now() / 1000) + retryAfter);
 
-						// If this is not a retry, queue the request instead of failing immediately
-						if (retryAttempt === 0) {
-							logger.info(`Rate limit hit, queuing request for retry after ${retryAfter}s`);
-							return queue.add(() => ha<T>(method, endpoint, body, qs, options, 1, validator));
+						// Requeue only read-only requests after the failed item has been released.
+						if (canRetry && retryAttempt === 0) {
+							logger.info(`Rate limit hit, retrying after ${retryAfter}s`);
+							throw new RetryRequestSignal(retryAfter * 1000);
 						}
 						throw new MastodonRateLimitError(retryAfter);
 					}
 					case 502:
 					case 503:
 					case 504:
-						logger.warn(`Received ${errStatus} error, retrying request`, errorDetails);
-						if (retryAttempt < maxRetries) {
+						logger.warn(`Received ${errStatus} server error`, errorDetails);
+						if (canRetry && retryAttempt < maxRetries) {
 							const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 30000);
 							logger.info(
 								`Retrying request after ${delay}ms (attempt ${retryAttempt + 1}/${maxRetries})`,
 							);
-							await new Promise((resolve) => setTimeout(resolve, delay));
-							return ha<T>(method, endpoint, body, qs, options, retryAttempt + 1, validator);
+							throw new RetryRequestSignal(delay);
 						}
 						throw new NodeOperationError(
 							this.getNode(),
@@ -1007,7 +1019,15 @@ export async function handleApiRequest<T = any>(
 						);
 				}
 			}
-		});
+			});
+		} catch (error) {
+			// Avoid deadlock: an unsuccessful queue item must settle before retrying.
+			if (error instanceof RetryRequestSignal) {
+				await new Promise((resolve) => setTimeout(resolve, error.delayMs));
+				return ha<T>(method, endpoint, body, qs, options, retryAttempt + 1, validator);
+			}
+			throw error;
+		}
 	});
 }
 

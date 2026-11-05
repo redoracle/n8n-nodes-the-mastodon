@@ -35,9 +35,10 @@
 		"lintfix": "pnpm run deps:ensure && eslint --config eslint.config.js nodes credentials package.json --fix",
 		"prepublishOnly": "pnpm run build && pnpm run lint",
 		"test": "pnpm run deps:ensure && jest",
-		"clean": "rm -rf dist node_modules pnpm-lock.yaml",
-		"fresh-install": "pnpm run clean && pnpm install",
-		"update-deps": "pnpm update && pnpm audit"
+		"clean": "rm -rf dist node_modules",
+		"fresh-install": "pnpm run clean && pnpm install --frozen-lockfile",
+		"update-deps": "pnpm update && pnpm audit",
+		"verify": "pnpm lint && pnpm test --runInBand && pnpm build"
 	},
 	"files": [
 		"dist"

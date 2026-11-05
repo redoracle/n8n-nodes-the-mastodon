@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/n8n-nodes-the-mastodon.svg)](https://www.npmjs.com/package/n8n-nodes-the-mastodon)
 [![Downloads](https://img.shields.io/npm/dm/n8n-nodes-the-mastodon.svg)](https://www.npmjs.com/package/n8n-nodes-the-mastodon)
+[![CI](https://github.com/redoracle/n8n-nodes-the-mastodon/actions/workflows/ci.yml/badge.svg)](https://github.com/redoracle/n8n-nodes-the-mastodon/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
 
 This is a community maintained n8n node pack for working with the Mastodon API. It provides full CRUD support across Mastodon resources, including statuses, accounts, timelines, media, polls, bookmarks, lists, and more, all within n8n workflows.
@@ -354,3 +355,7 @@ On 2025-10-12, the plugin was validated against a locally built n8n image using 
 If you find this plugin useful and want to support its development, you can support me on Ko-fi.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/X8X71XF2G2)
+
+## Architecture and contributing
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for request scheduling, account-scoped caching, retry safety and design improvements. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, verification and the safe dependency upgrade policy.
