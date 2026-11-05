@@ -338,8 +338,8 @@ export class Mastodon implements INodeType {
 			return result;
 		};
 
-		try {
-			for (let i = 0; i < items.length; i++) {
+		for (let i = 0; i < items.length; i++) {
+			try {
 				// Route to appropriate modular method based on resource
 				switch (resource) {
 					case 'status':
@@ -937,15 +937,15 @@ export class Mastodon implements INodeType {
 				} else if (executionData !== undefined && executionData !== null) {
 					returnData.push({ json: executionData });
 				}
+			} catch (error) {
+				if (!this.continueOnFail()) throw error;
+				returnData.push({
+					json: { error: error instanceof Error ? error.message : String(error) },
+					pairedItem: { item: i },
+				});
 			}
-
-			return [returnData];
-		} catch (error) {
-			if (this.continueOnFail()) {
-				return [returnData];
-			}
-			throw error;
 		}
+		return [returnData];
 	}
 }
 

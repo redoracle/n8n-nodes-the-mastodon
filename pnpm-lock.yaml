@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      pkce-challenge:
-        specifier: ^2.2.0
-        version: 2.2.0
     devDependencies:
       '@types/express':
         specifier: ^5.0.6
@@ -8464,9 +8460,6 @@ packages:
   pirates@4.0.7:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
-
-  pkce-challenge@2.2.0:
-    resolution: {integrity: sha512-Ly0Y0OwhtG2N1ynk5ruqoyJxkrWhAPmvdRk0teiLh9Dp2+J4URKpv1JSKWD0j1Sd+QCeiwO9lTl0EjmrB2jWeA==}
 
   pkce-challenge@5.0.0:
     resolution: {integrity: sha512-ueGLflrrnvwB3xuo/uGob5pd5FN7l0MsLf0Z87o/UQmRtwjvfylfc9MurIxRAWywCYTgrvpXBcqjV4OfCYGCIQ==}
@@ -22898,8 +22891,6 @@ snapshots:
   pify@3.0.0: {}
 
   pirates@4.0.7: {}
-
-  pkce-challenge@2.2.0: {}
 
   pkce-challenge@5.0.0: {}
 
