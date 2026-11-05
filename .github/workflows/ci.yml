@@ -41,3 +41,7 @@ jobs:
         run: docker build --pull --target final -f Dockerfile -t mastodon-n8n:ci .
       - name: Build developer image
         run: docker build --pull --target final -f Dockerfile.dev -t mastodon-n8n:dev-ci .
+      - name: Verify unprivileged container users
+        run: |
+          test "$(docker image inspect --format '{{.Config.User}}' mastodon-n8n:ci)" = node
+          test "$(docker image inspect --format '{{.Config.User}}' mastodon-n8n:dev-ci)" = node

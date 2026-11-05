@@ -1,5 +1,5 @@
 
-ARG N8N_IMAGE_TAG=2.23.4
+ARG N8N_IMAGE_TAG=2.46.6
 FROM n8nio/n8n:${N8N_IMAGE_TAG} AS base-dev
 
 # Accept a tarball build-arg pointing to a tar produced by `npm pack`

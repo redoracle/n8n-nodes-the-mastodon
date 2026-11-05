@@ -15,7 +15,7 @@ n8n input items
 
 ## Credentials and trust boundaries
 
-- API requests must share their origin (scheme, hostname and port) with the selected credential instance. An optional node URL cannot redirect a token to an unrelated host. Production deployments should use TLS-enabled Mastodon instances.
+- API requests must share their origin (scheme, hostname and port) with the selected credential instance. An optional node URL cannot redirect a token to an unrelated host. In the legacy link-timeline operation, the external link URL is passed as a **query value** while the API request remains on the credential's Mastodon origin. Production deployments should use TLS-enabled Mastodon instances.
 - The transport rejects untrusted request-option URI/URL/redirect overrides and does not follow HTTP redirects. Custom headers are merged with credential headers; custom Authorization requests are not cached.
 - A cryptographic digest of the access token partitions the shared GET cache without recording the raw token in cache keys. Authenticated HTTP responses may contain personal data and therefore must not be dumped into diagnostics.
 - OAuth2 PKCE S256 verifier and challenge are produced from Node.js CSPRNG and SHA-256. OAuth state should be managed by the n8n OAuth2 platform implementation.
@@ -27,6 +27,10 @@ n8n input items
 - A failed queued request settles before any retry delay. **Only GET/HEAD/OPTIONS** can be retried automatically. Network or 5xx timeouts on writes must not be treated as proof that the server did not commit the mutation.
 - Mastodon rate-limit headers are optional. Only valid remaining/reset values update queue state; reset accepts ISO-8601 or Unix epoch seconds.
 - `continueOnFail` emits an error item with source-item pairing for failed items, instead of discarding later input items. Exceptions in credential initialization and authentication-specific actions are handled separately.
+
+## Deployment safeguards
+
+Development Compose files use loopback-only ports and a pinned n8n 2.46.6 image, and the custom Dockerfile drops root privileges for runtime. Root is used for image construction, not n8n request execution. Docker image build and user checks are automated; operators must protect data volumes, enforce TLS and test new image versions before deployment.
 
 ## Residual design backlog
 

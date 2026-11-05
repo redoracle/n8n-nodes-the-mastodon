@@ -23,6 +23,7 @@ This community-maintained n8n node adds Mastodon API operations for statuses, ac
 - [Development & Contributing](#development--contributing)
 - [License](#license)
 - [References](#references)
+- [Security, Support and Audit](#security-support-and-audit)
 
 ## Features
 
@@ -364,15 +365,23 @@ CI verifies supported Node.js LTS versions. Runtime PKCE is generated with built
 - The repository includes destructive test workflows; only import the `.full.json` variants into a disposable instance and a dedicated test account.
 - Report potential vulnerabilities privately using [SECURITY.md](SECURITY.md). Never post tokens or private user content in public issues.
 
-## Frozen testing state
+## Validation scope
 
-On 2025-10-12, the plugin was validated against a locally built n8n image using the `docker-compose.dev.plugin.yml` flow. The package was packed, the image was built, the package was copied into n8n's runtime custom extensions folder, and a require test inside the container returned "require OK". See `DEV_SETUP.md` for step by step reproduction and recommended developer flows.
+Every pull request runs a Node.js **22 and 24** matrix with a frozen pnpm install, ESLint, Jest and the production build. CI also smoke-builds the Docker images and checks the configured unprivileged runtime user. These are **mocked unit tests**, not live Mastodon OAuth, media-upload or administration integration tests.
+
+All development Compose files bind to `127.0.0.1:5678` for local use. Example Docker images are pinned to n8n **2.46.6** and run as `node`. Operators upgrading n8n should read the release notes, back up workflow data and credentials, and test a disposable instance before changing the image tag; see [DEV_SETUP.md](DEV_SETUP.md).
+
+The manual n8n plugin check previously described here occurred in October 2025 and is historical, not evidence of current Mastodon integration compatibility.
 
 ## Support
 
 If you find this plugin useful and want to support its development, you can support me on Ko-fi.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/X8X71XF2G2)
+
+## Security, Support and Audit
+
+Follow [SECURITY.md](SECURITY.md) for private vulnerability disclosure, [SUPPORT.md](SUPPORT.md) for troubleshooting and [AUDIT.md](AUDIT.md) for the second-pass findings and unresolved risks. Do not include real credentials or private Mastodon content in public issues or PRs.
 
 ## Architecture and contributing
 

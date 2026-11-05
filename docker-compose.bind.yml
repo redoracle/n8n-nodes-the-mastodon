@@ -1,6 +1,6 @@
 services:
   n8n:
-    image: n8nio/n8n:2.23.4
+    image: n8nio/n8n:2.46.6
     environment:
       - N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom
       - N8N_LOG_LEVEL=debug

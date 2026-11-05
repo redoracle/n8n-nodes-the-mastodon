@@ -1,4 +1,4 @@
-ARG N8N_IMAGE_TAG=2.23.4
+ARG N8N_IMAGE_TAG=2.46.6
 FROM n8nio/n8n:${N8N_IMAGE_TAG} AS base
 
 # Use root to install packages during image build
@@ -35,9 +35,6 @@ fi
 # Run as the same unprivileged node user as the upstream n8n image.
 # Export NODE_PATH so modules that `require('n8n-workflow')` resolve against global and opt locations
 export NODE_PATH="/home/node/.n8n/node_modules:/opt/plugins/node_modules:/usr/local/lib/node_modules:${NODE_PATH:-}"
-echo "[entrypoint] NODE_PATH=${NODE_PATH}"
-# Log contents of /home/node/.n8n/node_modules for easy debugging
-echo "[entrypoint] /home/node/.n8n/node_modules listing:" && ls -la /home/node/.n8n/node_modules || true
 # Exec the original entrypoint script (base image provides /docker-entrypoint.sh)
 exec /docker-entrypoint.sh "$@"
 EOS
