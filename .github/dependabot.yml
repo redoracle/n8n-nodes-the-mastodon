@@ -18,9 +18,6 @@ updates:
       # globals 17+ changes API — stay on 16.x until migration is planned
       - dependency-name: 'globals'
         versions: ['>=17']
-      # pkce-challenge 6.x has breaking API changes — stay on 2.x
-      - dependency-name: 'pkce-challenge'
-        versions: ['>=6']
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:

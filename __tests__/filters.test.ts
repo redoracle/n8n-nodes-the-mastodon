@@ -183,7 +183,7 @@ describe('Mastodon Node - Filters', () => {
 			await expect(node.execute.call(ctx as IExecuteFunctions)).rejects.toThrow();
 		});
 
-		it('should return empty result when API request fails and continueOnFail is true', async () => {
+		it('should return paired error item when API request fails and continueOnFail is true', async () => {
 			(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
 				if (param === 'resource') return 'filters';
 				if (param === 'operation') return 'create';
@@ -203,7 +203,8 @@ describe('Mastodon Node - Filters', () => {
 
 			const result = await node.execute.call(ctx as IExecuteFunctions);
 
-			expect(result[0]).toHaveLength(0);
+			expect(result[0]).toHaveLength(1);
+			expect(result[0][0].json.error).toBeDefined();
 			expect(ctx.continueOnFail).toHaveBeenCalled();
 		});
 	});
@@ -330,7 +331,8 @@ describe('Mastodon Node - Filters', () => {
 
 			const result = await node.execute.call(ctx as IExecuteFunctions);
 
-			expect(result[0]).toHaveLength(0);
+			expect(result[0]).toHaveLength(1);
+			expect(result[0][0].json.error).toBeDefined();
 			expect(ctx.continueOnFail).toHaveBeenCalled();
 		});
 	});

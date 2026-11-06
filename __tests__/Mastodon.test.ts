@@ -29,12 +29,12 @@ describe('Mastodon Node - Core', () => {
 		expect(creds?.[1].displayOptions?.show).toEqual({ authType: ['token'] });
 	});
 
-	test('should include URL property as required string', () => {
+	test('should include optional trusted instance URL property', () => {
 		const props = mastodonNode.description.properties as INodeProperties[];
 		const urlProp = props.find((p) => p.name === 'url');
 		expect(urlProp).toBeDefined();
 		expect(urlProp?.type).toBe('string');
-		expect(urlProp?.required).toBe(true);
+		expect(urlProp?.required).toBe(false);
 	});
 
 	test('should include authentication type selector with OAuth2 default', () => {
@@ -145,5 +145,28 @@ describe('Mastodon Node - Context Options', () => {
 		if (!dOpt) fail('maxDepth option not found');
 		expect((dOpt as { [k: string]: unknown })['type'] as string).toBe('number');
 		expect((dOpt as { [k: string]: unknown })['default'] as number).toBe(20);
+	});
+});
+
+describe('Mastodon continueOnFail', () => {
+	it('emits a paired error for each failing input instead of dropping later items', async () => {
+		const ctx = {
+			getInputData: jest.fn().mockReturnValue([{ json: { id: 1 } }, { json: { id: 2 } }]),
+			getNodeParameter: jest.fn().mockImplementation((key: string) => {
+				if (key === 'resource') return 'unsupported-test-resource';
+				if (key === 'authType') return 'token';
+				if (key === 'operation') return 'list';
+				if (key === 'url') return '';
+				return undefined;
+			}),
+			getCredentials: jest.fn().mockResolvedValue({ baseUrl: 'https://mastodon.social', accessToken: 'test-token' }),
+			continueOnFail: jest.fn().mockReturnValue(true),
+			getNode: jest.fn().mockReturnValue({}),
+		};
+		const result = await new Mastodon().execute.call(ctx as unknown as import('n8n-workflow').IExecuteFunctions);
+		expect(result[0]).toHaveLength(2);
+		expect((result[0][0] as unknown as { pairedItem: { item: number } }).pairedItem).toEqual({ item: 0 });
+		expect((result[0][1] as unknown as { pairedItem: { item: number } }).pairedItem).toEqual({ item: 1 });
+		expect(result[0][0].json.error).toBeDefined();
 	});
 });

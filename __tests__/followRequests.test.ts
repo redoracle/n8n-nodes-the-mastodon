@@ -120,7 +120,7 @@ describe('Mastodon Node - Follow Requests', () => {
 		);
 	});
 
-	it('should return empty array when API request fails and continueOnFail is true', async () => {
+	it('should return paired error item when API request fails and continueOnFail is true', async () => {
 		const apiError = Object.assign(new Error('Server error'), {
 			statusCode: 500,
 			code: 'SERVER_ERROR',
@@ -140,7 +140,8 @@ describe('Mastodon Node - Follow Requests', () => {
 
 		const result = await node.execute.call(ctx as IExecuteFunctions);
 
-		expect(result[0]).toEqual([]);
+		expect(result[0]).toHaveLength(1);
+			expect(result[0][0].json.error).toBeDefined();
 	});
 
 	it('should handle 404 error when rejecting non-existent follow request', async () => {

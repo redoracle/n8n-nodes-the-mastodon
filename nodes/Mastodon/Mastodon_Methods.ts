@@ -1,4 +1,5 @@
 // Core helper methods for Mastodon API interactions
+import { createHash } from 'crypto';
 import {
 	IBinaryKeyData,
 	ICredentialDataDecryptedObject,
@@ -591,6 +592,14 @@ export function bindHandleApiRequest<TThis extends IExecuteFunctions>(
 	return handleApiRequest.bind(ctx) as HandleApiRequestFn;
 }
 
+/** Retry signals are handled *after* releasing the serial queue slot. */
+class RetryRequestSignal extends Error {
+	constructor(readonly delayMs: number) {
+		super('Retry request outside the serial queue');
+		this.name = 'RetryRequestSignal';
+	}
+}
+
 /* tslint:disable:no-any -- handleApiRequest is generic; default `any` kept for incremental migration */
 export async function handleApiRequest<T = any>(
 	this: IExecuteFunctions,
@@ -631,7 +640,7 @@ export async function handleApiRequest<T = any>(
 					try {
 						return new URL(credentials.baseUrl as string).hostname;
 					} catch {
-						return credentials.baseUrl as string; // Return raw URL if parsing fails
+						return 'invalid URL'; // Never log raw credential input
 					}
 				})()
 			: undefined,
@@ -699,20 +708,52 @@ export async function handleApiRequest<T = any>(
 		? endpoint
 		: `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
 
+	// Only the credential's instance may receive its bearer token.
+	let baseOrigin: URL;
+	let targetUrl: URL;
+	try {
+		baseOrigin = new URL(baseUrl);
+		targetUrl = new URL(fullUrl);
+	} catch {
+		throw new NodeOperationError(this.getNode(), 'Invalid Mastodon instance or API URL.');
+	}
+	if (
+		!['https:', 'http:'].includes(baseOrigin.protocol) ||
+		baseOrigin.username || baseOrigin.password ||
+		targetUrl.origin !== baseOrigin.origin ||
+		targetUrl.username || targetUrl.password
+	) {
+		throw new NodeOperationError(this.getNode(),
+			'API requests must target the same origin as the selected Mastodon credential. Check the node URL and credential instance URL.');
+	}
+	const forbiddenOverrides = ['uri', 'url', 'baseUrl', 'baseURL', 'followRedirect', 'followAllRedirects', 'maxRedirects'];
+	if (forbiddenOverrides.some((key) => key in options)) {
+		throw new NodeOperationError(this.getNode(), 'Unsafe API request option: URL or redirect settings cannot be overridden.');
+	}
+	const safeEndpoint = `${targetUrl.origin}${targetUrl.pathname}`;
+	const customHeaders = options.headers as Record<string, string> | undefined;
+	const hasCustomAuthorization = customHeaders &&
+		Object.keys(customHeaders).some((header) => header.toLowerCase() === 'authorization');
+
+	// Separate account caches without retaining raw bearer tokens in cache keys.
+	const scope = accessToken ? createHash('sha256').update(accessToken).digest('hex') : 'public';
+	const cacheEndpoint = `${fullUrl}#auth=${scope}`;
+	const canRetry = ['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase());
 	const metrics = ApiMetrics.getInstance();
 
 	// Provide a local bound helper for internal recursion/queueing convenience
 	const ha = bindHandleApiRequest(this);
 	return monitor.trackOperation(operationName, async (): Promise<T> => {
 		const queue = RequestQueue.getInstance();
-		return queue.add(async (): Promise<T> => {
+		try {
+			return await queue.add(async (): Promise<T> => {
 			// Only cache GET requests for non-admin endpoints to avoid stale auth-sensitive data.
-			const shouldUseCache = method === 'GET' && !endpointPath.startsWith('/api/v1/admin/');
+			const shouldUseCache = method.toUpperCase() === 'GET' && !hasCustomAuthorization && !endpointPath.startsWith('/api/v1/admin/');
 			if (shouldUseCache) {
 				const params = JSON.stringify({ ...qs, ...options });
-				const cachedResponse = cache.get(method, fullUrl, params);
+				const cachedResponse = cache.get(method, cacheEndpoint, params);
 				if (cachedResponse) {
-					logger.debug('Cache hit', { endpoint: fullUrl });
+					logger.debug('Cache hit', { endpoint: safeEndpoint });
 
 					if (typeof validator === 'function') {
 						try {
@@ -722,23 +763,23 @@ export async function handleApiRequest<T = any>(
 							logger.warn(
 								'Cached response failed validation; invalidating cache and fetching fresh data',
 								{
-									endpoint: fullUrl,
+									endpoint: safeEndpoint,
 								},
 							);
-							cache.invalidate(method, fullUrl, params);
+							cache.invalidate(method, cacheEndpoint, params);
 						} catch (err) {
 							logger.warn(
 								'Validator threw an error while validating cached response; invalidating cache',
 								{
-									endpoint: fullUrl,
+									endpoint: safeEndpoint,
 									error: err instanceof Error ? err.message : String(err),
 								},
 							);
-							cache.invalidate(method, fullUrl, params);
+							cache.invalidate(method, cacheEndpoint, params);
 						}
 					} else {
 						// No validator provided: return cached response as-is
-						logger.debug('Cache hit (no validator)', { endpoint: fullUrl });
+						logger.debug('Cache hit (no validator)', { endpoint: safeEndpoint });
 						return cachedResponse as T;
 					}
 				}
@@ -775,9 +816,10 @@ export async function handleApiRequest<T = any>(
 				json: true,
 				resolveWithFullResponse: true,
 				timeout: 60000, // Increased from 30s to 60s
-				followRedirect: true,
-				followAllRedirects: true,
-				maxRedirects: 5,
+				// Do not follow redirects while handling bearer-token requests.
+				followRedirect: false,
+				followAllRedirects: false,
+				maxRedirects: 0,
 				forever: true,
 				gzip: true, // Enable compression
 				pool: { maxSockets },
@@ -785,7 +827,11 @@ export async function handleApiRequest<T = any>(
 
 			try {
 				if (Object.keys(options).length !== 0) {
-					requestOptions = { ...requestOptions, ...options };
+					requestOptions = {
+						...requestOptions,
+						...options,
+						headers: { ...requestHeaders, ...(customHeaders || {}) },
+					};
 				}
 
 				// Support multipart form data uploads
@@ -805,7 +851,7 @@ export async function handleApiRequest<T = any>(
 					delete requestOptions.qs;
 				}
 
-				logger.debug('Making API request', { method, endpoint: fullUrl, retryAttempt });
+				logger.debug('Making API request', { method, endpoint: safeEndpoint, retryAttempt });
 
 				const rawResponse =
 					authType === 'oauth2'
@@ -822,7 +868,7 @@ export async function handleApiRequest<T = any>(
 					} catch {
 						throw new NodeOperationError(
 							this.getNode(),
-							`Invalid JSON response from ${method} ${fullUrl}`,
+							`Invalid JSON response from ${method} ${safeEndpoint}`,
 							{ description: 'The API returned a non-JSON response that could not be parsed.' },
 						);
 					}
@@ -832,14 +878,21 @@ export async function handleApiRequest<T = any>(
 
 				// Handle rate limits
 				if (rawResponse.headers) {
-					const limit = parseInt(rawResponse.headers['x-ratelimit-limit'] || '300', 10);
-					const remaining = parseInt(rawResponse.headers['x-ratelimit-remaining'] || '300', 10);
-					const reset = parseInt(rawResponse.headers['x-ratelimit-reset'] || '0', 10);
-
-					RateLimitHandler.handleRateLimit(limit, remaining, reset);
+					const remainingHeader = rawResponse.headers['x-ratelimit-remaining'];
+					const resetHeader = rawResponse.headers['x-ratelimit-reset'];
+					const limit = Number(rawResponse.headers['x-ratelimit-limit'] ?? '300');
+					const remaining = remainingHeader === undefined ? NaN : Number(remainingHeader);
+					// Mastodon typically returns an ISO-8601 reset; support Unix seconds as well.
+					const numericReset = resetHeader === undefined ? NaN : Number(resetHeader);
+					const reset = Number.isFinite(numericReset)
+						? (numericReset > 1e12 ? Math.floor(numericReset / 1000) : numericReset)
+						: Math.floor(Date.parse(resetHeader || '') / 1000);
+					if (Number.isFinite(remaining) && remaining >= 0 && Number.isFinite(reset) && reset > 0) {
+						RateLimitHandler.handleRateLimit(limit, remaining, reset);
+					}
 
 					// Log rate limit status for monitoring
-					if (remaining < 50) {
+					if (Number.isFinite(remaining) && remaining < 50) {
 						logger.warn(`Rate limit running low: ${remaining}/${limit} remaining`);
 					}
 				}
@@ -850,16 +903,16 @@ export async function handleApiRequest<T = any>(
 					try {
 						if (!validator(responseBody)) {
 							// Validation failed - do not cache and surface an error with details
-							const msg = `API response validation failed for ${method} ${fullUrl}`;
-							logger.error(msg, undefined, { responseBody });
+							const msg = `API response validation failed for ${method} ${safeEndpoint}`;
+							logger.error(msg, undefined, { responseType: typeof responseBody });
 							throw new NodeOperationError(this.getNode(), msg, {
 								description:
 									'The API response did not match the expected shape. Consider updating the validator schema or handling unexpected responses.',
 							});
 						}
 					} catch (err) {
-						const msg = `Validator threw an error while validating response for ${method} ${fullUrl}`;
-						logger.error(msg, err instanceof Error ? err : undefined, { responseBody });
+						const msg = `Validator threw an error while validating response for ${method} ${safeEndpoint}`;
+						logger.error(msg, undefined, { responseType: typeof responseBody });
 						throw new NodeOperationError(this.getNode(), msg, {
 							description:
 								'The provided validator threw an error while validating the API response.',
@@ -869,8 +922,8 @@ export async function handleApiRequest<T = any>(
 					// Minimal sanity check: response should be an object or an array. This avoids casting primitives to structured types.
 					const ok = responseBody !== null && typeof responseBody === 'object';
 					if (!ok) {
-						const msg = `Unexpected API response type for ${method} ${fullUrl}`;
-						logger.error(msg, undefined, { responseBody });
+						const msg = `Unexpected API response type for ${method} ${safeEndpoint}`;
+						logger.error(msg, undefined, { responseType: typeof responseBody });
 						throw new NodeOperationError(this.getNode(), msg, {
 							description:
 								'Expected an object or array from the Mastodon API, but received a primitive value. Provide a validator if you need custom shape validation.',
@@ -881,7 +934,7 @@ export async function handleApiRequest<T = any>(
 				// Cache successful GET responses (only after validation passed)
 				if (shouldUseCache) {
 					const paramsJson = JSON.stringify({ ...qs, ...options });
-					cache.set(method, fullUrl, paramsJson, responseBody);
+					cache.set(method, cacheEndpoint, paramsJson, responseBody);
 				}
 
 				metrics.trackRequest(operationName, Date.now() - startTime);
@@ -900,19 +953,17 @@ export async function handleApiRequest<T = any>(
 				const errCode = isHttpError(err) ? err.code : undefined;
 				const errName = isHttpError(err) ? err.name : undefined;
 				const errMessage = isHttpError(err) ? err.message : String(err);
-				const errStack = isHttpError(err) ? err.stack : undefined;
 				const errResponse = isHttpError(err) ? err.response : undefined;
 
 				metrics.trackError(operationName, errStatus);
 				const errorDetails = {
 					method,
-					endpoint: fullUrl,
+					endpoint: safeEndpoint,
 					retryAttempt,
 					errorName: errName,
 					errorMessage: errMessage,
 					statusCode: errStatus,
-					stack: errStack,
-					response: errResponse?.body,
+					code: errCode, // Do not log response bodies or stacks.
 				};
 
 				// Connection/Network error handling
@@ -923,13 +974,12 @@ export async function handleApiRequest<T = any>(
 					errCode === 'ECONNRESET'
 				) {
 					logger.warn('Network error occurred', errorDetails);
-					if (retryAttempt < maxRetries) {
+					if (canRetry && retryAttempt < maxRetries) {
 						const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 30000); // Cap at 30 seconds
 						logger.info(
 							`Retrying request after ${delay}ms (attempt ${retryAttempt + 1}/${maxRetries})`,
 						);
-						await new Promise((resolve) => setTimeout(resolve, delay));
-						return ha<T>(method, endpoint, body, qs, options, retryAttempt + 1, validator);
+						throw new RetryRequestSignal(delay);
 					}
 					throw new NodeOperationError(
 						this.getNode(),
@@ -969,24 +1019,23 @@ export async function handleApiRequest<T = any>(
 						const queue = RequestQueue.getInstance();
 						queue.updateRateLimits(0, Math.floor(Date.now() / 1000) + retryAfter);
 
-						// If this is not a retry, queue the request instead of failing immediately
-						if (retryAttempt === 0) {
-							logger.info(`Rate limit hit, queuing request for retry after ${retryAfter}s`);
-							return queue.add(() => ha<T>(method, endpoint, body, qs, options, 1, validator));
+						// Requeue only read-only requests after the failed item has been released.
+						if (canRetry && retryAttempt === 0) {
+							logger.info(`Rate limit hit, retrying after ${retryAfter}s`);
+							throw new RetryRequestSignal(retryAfter * 1000);
 						}
 						throw new MastodonRateLimitError(retryAfter);
 					}
 					case 502:
 					case 503:
 					case 504:
-						logger.warn(`Received ${errStatus} error, retrying request`, errorDetails);
-						if (retryAttempt < maxRetries) {
+						logger.warn(`Received ${errStatus} server error`, errorDetails);
+						if (canRetry && retryAttempt < maxRetries) {
 							const delay = Math.min(baseDelay * Math.pow(2, retryAttempt), 30000);
 							logger.info(
 								`Retrying request after ${delay}ms (attempt ${retryAttempt + 1}/${maxRetries})`,
 							);
-							await new Promise((resolve) => setTimeout(resolve, delay));
-							return ha<T>(method, endpoint, body, qs, options, retryAttempt + 1, validator);
+							throw new RetryRequestSignal(delay);
 						}
 						throw new NodeOperationError(
 							this.getNode(),
@@ -1007,7 +1056,15 @@ export async function handleApiRequest<T = any>(
 						);
 				}
 			}
-		});
+			});
+		} catch (error) {
+			// Avoid deadlock: an unsuccessful queue item must settle before retrying.
+			if (error instanceof RetryRequestSignal) {
+				await new Promise((resolve) => setTimeout(resolve, error.delayMs));
+				return ha<T>(method, endpoint, body, qs, options, retryAttempt + 1, validator);
+			}
+			throw error;
+		}
 	});
 }
 

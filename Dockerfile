@@ -1,4 +1,5 @@
-FROM n8nio/n8n:latest AS base
+ARG N8N_IMAGE_TAG=2.46.6
+FROM n8nio/n8n:${N8N_IMAGE_TAG} AS base
 
 # Use root to install packages during image build
 USER root
@@ -24,24 +25,23 @@ fi
 mkdir -p /home/node/.n8n/node_modules
 if [ ! -d /home/node/.n8n/node_modules/n8n-nodes-the-mastodon ]; then
 	if [ -d /opt/plugins/node_modules/n8n-nodes-the-mastodon ]; then
-		echo "Copying plugin from /opt/plugins into /home/node/.n8n/node_modules..." && cp -a /opt/plugins/node_modules/n8n-nodes-the-mastodon /home/node/.n8n/node_modules/ && chown -R node:node /home/node/.n8n/node_modules/n8n-nodes-the-mastodon || true
+		echo "Copying plugin from /opt/plugins into /home/node/.n8n/node_modules..." && cp -R /opt/plugins/node_modules/n8n-nodes-the-mastodon /home/node/.n8n/node_modules/
 	else
 		echo "No plugin found in /opt/plugins to copy into volume."
 	fi
 else
 	echo "Per-user package already present in volume: /home/node/.n8n/node_modules/n8n-nodes-the-mastodon"
 fi
-# Ensure ownership
-chown -R node:node /home/node/.n8n || true
+# Run as the same unprivileged node user as the upstream n8n image.
 # Export NODE_PATH so modules that `require('n8n-workflow')` resolve against global and opt locations
 export NODE_PATH="/home/node/.n8n/node_modules:/opt/plugins/node_modules:/usr/local/lib/node_modules:${NODE_PATH:-}"
-echo "[entrypoint] NODE_PATH=${NODE_PATH}"
-# Log contents of /home/node/.n8n/node_modules for easy debugging
-echo "[entrypoint] /home/node/.n8n/node_modules listing:" && ls -la /home/node/.n8n/node_modules || true
 # Exec the original entrypoint script (base image provides /docker-entrypoint.sh)
 exec /docker-entrypoint.sh "$@"
 EOS
-RUN chmod +x /usr/local/bin/entrypoint-with-plugin.sh && chown root:root /usr/local/bin/entrypoint-with-plugin.sh
+RUN chmod +x /usr/local/bin/entrypoint-with-plugin.sh && \
+    mkdir -p /home/node/.n8n/node_modules && chown -R node:node /home/node/.n8n
+
+USER node
 
 # Use tini to run the wrapper (keeps same startup semantics as base image)
 ENTRYPOINT ["tini","--","/usr/local/bin/entrypoint-with-plugin.sh"]

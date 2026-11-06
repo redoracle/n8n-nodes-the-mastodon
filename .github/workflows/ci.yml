@@ -1,33 +1,47 @@
 name: CI
-
 on:
   push:
-    branches:
-      - main
-
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['22', '24']
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
         with:
           run_install: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test --runInBand
+      - run: pnpm build
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run lint
-        run: pnpm lint
-
-      - name: Run tests
-        run: pnpm test
+  docker-smoke:
+    name: docker image smoke build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build hardened n8n image
+        run: docker build --pull --target final -f Dockerfile -t mastodon-n8n:ci .
+      - name: Build developer image
+        run: docker build --pull --target final -f Dockerfile.dev -t mastodon-n8n:dev-ci .
+      - name: Verify unprivileged container users
+        run: |
+          test "$(docker image inspect --format '{{.Config.User}}' mastodon-n8n:ci)" = node
+          test "$(docker image inspect --format '{{.Config.User}}' mastodon-n8n:dev-ci)" = node

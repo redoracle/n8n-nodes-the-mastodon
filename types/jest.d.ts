@@ -39,7 +39,9 @@ declare namespace jest {
 		(...args: any[]): any;
 		mockImplementation(fn: (...args: any[]) => any): Mock;
 		mockResolvedValue(value: any): Mock;
+		mockResolvedValueOnce(value: any): Mock;
 		mockRejectedValue(value: any): Mock;
+		mockRejectedValueOnce(value: any): Mock;
 		mockReturnValue(value: any): Mock;
 		mock: { calls: any[] };
 	}
@@ -49,6 +51,7 @@ declare namespace jest {
 		mock: (moduleName: string, factory?: any) => void;
 		clearAllMocks(): void;
 		clearAllTimers(): void;
+		advanceTimersByTimeAsync(msToRun: number): Promise<void>;
 		useRealTimers(): void;
 		useFakeTimers(): void;
 		spyOn(obj: any, key: string): Mock;

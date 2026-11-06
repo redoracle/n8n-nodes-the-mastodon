@@ -175,7 +175,7 @@ describe('Mastodon Node - Blocks', () => {
 			);
 		});
 
-		it('should return empty result when block fails and continueOnFail is true', async () => {
+		it('should return paired error item when block fails and continueOnFail is true', async () => {
 			(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
 				if (param === 'resource') return 'blocks';
 				if (param === 'operation') return 'block';
@@ -191,7 +191,8 @@ describe('Mastodon Node - Blocks', () => {
 
 			const result = await node.execute.call(ctx as IExecuteFunctions);
 
-			expect(result[0]).toHaveLength(0);
+			expect(result[0]).toHaveLength(1);
+			expect(result[0][0].json.error).toBeDefined();
 			expect(ctx.continueOnFail).toHaveBeenCalled();
 		});
 	});

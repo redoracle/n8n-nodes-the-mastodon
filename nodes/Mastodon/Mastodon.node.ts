@@ -269,7 +269,9 @@ export class Mastodon implements INodeType {
 		const credentialBaseUrl = (credentials.baseUrl as string).replace(/\/+$/, '');
 		const nodeBaseUrlParam = this.getNodeParameter('url', 0, '') as string;
 		const nodeBaseUrl = nodeBaseUrlParam ? nodeBaseUrlParam.replace(/\/+$/, '') : credentialBaseUrl;
-		const url = resource === 'authentication' ? credentialBaseUrl : nodeBaseUrl;
+		const url = resource === 'authentication' || (resource === 'timeline' && operation === 'link')
+			? credentialBaseUrl
+			: nodeBaseUrl;
 
 		// Handle authentication operations
 		if (resource === 'authentication') {
@@ -338,8 +340,8 @@ export class Mastodon implements INodeType {
 			return result;
 		};
 
-		try {
-			for (let i = 0; i < items.length; i++) {
+		for (let i = 0; i < items.length; i++) {
+			try {
 				// Route to appropriate modular method based on resource
 				switch (resource) {
 					case 'status':
@@ -937,15 +939,15 @@ export class Mastodon implements INodeType {
 				} else if (executionData !== undefined && executionData !== null) {
 					returnData.push({ json: executionData });
 				}
+			} catch (error) {
+				if (!this.continueOnFail()) throw error;
+				returnData.push({
+					json: { error: error instanceof Error ? error.message : String(error) },
+					pairedItem: { item: i },
+				} as unknown as INodeExecutionData);
 			}
-
-			return [returnData];
-		} catch (error) {
-			if (this.continueOnFail()) {
-				return [returnData];
-			}
-			throw error;
 		}
+		return [returnData];
 	}
 }
 

@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a reproducible functional problem (not a security vulnerability)
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Before submitting, remove all access tokens, OAuth secrets, private status contents, personal data and instance-specific private details. For security issues use SECURITY.md rather than a public issue."
+  - type: input
+    id: package
+    attributes:
+      label: Package version
+      placeholder: "e.g. 0.0.37"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: n8n, Node.js and Mastodon server versions
+      placeholder: "n8n 2.x, Node 22.x, Mastodon 4.x"
+    validations:
+      required: true
+  - type: dropdown
+    id: auth
+    attributes:
+      label: Authentication method
+      options:
+        - OAuth2
+        - Access token
+        - Not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal steps to reproduce
+      description: "Include resource/operation, sanitized parameters and expected behavior. Do not paste credentials."
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: "Provide a sanitized error message or log excerpt."
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Checklist
+      options:
+        - label: "I searched existing issues and verified that no secrets or private data are present."
+          required: true

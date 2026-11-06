@@ -1,0 +1,24 @@
+name: Feature request
+description: Suggest a new Mastodon operation, integration feature or developer improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and use case
+      description: "Describe the workflow goal and current limitation."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed behavior
+      description: "Include Mastodon API endpoint(s), n8n resource/operation and expected output."
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and migration considerations
+      description: "What versions, permissions and existing workflows might be affected?"

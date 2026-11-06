@@ -162,7 +162,6 @@ export class MastodonOAuth2Api implements ICredentialType {
 				// Use granted/current scopes when available, otherwise fall back to configured scope or sensible default
 				// This avoids requesting deprecated/unsupported scopes (e.g. follow) when the instance doesn't accept them
 				scope: '={{$credentials.currentScopes || $credentials.scope || "read write"}}',
-				state: '={{Date.now()}}',
 				force_login: true, // Always force login to support multiple accounts
 			},
 		},
