@@ -97,7 +97,7 @@ describe('Mastodon Node - Favourites', () => {
 				expect.objectContaining({
 					method: 'GET',
 					uri: expect.stringContaining('/api/v1/favourites'),
-					body: expect.objectContaining({
+					qs: expect.objectContaining({
 						limit: 5,
 					}),
 				}),
@@ -141,7 +141,8 @@ describe('Mastodon Node - Favourites', () => {
 			const result = await node.execute.call(ctx as IExecuteFunctions);
 			expect(ctx.helpers!.requestOAuth2).toHaveBeenCalledTimes(1);
 			const requestOptions = (ctx.helpers!.requestOAuth2 as jest.Mock).mock.calls[0][1];
-			expect(requestOptions.body).toEqual({ limit: 2 });
+			expect(requestOptions.qs).toEqual({ limit: 2 });
+			expect(requestOptions.body).toBeUndefined();
 			expect(result[0]).toHaveLength(2);
 		});
 	});

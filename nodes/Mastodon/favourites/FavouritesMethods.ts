@@ -9,7 +9,7 @@ export async function getFavourites(
 ) {
 	const limit = this.getNodeParameter('limit', i, 20) as number;
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest('GET', `${baseUrl}/api/v1/favourites`, { limit });
+	return await apiRequest('GET', `${baseUrl}/api/v1/favourites`, {}, { limit });
 }
 
 export async function favourite(

@@ -160,8 +160,7 @@ describe('Mastodon Node - Notifications', () => {
 				'mastodonOAuth2Api',
 				expect.objectContaining({
 					method: 'POST',
-					uri: expect.stringContaining('/api/v1/notifications/dismiss'),
-					body: expect.objectContaining({ id: 'notif123' }),
+					uri: expect.stringContaining('/api/v1/notifications/notif123/dismiss'),
 				}),
 			);
 		});
