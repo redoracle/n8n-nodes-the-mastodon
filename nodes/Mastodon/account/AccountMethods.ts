@@ -9,6 +9,18 @@ import {
 import { bindHandleApiRequest } from '../Mastodon_Methods';
 import { IAccount, IAccountWarning, IAdminAccount } from './AccountInterfaces';
 
+/** Support array inputs from older workflows as well as comma-separated IDs in the n8n UI. */
+function getAccountIds(this: IExecuteFunctions, i: number): string[] {
+	const input = this.getNodeParameter('ids', i) as string | string[];
+	const ids = (Array.isArray(input) ? input : typeof input === 'string' ? input.split(',') : [])
+		.map((id) => id.trim())
+		.filter(Boolean);
+	if (ids.length === 0) {
+		throw new NodeOperationError(this.getNode(), 'At least one Account ID is required');
+	}
+	return ids;
+}
+
 export async function follow(
 	this: IExecuteFunctions,
 	items: INodeExecutionData[],
@@ -299,7 +311,7 @@ export async function getMultipleAccounts(
 	items: INodeExecutionData[],
 	i: number,
 ): Promise<IAccount[]> {
-	const ids = this.getNodeParameter('ids', i) as string[];
+	const ids = getAccountIds.call(this, i);
 	const apiRequest = bindHandleApiRequest(this);
 	return await apiRequest<IAccount[]>('GET', '/api/v1/accounts', {}, { id: ids });
 }
@@ -310,7 +322,7 @@ export async function getRelationships(
 	items: INodeExecutionData[],
 	i: number,
 ): Promise<IDataObject[]> {
-	const ids = this.getNodeParameter('ids', i) as string[];
+	const ids = getAccountIds.call(this, i);
 	const withSuspended = this.getNodeParameter('with_suspended', i, false) as boolean;
 	const qs: IDataObject = { id: ids };
 	if (withSuspended) qs.with_suspended = true;
@@ -324,7 +336,7 @@ export async function getFamiliarFollowers(
 	items: INodeExecutionData[],
 	i: number,
 ): Promise<IDataObject[]> {
-	const ids = this.getNodeParameter('ids', i) as string[];
+	const ids = getAccountIds.call(this, i);
 	const apiRequest = bindHandleApiRequest(this);
 	return await apiRequest<IDataObject[]>(
 		'GET',

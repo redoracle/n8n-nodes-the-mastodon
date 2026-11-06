@@ -42,6 +42,54 @@ export const statusOperations: INodeProperties = {
 			description: 'Get a status’s context (original and all replies)',
 			action: 'Get status context',
 		},
+		{
+			name: 'Boost Status',
+			value: 'boost',
+			description: 'Reblog a status',
+			action: 'Boost a status',
+		},
+		{
+			name: 'Unboost Status',
+			value: 'unboost',
+			description: 'Undo a reblog',
+			action: 'Unboost a status',
+		},
+		{
+			name: 'Favourite Status',
+			value: 'favourite',
+			description: 'Favourite a status',
+			action: 'Favourite a status',
+		},
+		{
+			name: 'Unfavourite Status',
+			value: 'unfavourite',
+			description: 'Remove a favourite',
+			action: 'Unfavourite a status',
+		},
+		{
+			name: 'Bookmark Status',
+			value: 'bookmark',
+			description: 'Bookmark a status',
+			action: 'Bookmark a status',
+		},
+		{
+			name: 'Search Statuses',
+			value: 'search',
+			description: 'Search statuses',
+			action: 'Search statuses',
+		},
+		{
+			name: 'View Edit History',
+			value: 'viewEditHistory',
+			description: 'Retrieve a status edit history',
+			action: 'View status edit history',
+		},
+		{
+			name: 'View Source',
+			value: 'viewSource',
+			description: 'Retrieve the source of a status',
+			action: 'View status source',
+		},
 	],
 	default: 'create',
 };
@@ -176,7 +224,7 @@ export const favouriteFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['status'],
-				operation: ['favourite', 'unfavourite'],
+				operation: ['favourite', 'unfavourite', 'bookmark'],
 			},
 		},
 	},
@@ -227,7 +275,7 @@ export const statusExtraFields: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['status'],
-				operation: ['view'],
+				operation: ['view', 'viewEditHistory', 'viewSource'],
 			},
 		},
 	},
