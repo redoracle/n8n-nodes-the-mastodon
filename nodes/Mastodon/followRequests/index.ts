@@ -14,10 +14,12 @@ type FollowRequestMethod = (
 	i: number,
 ) => Promise<unknown>;
 
-export const followRequestsMethods: {
-	[K in keyof typeof FollowRequestMethods]: FollowRequestMethod;
-} = {
+export const followRequestsMethods: Record<string, FollowRequestMethod> = {
 	list: FollowRequestMethods.list,
+	// Match the identifiers actually exposed in the UI.
+	authorize: FollowRequestMethods.acceptRequest,
+	reject: FollowRequestMethods.rejectRequest,
+	// Preserve legacy operation values in existing n8n workflows.
 	acceptRequest: FollowRequestMethods.acceptRequest,
 	rejectRequest: FollowRequestMethods.rejectRequest,
 };
