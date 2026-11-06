@@ -7,5 +7,7 @@ export const filterProperties: INodeProperties[] = [...filtersOperations, ...fil
 export const filterMethods = {
 	create: FilterMethods.create,
 	update: FilterMethods.update,
+	delete: FilterMethods.remove,
+	// Preserve old saved-workflow operation values.
 	remove: FilterMethods.remove,
 };

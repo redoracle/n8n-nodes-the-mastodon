@@ -13,6 +13,42 @@ export const accountOperations: INodeProperties = {
 	},
 	options: [
 		{
+			name: 'Follow Account',
+			value: 'follow',
+			description: 'Follow another Mastodon account',
+			action: 'Follow an account',
+		},
+		{
+			name: 'Unfollow Account',
+			value: 'unfollow',
+			description: 'Stop following another Mastodon account',
+			action: 'Unfollow an account',
+		},
+		{
+			name: 'Get Relationships',
+			value: 'getRelationships',
+			description: 'Get relationships with one or more accounts',
+			action: 'Get account relationships',
+		},
+		{
+			name: 'Get Familiar Followers',
+			value: 'getFamiliarFollowers',
+			description: 'Get familiar followers of one or more accounts',
+			action: 'Get familiar followers',
+		},
+		{
+			name: 'Get Multiple Accounts',
+			value: 'getMultipleAccounts',
+			description: 'Retrieve multiple accounts by ID',
+			action: 'Get multiple accounts',
+		},
+		{
+			name: 'Lookup Account',
+			value: 'lookupAccount',
+			description: 'Look up an account by username or federated address',
+			action: 'Look up an account',
+		},
+		{
 			name: 'Add Note to Account',
 			value: 'addNoteToAccount',
 			description: 'Add a note to an account',
@@ -106,6 +142,8 @@ export const accountFields: INodeProperties[] = [
 				resource: ['account'],
 				operation: [
 					'viewProfile',
+					'follow',
+					'unfollow',
 					'getAccountWarnings',
 					'getAdminAccountInfo',
 					'addNoteToAccount',
@@ -122,6 +160,47 @@ export const accountFields: INodeProperties[] = [
 			},
 		},
 		description: 'ID of the account',
+	},
+	{
+		displayName: 'Account IDs',
+		name: 'ids',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['account'],
+				operation: ['getRelationships', 'getFamiliarFollowers', 'getMultipleAccounts'],
+			},
+		},
+		description: 'Comma-separated Mastodon account IDs',
+	},
+	{
+		displayName: 'Include Suspended Accounts',
+		name: 'with_suspended',
+		type: 'boolean',
+		default: false,
+		displayOptions: {
+			show: {
+				resource: ['account'],
+				operation: ['getRelationships'],
+			},
+		},
+		description: 'Whether to include suspended accounts in relationships',
+	},
+	{
+		displayName: 'Account Address',
+		name: 'acct',
+		type: 'string',
+		required: true,
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['account'],
+				operation: ['lookupAccount'],
+			},
+		},
+		description: 'Username or federated account address (user@server.example)',
 	},
 	{
 		displayName: 'Additional Fields',

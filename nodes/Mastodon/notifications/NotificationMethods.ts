@@ -1,4 +1,4 @@
-import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, INodeExecutionData, NodeOperationError } from 'n8n-workflow';
 import { bindHandleApiRequest } from '../Mastodon_Methods';
 import { INotification, INotificationParams, IUnreadCount } from './NotificationInterfaces';
 
@@ -52,11 +52,15 @@ export async function dismissNotification(
 	i: number,
 ): Promise<{}> {
 	const notificationId = this.getNodeParameter('id', i) as string;
+	if (!notificationId?.trim()) {
+		throw new NodeOperationError(this.getNode(), 'Notification ID is required');
+	}
 
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<{}>('POST', `${baseUrl}/api/v1/notifications/dismiss`, {
-		id: notificationId,
-	});
+	return await apiRequest<{}>(
+		'POST',
+		`${baseUrl}/api/v1/notifications/${encodeURIComponent(notificationId)}/dismiss`,
+	);
 }
 
 /**
