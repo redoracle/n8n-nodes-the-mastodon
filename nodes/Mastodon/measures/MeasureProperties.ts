@@ -14,15 +14,15 @@ export const measureOperations = [
 		},
 		options: [
 			{
-				name: 'List Measures',
+				name: 'Get Common Measures',
 				value: 'listMeasures',
-				description: 'Get a list of available measures for metrics',
+				description: 'Get the most useful server measures for a date range',
 				action: 'List measures',
 			},
 			{
-				name: 'Get Measure Metrics',
+				name: 'Get Measure by Key',
 				value: 'getMeasureMetrics',
-				description: 'Get metrics for a specific measure',
+				description: 'Get one server measure for a date range',
 				action: 'Get measure metrics',
 			},
 		],
@@ -32,7 +32,35 @@ export const measureOperations = [
 
 export const measureFields = [
 	{
-		displayName: 'Measure ID',
+		displayName: 'Start Date',
+		name: 'start_at',
+		type: 'dateTime',
+		required: true,
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['measures'],
+				operation: ['listMeasures', 'getMeasureMetrics'],
+			},
+		},
+		description: 'Start of the server analytics period',
+	},
+	{
+		displayName: 'End Date',
+		name: 'end_at',
+		type: 'dateTime',
+		required: true,
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['measures'],
+				operation: ['listMeasures', 'getMeasureMetrics'],
+			},
+		},
+		description: 'End of the server analytics period',
+	},
+	{
+		displayName: 'Measure Key',
 		name: 'measureId',
 		type: 'string',
 		required: true,
@@ -43,6 +71,6 @@ export const measureFields = [
 				operation: ['getMeasureMetrics'],
 			},
 		},
-		description: 'The ID of the measure to retrieve metrics for',
+		description: 'Metric key, for example active_users, new_users or interactions',
 	},
 ] as INodeProperties[];

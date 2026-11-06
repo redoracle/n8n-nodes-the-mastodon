@@ -1,23 +1,24 @@
 import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { bindHandleApiRequest, handleApiRequest } from '../../Mastodon_Methods';
+import { bindHandleApiRequest } from '../../Mastodon_Methods';
+import { getAdminDateRange } from '../AnalyticsContract';
 import { ICohort } from '../AdminInterfaces';
 
 export async function getRetentionData(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
+	_items: INodeExecutionData[],
 	i: number,
-): Promise<ICohort> {
-	const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-	const qs: IDataObject = {};
-
-	if (additionalFields.frequency) {
-		qs.frequency = additionalFields.frequency;
-	}
-	if (additionalFields.startDate) {
-		qs.start_at = additionalFields.startDate;
-	}
-
+): Promise<ICohort[]> {
+	// Retain previous collection parameter names for saved-workflow compatibility.
+	const additionalFields = this.getNodeParameter('additionalFields', i, {}) as IDataObject;
+	const range = getAdminDateRange.call(this, i, {
+		startDate: additionalFields.startDate as string | undefined,
+		endDate: additionalFields.endDate as string | undefined,
+	});
+	const frequency = (additionalFields.frequency as string) || 'day';
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<ICohort>('GET', `${baseUrl}/api/v1/admin/retention`, {}, qs);
+	return await apiRequest<ICohort[]>('POST', `${baseUrl}/api/v1/admin/retention`, {
+		...range,
+		frequency,
+	});
 }

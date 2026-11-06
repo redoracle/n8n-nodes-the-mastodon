@@ -44,8 +44,13 @@ describe('Mastodon Node - Retention', () => {
 		expect(ctx.helpers!.requestOAuth2).toHaveBeenCalledWith(
 			'mastodonOAuth2Api',
 			expect.objectContaining({
-				method: 'GET',
+				method: 'POST',
 				uri: expect.stringContaining('/api/v1/admin/retention'),
+				body: expect.objectContaining({
+					start_at: '2024-01-01',
+					end_at: '2024-01-31',
+					frequency: 'day',
+				}),
 			}),
 		);
 		expect(result[0][0].json).toEqual(mockStats);

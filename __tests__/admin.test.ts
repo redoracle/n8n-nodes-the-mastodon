@@ -72,11 +72,15 @@ describe('Mastodon Node - Admin', () => {
 	});
 
 	it('should get cohort retention data', async () => {
-		const mockResponse = { data: [] };
+		const mockResponse = [{ period: '2026-01-01', data: [] }];
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param, _index, defaultValue) => {
 			if (param === 'resource') return 'cohorts';
 			if (param === 'operation') return 'getRetentionData';
-			if (param === 'additionalFields') return defaultValue || {};
+			if (param === 'additionalFields') return {
+				frequency: 'day',
+				startDate: '2026-01-01',
+				endDate: '2026-01-31',
+			};
 			return undefined;
 		});
 		(ctx.helpers!.requestOAuth2 as jest.Mock).mockResolvedValue(mockResponse);
@@ -85,11 +89,16 @@ describe('Mastodon Node - Admin', () => {
 		expect(ctx.helpers!.requestOAuth2).toHaveBeenCalledWith(
 			'mastodonOAuth2Api',
 			expect.objectContaining({
-				method: 'GET',
+				method: 'POST',
 				uri: expect.stringContaining('/api/v1/admin/retention'),
+				body: expect.objectContaining({
+					start_at: '2026-01-01',
+					end_at: '2026-01-31',
+					frequency: 'day',
+				}),
 			}),
 		);
-		expect(result[0][0].json).toEqual(mockResponse);
+		expect(result[0][0].json).toEqual(mockResponse[0]);
 	});
 
 	it('should list dimensions', async () => {
@@ -106,19 +115,22 @@ describe('Mastodon Node - Admin', () => {
 		expect(ctx.helpers!.requestOAuth2).toHaveBeenCalledWith(
 			'mastodonOAuth2Api',
 			expect.objectContaining({
-				method: 'GET',
+				method: 'POST',
 				uri: expect.stringContaining('/api/v1/admin/dimensions'),
+				body: expect.objectContaining({
+					keys: expect.arrayContaining(['languages', 'sources']),
+				}),
 			}),
 		);
 		expect(result[0][0].json).toEqual(mockResponse[0]);
 	});
 
 	it('should get dimension', async () => {
-		const mockResponse = { id: 'd2' };
+		const mockResponse = [{ key: 'languages', data: [] }];
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param, _index, defaultValue) => {
 			if (param === 'resource') return 'dimensions';
 			if (param === 'operation') return 'get';
-			if (param === 'dimensionId') return 'd2';
+			if (param === 'dimensionId') return 'languages';
 			if (param === 'additionalFields') return defaultValue || {};
 			return undefined;
 		});
@@ -128,11 +140,12 @@ describe('Mastodon Node - Admin', () => {
 		expect(ctx.helpers!.requestOAuth2).toHaveBeenCalledWith(
 			'mastodonOAuth2Api',
 			expect.objectContaining({
-				method: 'GET',
-				uri: expect.stringContaining('/api/v1/admin/dimensions/d2'),
+				method: 'POST',
+				uri: expect.stringContaining('/api/v1/admin/dimensions'),
+				body: expect.objectContaining({ keys: ['languages'] }),
 			}),
 		);
-		expect(result[0][0].json).toEqual(mockResponse);
+		expect(result[0][0].json).toEqual(mockResponse[0]);
 	});
 
 	it('should list IPs', async () => {
@@ -150,7 +163,7 @@ describe('Mastodon Node - Admin', () => {
 			'mastodonOAuth2Api',
 			expect.objectContaining({
 				method: 'GET',
-				uri: expect.stringContaining('/api/v1/admin/ips'),
+				uri: expect.stringContaining('/api/v1/admin/ip_blocks'),
 			}),
 		);
 		expect(result[0][0].json).toEqual(mockResponse[0]);
@@ -172,7 +185,7 @@ describe('Mastodon Node - Admin', () => {
 			'mastodonOAuth2Api',
 			expect.objectContaining({
 				method: 'GET',
-				uri: expect.stringContaining('/api/v1/admin/ips/ip2'),
+				uri: expect.stringContaining('/api/v1/admin/ip_blocks/ip2'),
 			}),
 		);
 		expect(result[0][0].json).toEqual(mockResponse);
