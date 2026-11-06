@@ -107,9 +107,8 @@ describe('Mastodon UI operation contract', () => {
 		},
 	];
 
-	it.each(cases)(
-		'dispatches the visible $resource/$operation operation',
-		async ({ resource, operation, verb, path, params }) => {
+	for (const { resource, operation, verb, path, params } of cases) {
+		it(`dispatches the visible ${resource}/${operation} operation`, async () => {
 			ResponseCache.getInstance().clear();
 			const requestOAuth2 = jest.fn().mockResolvedValue({});
 			const getNodeParameter = jest.fn(
@@ -150,6 +149,6 @@ describe('Mastodon UI operation contract', () => {
 			if (resource === 'notifications' && operation === 'dismiss') {
 				expect(requestOAuth2.mock.calls[0][1].body).toBeUndefined();
 			}
-		},
-	);
+		});
+	}
 });
