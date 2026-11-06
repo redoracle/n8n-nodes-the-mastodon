@@ -13,15 +13,15 @@ export const dimensionOperations = [
 		},
 		options: [
 			{
-				name: 'List All',
+				name: 'Get Common Dimensions',
 				value: 'listAll',
-				description: 'Get all custom dimensions',
+				description: 'Get dimensions that do not require a tag or remote domain',
 				action: 'List all dimensions',
 			},
 			{
-				name: 'Get',
+				name: 'Get Dimension by Key',
 				value: 'get',
-				description: 'Get a specific dimension',
+				description: 'Get a dimension using the documented key',
 				action: 'Get a dimension',
 			},
 		],
@@ -31,7 +31,7 @@ export const dimensionOperations = [
 
 export const dimensionFields = [
 	{
-		displayName: 'Dimension ID',
+		displayName: 'Dimension Key',
 		name: 'dimensionId',
 		type: 'string',
 		required: true,
@@ -42,6 +42,6 @@ export const dimensionFields = [
 				operation: ['get'],
 			},
 		},
-		description: 'ID of the dimension to retrieve',
+		description: 'Dimension key, for example languages, sources or servers',
 	},
 ] as INodeProperties[];

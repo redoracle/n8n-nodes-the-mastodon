@@ -1,19 +1,35 @@
-import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { bindHandleApiRequest, handleApiRequest } from '../../Mastodon_Methods';
+import { IDataObject, IExecuteFunctions, INodeExecutionData, NodeOperationError } from 'n8n-workflow';
+import { bindHandleApiRequest } from '../../Mastodon_Methods';
 import { IDimension } from '../AdminInterfaces';
 
-export async function listAll(this: IExecuteFunctions, baseUrl: string): Promise<IDimension[]> {
+// Dimensions that can be queried without a tag ID or remote-domain context.
+const COMMON_DIMENSIONS = ['languages', 'sources', 'servers', 'space_usage', 'software_versions'];
+
+export async function listAll(
+	this: IExecuteFunctions,
+	baseUrl: string,
+	_items: INodeExecutionData[],
+	_i: number,
+): Promise<IDimension[]> {
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IDimension[]>('GET', `${baseUrl}/api/v1/admin/dimensions`);
+	return await apiRequest<IDimension[]>('POST', `${baseUrl}/api/v1/admin/dimensions`, {
+		keys: COMMON_DIMENSIONS,
+	});
 }
 
 export async function get(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
+	_items: INodeExecutionData[],
 	i: number,
 ): Promise<IDimension> {
-	const dimensionId = this.getNodeParameter('dimensionId', i) as string;
+	const key = this.getNodeParameter('dimensionId', i) as string;
+	if (!key?.trim()) {
+		throw new NodeOperationError(this.getNode(), 'Dimension Key is required');
+	}
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IDimension>('GET', `${baseUrl}/api/v1/admin/dimensions/${dimensionId}`);
+	const response = await apiRequest<IDimension[]>('POST', `${baseUrl}/api/v1/admin/dimensions`, {
+		keys: [key],
+	});
+	return Array.isArray(response) ? response[0] || ({} as IDimension) : response;
 }

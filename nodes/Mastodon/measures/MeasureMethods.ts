@@ -1,19 +1,45 @@
-// Modularized Measure methods for Mastodon node
-import { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { IDataObject, IExecuteFunctions, INodeExecutionData, NodeOperationError } from 'n8n-workflow';
 import { bindHandleApiRequest } from '../Mastodon_Methods';
+import { getAdminDateRange } from '../admin/AnalyticsContract';
 
-export async function listMeasures(this: IExecuteFunctions, baseUrl: string) {
+// These keys do not require additional tag/domain context.
+const DEFAULT_MEASURES = [
+	'active_users',
+	'new_users',
+	'interactions',
+	'opened_reports',
+	'resolved_reports',
+];
+
+export async function listMeasures(
+	this: IExecuteFunctions,
+	baseUrl: string,
+	_items: INodeExecutionData[],
+	i: number,
+): Promise<IDataObject[]> {
+	const range = getAdminDateRange.call(this, i);
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest('GET', `${baseUrl}/api/v1/admin/measures`);
+	return await apiRequest<IDataObject[]>('POST', `${baseUrl}/api/v1/admin/measures`, {
+		keys: DEFAULT_MEASURES,
+		...range,
+	});
 }
 
 export async function getMeasureMetrics(
 	this: IExecuteFunctions,
 	baseUrl: string,
-	items: INodeExecutionData[],
+	_items: INodeExecutionData[],
 	i: number,
-) {
-	const measureId = this.getNodeParameter('measureId', i) as string;
+): Promise<IDataObject> {
+	const key = this.getNodeParameter('measureId', i) as string;
+	if (!key?.trim()) {
+		throw new NodeOperationError(this.getNode(), 'Measure Key is required');
+	}
+	const range = getAdminDateRange.call(this, i);
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest('GET', `${baseUrl}/api/v1/admin/measures/${measureId}`);
+	const response = await apiRequest<IDataObject[]>('POST', `${baseUrl}/api/v1/admin/measures`, {
+		keys: [key],
+		...range,
+	});
+	return Array.isArray(response) ? response[0] || {} : response;
 }
