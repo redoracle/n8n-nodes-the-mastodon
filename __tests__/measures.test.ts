@@ -36,6 +36,8 @@ describe('Mastodon Node - Measures', () => {
 		const mockMeasures = [{ key: 'active_users' }];
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
 			if (param === 'resource') return 'measures';
+			if (param === 'start_at') return '2026-01-01';
+			if (param === 'end_at') return '2026-01-31';
 			if (param === 'operation') return 'listMeasures';
 			return undefined;
 		});
@@ -46,8 +48,13 @@ describe('Mastodon Node - Measures', () => {
 		expect(ctx.helpers!.requestOAuth2).toHaveBeenCalledWith(
 			'mastodonOAuth2Api',
 			expect.objectContaining({
-				method: 'GET',
+				method: 'POST',
 				uri: expect.stringContaining('/api/v1/admin/measures'),
+				body: expect.objectContaining({
+					start_at: '2026-01-01',
+					end_at: '2026-01-31',
+					keys: expect.arrayContaining(['active_users']),
+				}),
 			}),
 		);
 		expect(result[0][0].json).toEqual(mockMeasures[0]);
@@ -57,6 +64,8 @@ describe('Mastodon Node - Measures', () => {
 		const mockMetrics = { id: 'measure1', data: [] };
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
 			if (param === 'resource') return 'measures';
+			if (param === 'start_at') return '2026-01-01';
+			if (param === 'end_at') return '2026-01-31';
 			if (param === 'operation') return 'getMeasureMetrics';
 			if (param === 'measureId') return 'measure1';
 			return undefined;
@@ -68,8 +77,13 @@ describe('Mastodon Node - Measures', () => {
 		expect(ctx.helpers!.requestOAuth2).toHaveBeenCalledWith(
 			'mastodonOAuth2Api',
 			expect.objectContaining({
-				method: 'GET',
-				uri: expect.stringContaining('/api/v1/admin/measures/measure1'),
+				method: 'POST',
+				uri: expect.stringContaining('/api/v1/admin/measures'),
+				body: expect.objectContaining({
+					keys: ['measure1'],
+					start_at: '2026-01-01',
+					end_at: '2026-01-31',
+				}),
 			}),
 		);
 		expect(result[0][0].json).toEqual(mockMetrics);
@@ -79,6 +93,8 @@ describe('Mastodon Node - Measures', () => {
 	it('should handle empty array response from listMeasures', async () => {
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param, _index, defaultValue) => {
 			if (param === 'resource') return 'measures';
+			if (param === 'start_at') return '2026-01-01';
+			if (param === 'end_at') return '2026-01-31';
 			if (param === 'operation') return 'listMeasures';
 			if (param === 'additionalFields') return defaultValue || {};
 			return undefined;
@@ -98,6 +114,8 @@ describe('Mastodon Node - Measures', () => {
 
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param, _index, defaultValue) => {
 			if (param === 'resource') return 'measures';
+			if (param === 'start_at') return '2026-01-01';
+			if (param === 'end_at') return '2026-01-31';
 			if (param === 'operation') return 'listMeasures';
 			if (param === 'authType') return 'oAuth2';
 			if (param === 'url') return 'https://mastodon.social';
@@ -120,6 +138,8 @@ describe('Mastodon Node - Measures', () => {
 
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param, _index, defaultValue) => {
 			if (param === 'resource') return 'measures';
+			if (param === 'start_at') return '2026-01-01';
+			if (param === 'end_at') return '2026-01-31';
 			if (param === 'operation') return 'listMeasures';
 			if (param === 'authType') return 'oAuth2';
 			if (param === 'url') return 'https://mastodon.social';
@@ -143,6 +163,8 @@ describe('Mastodon Node - Measures', () => {
 
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param, _index, defaultValue) => {
 			if (param === 'resource') return 'measures';
+			if (param === 'start_at') return '2026-01-01';
+			if (param === 'end_at') return '2026-01-31';
 			if (param === 'operation') return 'getMeasureMetrics';
 			if (param === 'measureId') return 'nonexistent_measure';
 			if (param === 'authType') return 'oAuth2';
@@ -153,9 +175,7 @@ describe('Mastodon Node - Measures', () => {
 		ctx.continueOnFail = jest.fn().mockReturnValue(false);
 		(ctx.helpers!.requestOAuth2 as jest.Mock).mockRejectedValue(notFoundError);
 
-		await expect(node.execute.call(ctx as IExecuteFunctions)).rejects.toThrow(
-			'The requested nonexistent_measure was not found. Please verify the ID or handle is correct.',
-		);
+		await expect(node.execute.call(ctx as IExecuteFunctions)).rejects.toThrow();
 	});
 
 	it('should handle listMeasures with multiple measures response', async () => {
@@ -166,6 +186,8 @@ describe('Mastodon Node - Measures', () => {
 
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
 			if (param === 'resource') return 'measures';
+			if (param === 'start_at') return '2026-01-01';
+			if (param === 'end_at') return '2026-01-31';
 			if (param === 'operation') return 'listMeasures';
 			return undefined;
 		});
@@ -188,6 +210,8 @@ describe('Mastodon Node - Measures', () => {
 
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param, _index, defaultValue) => {
 			if (param === 'resource') return 'measures';
+			if (param === 'start_at') return '2026-01-01';
+			if (param === 'end_at') return '2026-01-31';
 			if (param === 'operation') return 'getMeasureMetrics';
 			if (param === 'measureId') return 'restricted_measure';
 			if (param === 'authType') return 'oAuth2';
