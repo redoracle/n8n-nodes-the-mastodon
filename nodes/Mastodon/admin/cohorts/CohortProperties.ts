@@ -61,6 +61,13 @@ export const cohortFields = [
 				default: '',
 				description: 'Start date for retention data',
 			},
+			{
+				displayName: 'End Date',
+				name: 'endDate',
+				type: 'dateTime',
+				default: '',
+				description: 'End date for retention data (required by the Mastodon API)',
+			},
 		],
 	},
 ] as INodeProperties[];
