@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  # Trusted npm publishing uses short-lived GitHub OIDC credentials.
+  id-token: write
 concurrency:
   group: release
   cancel-in-progress: false
@@ -20,16 +22,29 @@ jobs:
           run_install: false
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org/'
-          cache: pnpm
+          node-version: '24'
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test --runInBand
       - run: pnpm build
+      - name: Verify npm CLI supports trusted publishing
+        run: |
+          npm --version
+          node -e "const v=require('child_process').execFileSync('npm',['--version'],{encoding:'utf8'}).trim().split('.').map(Number);if(v[0]<11||(v[0]===11&&v[1]<5)){throw Error('npm >=11.5.1 is required for trusted publishing')}"
+      - name: Ensure most recent release tag exists on npm
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_tag="$(git tag --merged HEAD --sort=-version:refname | grep -Em1 '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)"
+          if [ -n "$latest_tag" ]; then
+            package_name="$(node -p 'require("./package.json").name')"
+            version="${latest_tag#v}"
+            if ! npm view "${package_name}@${version}" version --registry=https://registry.npmjs.org/ >/dev/null 2>&1; then
+              echo "::error::Cannot verify ${package_name}@${version} on npm although Git tag ${latest_tag} exists. Investigate the failed publish before generating a new release tag; see docs/RELEASE_PUBLISHING.md."
+              exit 1
+            fi
+          fi
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm exec semantic-release
