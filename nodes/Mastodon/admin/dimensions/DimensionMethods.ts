@@ -1,4 +1,4 @@
-import { IDataObject, IExecuteFunctions, INodeExecutionData, NodeOperationError } from 'n8n-workflow';
+import { IExecuteFunctions, INodeExecutionData, NodeOperationError } from 'n8n-workflow';
 import { bindHandleApiRequest } from '../../Mastodon_Methods';
 import { IDimension } from '../AdminInterfaces';
 
@@ -31,5 +31,11 @@ export async function get(
 	const response = await apiRequest<IDimension[]>('POST', `${baseUrl}/api/v1/admin/dimensions`, {
 		keys: [key],
 	});
-	return Array.isArray(response) ? response[0] || ({} as IDimension) : response;
+	if (Array.isArray(response)) {
+		if (response.length === 0) {
+			throw new NodeOperationError(this.getNode(), `No dimension found for key "${key}"`);
+		}
+		return response[0];
+	}
+	return response;
 }

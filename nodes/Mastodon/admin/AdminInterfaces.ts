@@ -17,10 +17,14 @@ export interface ICohort {
 }
 
 export interface IDimension {
-	id: string;
-	name: string;
-	created_at: string;
-	updated_at: string;
+	key: string;
+	data: Array<{
+		key: string;
+		human_key: string;
+		value: string;
+		unit?: string;
+		human_value?: string;
+	}>;
 }
 
 export interface IAdminDomainAllow {
@@ -58,17 +62,14 @@ export interface IAdminEmailDomainBlock {
 export interface IAdminIp {
 	id: string;
 	ip: string;
-	used_at: string;
-	account_id: string;
+	severity: 'sign_up_requires_approval' | 'sign_up_block' | 'no_access';
+	comment: string;
+	created_at: string;
+	expires_at: string | null;
 }
 
-export interface IAdminIpBlock {
-	id: string;
-	ip: string;
-	severity: 'noop' | 'sign_up_requires_approval' | 'sign_up_block' | 'block';
-	comment: string | null;
-	created_at: string;
-}
+/** Alias matching the official Mastodon Admin::IpBlock entity. */
+export type IAdminIpBlock = IAdminIp;
 
 export interface IAdminRole {
 	id: string;
