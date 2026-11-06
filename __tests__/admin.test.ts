@@ -150,7 +150,7 @@ describe('Mastodon Node - Admin', () => {
 			'mastodonOAuth2Api',
 			expect.objectContaining({
 				method: 'GET',
-				uri: expect.stringContaining('/api/v1/admin/ips'),
+				uri: expect.stringContaining('/api/v1/admin/ip_blocks'),
 			}),
 		);
 		expect(result[0][0].json).toEqual(mockResponse[0]);
@@ -172,7 +172,7 @@ describe('Mastodon Node - Admin', () => {
 			'mastodonOAuth2Api',
 			expect.objectContaining({
 				method: 'GET',
-				uri: expect.stringContaining('/api/v1/admin/ips/ip2'),
+				uri: expect.stringContaining('/api/v1/admin/ip_blocks/ip2'),
 			}),
 		);
 		expect(result[0][0].json).toEqual(mockResponse);

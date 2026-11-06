@@ -15,7 +15,7 @@ export async function listIps(
 	if (additionalFields.since_id) qs.since_id = additionalFields.since_id;
 	if (additionalFields.min_id) qs.min_id = additionalFields.min_id;
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IAdminIp[]>('GET', `${baseUrl}/api/v1/admin/ips`, {}, qs);
+	return await apiRequest<IAdminIp[]>('GET', `${baseUrl}/api/v1/admin/ip_blocks`, {}, qs);
 }
 
 export async function getIp(
@@ -26,5 +26,5 @@ export async function getIp(
 ): Promise<IAdminIp> {
 	const ipRecordId = this.getNodeParameter('ipRecordId', i) as string;
 	const apiRequest = bindHandleApiRequest(this);
-	return await apiRequest<IAdminIp>('GET', `${baseUrl}/api/v1/admin/ips/${ipRecordId}`);
+	return await apiRequest<IAdminIp>('GET', `${baseUrl}/api/v1/admin/ip_blocks/${ipRecordId}`);
 }
