@@ -11,7 +11,7 @@ export async function viewStatistics(
 ): Promise<IDataObject[]> {
 	const index = i ?? 0;
 	const range = getAdminDateRange.call(this, index);
-	const frequency = this.getNodeParameter('frequency', index, 'day') as string;
+	const frequency = (this.getNodeParameter('frequency', index, 'day') as string) || 'day';
 	const apiRequest = bindHandleApiRequest(this);
 	return await apiRequest<IDataObject[]>('POST', `${baseUrl}/api/v1/admin/retention`, {
 		...range,
