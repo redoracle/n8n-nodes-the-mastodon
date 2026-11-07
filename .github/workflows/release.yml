@@ -72,19 +72,42 @@ jobs:
           gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}"
           git tag -d "$tag"
           echo "::notice::Removed verified orphaned ${tag}: npm 404; GitHub Release 404; tag SHA matched"
-      - name: Ensure most recent release tag exists on npm
+      - name: Check latest release-tag integrity
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           latest_tag="$(git tag --merged HEAD --sort=-version:refname | grep -Em1 '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)"
-          if [ -n "$latest_tag" ]; then
-            package_name="$(node -p 'require("./package.json").name')"
-            version="${latest_tag#v}"
-            if ! npm view "${package_name}@${version}" version --registry=https://registry.npmjs.org/ >/dev/null 2>&1; then
-              echo "::error::Cannot verify ${package_name}@${version} on npm although Git tag ${latest_tag} exists. Investigate the failed publish before generating a new release tag; see docs/RELEASE_PUBLISHING.md."
-              exit 1
-            fi
+          if [[ -z "$latest_tag" ]]; then
+            exit 0
           fi
+          package="$(node -p 'require("./package.json").name')"
+          version="${latest_tag#v}"
+          npm_status="$(curl --silent --show-error --location --retry 3 --retry-all-errors --max-time 20 -o "$RUNNER_TEMP/npm-latest-version.json" -w '%{http_code}' "https://registry.npmjs.org/${package}/${version}")"
+          case "$npm_status" in
+            200)
+              jq -e --arg version "$version" '.version == $version' "$RUNNER_TEMP/npm-latest-version.json" >/dev/null
+              ;;
+            404)
+              # Legacy GitHub-only releases are reported but are NOT confused with
+              # uncompleted tags that have neither an npm version nor a GitHub Release.
+              release_status="$(curl --silent --show-error --retry 3 --retry-all-errors --max-time 20 -o "$RUNNER_TEMP/github-latest-release.json" -w '%{http_code}' -H "Authorization: Bearer ${GH_TOKEN}" -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${latest_tag}")"
+              if [[ "$release_status" == 200 ]]; then
+                echo "::warning::Historical GitHub Release ${latest_tag} exists but npm ${package}@${version} is missing. Preserve the release and reconcile npm separately."
+              elif [[ "$release_status" == 404 ]]; then
+                echo "::error::Orphaned Git tag ${latest_tag} has neither a published npm version nor a GitHub Release."
+                exit 1
+              else
+                echo "::error::GitHub API returned HTTP ${release_status}; refusing to proceed."
+                exit 1
+              fi
+              ;;
+            *)
+              echo "::error::Unexpected npm HTTP status ${npm_status}; refusing to proceed."
+              exit 1
+              ;;
+          esac
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

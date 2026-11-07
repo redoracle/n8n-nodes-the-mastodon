@@ -82,3 +82,11 @@ jobs:
               exit 1
               ;;
           esac
+          for historical in 0.0.37 0.0.38 0.0.39; do
+            historical_status="$(curl --silent --show-error --location --retry 3 --retry-all-errors --max-time 20 -o "$RUNNER_TEMP/npm-historical-${historical}.json" -w '%{http_code}' "https://registry.npmjs.org/${package}/${historical}")"
+            if [[ "$historical_status" != 200 && "$historical_status" != 404 ]]; then
+              echo "::error::npm returned HTTP ${historical_status} for historical ${historical}"
+              exit 1
+            fi
+            echo "Historical npm version ${package}@${historical}: HTTP ${historical_status}" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
