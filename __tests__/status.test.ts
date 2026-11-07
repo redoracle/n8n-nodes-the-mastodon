@@ -45,6 +45,53 @@ describe('Mastodon Node - Status', () => {
 		expect(result?.[0]?.[0].json).toEqual(mockResponse[0]);
 	});
 
+	it('allows a media-only status and sends media IDs', async () => {
+		(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
+			if (param === 'resource') return 'status';
+			if (param === 'operation') return 'create';
+			if (param === 'status') return '';
+			if (param === 'additionalFields') return { mediaIds: 'media-123' };
+			return undefined;
+		});
+		(ctx.getInputData as jest.Mock).mockReturnValue([{ json: {} }]);
+		(ctx.helpers!.requestOAuth2 as jest.Mock).mockResolvedValue({ id: 'new-status' });
+		const result = await node.execute.call(ctx as IExecuteFunctions);
+		expect(result?.[0]?.[0].json).toEqual({ id: 'new-status' });
+		expect(ctx.helpers!.requestOAuth2).toHaveBeenCalledWith(
+			'mastodonOAuth2Api',
+			expect.objectContaining({
+				method: 'POST',
+				body: expect.objectContaining({ status: '', media_ids: ['media-123'] }),
+			}),
+		);
+	});
+
+	it('rejects a status with neither text nor media', async () => {
+		(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
+			if (param === 'resource') return 'status';
+			if (param === 'operation') return 'create';
+			if (param === 'status') return '';
+			if (param === 'additionalFields') return {};
+			return undefined;
+		});
+		(ctx.getInputData as jest.Mock).mockReturnValue([{ json: {} }]);
+		await expect(node.execute.call(ctx as IExecuteFunctions)).rejects.toThrow(
+			'Either status text or media attachments must be provided',
+		);
+	});
+
+	it('propagates status retrieval errors when continueOnFail is disabled', async () => {
+		(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
+			if (param === 'resource') return 'status';
+			if (param === 'operation') return 'view';
+			if (param === 'statusId') return 'missing';
+			return undefined;
+		});
+		(ctx.getInputData as jest.Mock).mockReturnValue([{ json: {} }]);
+		(ctx.helpers!.requestOAuth2 as jest.Mock).mockRejectedValue(new Error('Status not found'));
+		await expect(node.execute.call(ctx as IExecuteFunctions)).rejects.toThrow();
+	});
+
 	it('should throw for invalid status id on bookmark', async () => {
 		(ctx.getNodeParameter as jest.Mock).mockImplementation((param) => {
 			if (param === 'resource') return 'status';
