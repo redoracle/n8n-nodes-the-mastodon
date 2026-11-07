@@ -21,7 +21,7 @@ This relationship is configured on **npmjs.com**, not in GitHub workflow YAML. T
 
 [GitHub Actions run #42296132845](https://github.com/redoracle/n8n-nodes-the-mastodon/actions/runs/42296132845) passed install, lint, Jest, and build. npm rejected publishing version `0.0.40` with `EOTP` because the workflow did not provide an OIDC token and the legacy npm token requires a one-time password. During the failed release, semantic-release pushed Git tag `v0.0.40` at commit `439fb14eca735ab80d1c8e1225c378537ec4c1a7`. No matching GitHub Release existed at investigation time. A live GitHub Actions registry query on 2026-11-07 confirmed that npm returns HTTP 404 for version 0.0.40.
 
-**Do not assume the tag means the package was published. Do not delete a legitimate published release tag.** The workflow checks the newest semver Git tag against npm before calling semantic-release. It includes an SHA-pinned one-time cleanup for the documented v0.0.40 incident, but only after confirming npm HTTP 404, GitHub Release HTTP 404 and the exact remote tag SHA. No other tag is ever eligible.
+**Do not assume the tag means the package was published. Do not delete a legitimate published release tag.** The workflow checks the newest semver Git tag against npm and cross-checks GitHub Releases. Historical tags with an existing GitHub Release but no npm version are preserved and reported for reconciliation; an unpublished tag with no GitHub Release blocks publication. It includes an SHA-pinned one-time cleanup for the documented v0.0.40 incident, but only after confirming npm HTTP 404, GitHub Release HTTP 404 and the exact remote tag SHA. No other tag is eligible.
 
 ### Safe recovery
 
@@ -39,3 +39,11 @@ The workflow must not disable npm 2FA or suppress publication failures. Its one-
 - [npm Trusted Publishers](https://docs.npmjs.com/trusted-publishers/)
 - [semantic-release npm OIDC guidance](https://github.com/semantic-release/npm)
 - [GitHub Actions with semantic-release](https://github.com/semantic-release/docs/blob/main/src/content/docs/recipes/ci-configurations/github-actions.mdx)
+
+## Historical release verification
+
+The earlier successful workflow run for `v0.0.39` executed zero release commits and thus did **not** publish the package. The CI `inspect npm publication state` job now reports HTTP status for versions `0.0.37`, `0.0.38` and `0.0.39`. A prior GitHub Release may legitimately exist without an npm package; it is warned about and preserved rather than misclassified as a transient orphaned tag. Do not delete historical release tags to conceal missing npm publication.
+
+## Failure-safe tag rollback
+
+Semantic-release can create and push a Git tag before npm publishing completes. The Release workflow snapshots local Git tags **before** running semantic-release. If the release fails, it checks only tags created in this run, and deletes one only if its SHA equals `GITHUB_SHA`, npm returns HTTP 404, GitHub Releases returns HTTP 404, and the remote tag SHA is unchanged. Published releases and all pre-existing tags are preserved. The workflow still **fails visibly** when publishing fails; rollback does not conceal the failure or claim a successful release.
