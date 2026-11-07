@@ -88,7 +88,9 @@ describe('Mastodon Node - Status', () => {
 			return undefined;
 		});
 		(ctx.getInputData as jest.Mock).mockReturnValue([{ json: {} }]);
-		(ctx.helpers!.requestOAuth2 as jest.Mock).mockRejectedValue(new Error('Status not found'));
+		(ctx.helpers!.requestOAuth2 as jest.Mock).mockRejectedValue(
+			Object.assign(new Error('Status not found'), { statusCode: 404 }),
+		);
 		await expect(node.execute.call(ctx as IExecuteFunctions)).rejects.toThrow();
 	});
 
