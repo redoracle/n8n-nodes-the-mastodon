@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { randomUUID } from 'crypto';
 import {
 	IDataObject,
 	IExecuteFunctions,
@@ -8,13 +8,13 @@ import {
 import { bindHandleApiRequest, ValidationUtils } from '../Mastodon_Methods';
 import { IStatusMethods } from './StatusMethodsTypes';
 
-function validateStatusParam(this: IExecuteFunctions, i: number): string {
+function validateStatusParam(this: IExecuteFunctions, i: number, allowEmpty = false): string {
 	const status = this.getNodeParameter('status', i);
-	if (!status) {
+	if (!status && !allowEmpty) {
 		throw new NodeOperationError(this.getNode(), 'Status text is required');
 	}
 	return ValidationUtils.truncateWithUrlPreservation(
-		status as string,
+		(status || '') as string,
 		ValidationUtils.MASTODON_MAX_STATUS_LENGTH,
 	);
 }
@@ -29,22 +29,21 @@ function validateStatusId(this: IExecuteFunctions, i: number): string {
 
 const methods: IStatusMethods = {
 	async create(this: IExecuteFunctions, baseUrl: string, items: INodeExecutionData[], i: number) {
-		const status = validateStatusParam.call(this, i);
+		const status = validateStatusParam.call(this, i, true);
 		const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+		if (!status.trim() && !(additionalFields.mediaIds as string | undefined)?.split(',').some((id) => id.trim())) {
+			throw new NodeOperationError(this.getNode(), 'Either status text or media attachments must be provided');
+		}
 		const body: IDataObject = { status };
 
 		// Handle media attachments with proper validation
 		if (additionalFields.mediaIds) {
 			const mediaIds = (additionalFields.mediaIds as string).split(',').map((id) => id.trim());
+			if (mediaIds.some((id) => !id)) {
+				throw new NodeOperationError(this.getNode(), 'Media IDs must not contain empty entries');
+			}
 			if (mediaIds.length > 4) {
 				throw new NodeOperationError(this.getNode(), 'Maximum of 4 media attachments allowed');
-			}
-			// If media is attached and no status text, validate per API requirements
-			if (!status && mediaIds.length === 0) {
-				throw new NodeOperationError(
-					this.getNode(),
-					'Either status text or media attachments must be provided',
-				);
 			}
 			body.media_ids = mediaIds;
 		}
@@ -103,11 +102,9 @@ const methods: IStatusMethods = {
 			body.language = ValidationUtils.sanitizeStringParam(additionalFields.language as string, 2);
 		}
 
-		// Generate idempotency key to prevent duplicate submissions
-		const idempotencyKey = crypto
-			.createHash('sha256')
-			.update(JSON.stringify({ status, additionalFields }))
-			.digest('hex');
+		// A fresh key per execution item prevents distinct, identical posts from being deduplicated.
+		// The request helper reuses this key when retrying the same HTTP request.
+		const idempotencyKey = randomUUID();
 
 		// Make API request with idempotency key
 		const apiRequest = bindHandleApiRequest(this);
@@ -123,16 +120,10 @@ const methods: IStatusMethods = {
 
 	async view(this: IExecuteFunctions, baseUrl: string, items: INodeExecutionData[], i: number) {
 		const statusId = validateStatusId.call(this, i);
-		let result;
-		try {
-			const apiRequest = bindHandleApiRequest(this);
-			result = await apiRequest('GET', `${baseUrl}/api/v1/statuses/${statusId}`);
-		} catch (error) {
-			// Always output something meaningful for n8n UI
-			return [{ error: error.message || 'Failed to fetch status', statusId }];
-		}
+		const apiRequest = bindHandleApiRequest(this);
+		const result = await apiRequest('GET', `${baseUrl}/api/v1/statuses/${statusId}`);
 		if (!result) {
-			return [{ error: 'No data returned from API', statusId }];
+			throw new NodeOperationError(this.getNode(), `No data returned for status ${statusId}`);
 		}
 		// Always wrap in array and ensure it's an object
 		return Array.isArray(result)
