@@ -33,6 +33,45 @@ jobs:
           npm --version
           node -e "const v=require('child_process').execFileSync('npm',['--version'],{encoding:'utf8'}).trim().split('.').map(Number);if(v[0]<11||(v[0]===11&&(v[1]<5||(v[1]===5&&v[2]<1)))){throw Error('npm >=11.5.1 is required for trusted publishing')}"
           test -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" || { echo "::error::GitHub OIDC environment is unavailable"; exit 1; }
+      # Only this SHA-locked, unpublished 2026-11-06 release tag may be removed.
+      - name: Reconcile verified orphaned v0.0.40 tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == "redoracle/n8n-nodes-the-mastodon" ]] || exit 1
+          tag="v0.0.40"
+          expected_sha="439fb14eca735ab80d1c8e1225c378537ec4c1a7"
+          actual_sha="$(git rev-list -n 1 "refs/tags/${tag}" 2>/dev/null || true)"
+          if [[ -z "$actual_sha" || "$actual_sha" != "$expected_sha" ]]; then
+            echo "No matching interrupted release tag to reconcile"
+            exit 0
+          fi
+          package="$(node -p 'require("./package.json").name')"
+          version="${tag#v}"
+          npm_status="$(curl --silent --show-error --location --retry 3 --retry-all-errors --max-time 20 -o "$RUNNER_TEMP/npm-recovery-version.json" -w '%{http_code}' "https://registry.npmjs.org/${package}/${version}")"
+          if [[ "$npm_status" == 200 ]]; then
+            echo "The version is already published on npm; preserving ${tag}"
+            exit 0
+          fi
+          if [[ "$npm_status" != 404 ]]; then
+            echo "::error::npm registry returned HTTP ${npm_status}; preserving every tag"
+            exit 1
+          fi
+          release_status="$(curl --silent --show-error --retry 3 --retry-all-errors --max-time 20 -o "$RUNNER_TEMP/github-recovery-release.json" -w '%{http_code}' -H "Authorization: Bearer ${GH_TOKEN}" -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${tag}")"
+          if [[ "$release_status" != 404 ]]; then
+            echo "::error::GitHub Release status ${release_status} is not 404; preserving every tag"
+            exit 1
+          fi
+          remote_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" --jq '.object.sha')"
+          if [[ "$remote_sha" != "$expected_sha" ]]; then
+            echo "::error::Tag SHA changed; refusing to delete ${tag}"
+            exit 1
+          fi
+          gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}"
+          git tag -d "$tag"
+          echo "::notice::Removed verified orphaned ${tag}: npm 404; GitHub Release 404; tag SHA matched"
       - name: Ensure most recent release tag exists on npm
         shell: bash
         run: |

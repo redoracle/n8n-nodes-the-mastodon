@@ -19,9 +19,9 @@ This relationship is configured on **npmjs.com**, not in GitHub workflow YAML. T
 
 ## 2026-11-06 failed release: `v0.0.40`
 
-[GitHub Actions run #42296132845](https://github.com/redoracle/n8n-nodes-the-mastodon/actions/runs/42296132845) passed install, lint, Jest, and build. npm rejected publishing version `0.0.40` with `EOTP` because the workflow did not provide an OIDC token and the legacy npm token requires a one-time password. During the failed release, semantic-release pushed Git tag `v0.0.40` at commit `439fb14eca735ab80d1c8e1225c378537ec4c1a7`. No matching GitHub Release existed at investigation time. Direct npm registry verification was unavailable from the investigation environment.
+[GitHub Actions run #42296132845](https://github.com/redoracle/n8n-nodes-the-mastodon/actions/runs/42296132845) passed install, lint, Jest, and build. npm rejected publishing version `0.0.40` with `EOTP` because the workflow did not provide an OIDC token and the legacy npm token requires a one-time password. During the failed release, semantic-release pushed Git tag `v0.0.40` at commit `439fb14eca735ab80d1c8e1225c378537ec4c1a7`. No matching GitHub Release existed at investigation time. A live GitHub Actions registry query on 2026-11-07 confirmed that npm returns HTTP 404 for version 0.0.40.
 
-**Do not assume the tag means the package was published. Do not delete a legitimate published release tag.** The workflow now checks the newest semver Git tag against npm before calling semantic-release and fails safely instead of creating more orphaned release tags.
+**Do not assume the tag means the package was published. Do not delete a legitimate published release tag.** The workflow checks the newest semver Git tag against npm before calling semantic-release. It includes an SHA-pinned one-time cleanup for the documented v0.0.40 incident, but only after confirming npm HTTP 404, GitHub Release HTTP 404 and the exact remote tag SHA. No other tag is ever eligible.
 
 ### Safe recovery
 
@@ -29,10 +29,10 @@ This relationship is configured on **npmjs.com**, not in GitHub workflow YAML. T
 2. Check npm directly: `npm view n8n-nodes-the-mastodon@0.0.40 version --registry=https://registry.npmjs.org/`.
 3. If the version exists on npm, **do not remove the tag**. Verify package integrity and decide whether a GitHub Release needs restoring. The next normal release can proceed.
 4. If the version is confirmed **absent** from npm and the GitHub Release is also absent, verify the exact remote tag: `git ls-remote --tags origin refs/tags/v0.0.40` should show `439fb14eca735ab80d1c8e1225c378537ec4c1a7`.
-5. After explicit maintainer approval, remove **only** that confirmed orphaned tag: `git push origin :refs/tags/v0.0.40`. Do not delete `v0.0.39` or unrelated tags.
-6. Merge the OIDC release fix. Run **Actions → Release → Run workflow** from `main` and verify that npm, Git tag, and GitHub Release all have matching versions and that the workflow is green.
+5. After configuring the npm Trusted Publisher, the release workflow can automatically remove **only** the known orphaned `v0.0.40` tag if all three external checks match. Do not delete `v0.0.39` or unrelated tags.
+6. Merge the OIDC release fix and inspect its **Actions → Release** run. If the npm Trusted Publisher has not been configured, finish that external setup and rerun the workflow. Verify that npm, Git tag and GitHub Release all agree and the pipeline is green.
 
-The CI job must not disable or bypass npm 2FA, silently suppress publication errors, or delete Git tags automatically.
+The workflow must not disable npm 2FA or suppress publication failures. Its one-off tag recovery is restricted to the exact known SHA and independent registry/release 404 checks.
 
 ## References
 
