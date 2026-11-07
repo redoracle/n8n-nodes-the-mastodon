@@ -1,0 +1,73 @@
+name: Branch hygiene
+on:
+  pull_request:
+    types: [closed]
+  push:
+    branches: [main]
+permissions:
+  contents: write
+  pull-requests: read
+concurrency:
+  group: branch-hygiene
+  cancel-in-progress: false
+jobs:
+  delete-merged-pr-branches:
+    # Closed PRs are processed only after merge; push main reconciles the
+    # two pre-existing merged branches and this PR's branch.
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete only verified same-repository merged PR head branches
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          CLOSED_PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            # One-time catch-up of merged branches left behind by squash merges.
+            pull_numbers=(43 44 45)
+          else
+            pull_numbers=("$CLOSED_PR")
+          fi
+
+          for number in "${pull_numbers[@]}"; do
+            [[ "$number" =~ ^[0-9]+$ ]] || exit 1
+            pr="$(gh api "repos/${REPOSITORY}/pulls/${number}")"
+            merged="$(jq -r '.merged' <<<"$pr")"
+            source="$(jq -r '.head.repo.full_name // ""' <<<"$pr")"
+            base="$(jq -r '.base.ref' <<<"$pr")"
+            branch="$(jq -r '.head.ref' <<<"$pr")"
+            expected_sha="$(jq -r '.head.sha' <<<"$pr")"
+
+            if [[ "$merged" != true || "$source" != "$REPOSITORY" || "$base" != main || "$branch" == main || -z "$branch" ]]; then
+              echo "PR #${number}: not eligible for same-repository merged branch cleanup"
+              continue
+            fi
+            # Restrict to feature/fix branch namespaces; never touch protected/main branches.
+            if [[ ! "$branch" =~ ^(fix|feat|feature|audit|chore|docs|test|refactor)/[a-zA-Z0-9._/-]+$ ]]; then
+              echo "PR #${number}: branch name not in cleanup allowlist"
+              continue
+            fi
+
+            # Do not delete a branch currently referenced by any open PR.
+            open_prs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=open&per_page=100" | jq -s --arg branch "$branch" --arg source "$REPOSITORY" '[.[][] | select(.head.ref == $branch and .head.repo.full_name == $source)] | length')"
+            if [[ "$open_prs" != 0 ]]; then
+              echo "PR #${number}: branch is still used by an open pull request"
+              continue
+            fi
+
+            current_sha="$(gh api "repos/${REPOSITORY}/git/ref/heads/${branch}" --jq '.object.sha' 2>/dev/null || true)"
+            if [[ -z "$current_sha" ]]; then
+              echo "PR #${number}: branch was already deleted"
+              continue
+            fi
+            if [[ "$current_sha" != "$expected_sha" ]]; then
+              echo "PR #${number}: branch advanced after merge, leaving intact"
+              continue
+            fi
+            gh api --method DELETE "repos/${REPOSITORY}/git/refs/heads/${branch}"
+            echo "Deleted merged PR #${number} branch ${branch} at ${expected_sha}"
+          done
