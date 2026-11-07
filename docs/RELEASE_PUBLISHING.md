@@ -43,3 +43,7 @@ The workflow must not disable npm 2FA or suppress publication failures. Its one-
 ## Historical release verification
 
 The earlier successful workflow run for `v0.0.39` executed zero release commits and thus did **not** publish the package. The CI `inspect npm publication state` job now reports HTTP status for versions `0.0.37`, `0.0.38` and `0.0.39`. A prior GitHub Release may legitimately exist without an npm package; it is warned about and preserved rather than misclassified as a transient orphaned tag. Do not delete historical release tags to conceal missing npm publication.
+
+## Failure-safe tag rollback
+
+Semantic-release can create and push a Git tag before npm publishing completes. The Release workflow snapshots local Git tags **before** running semantic-release. If the release fails, it checks only tags created in this run, and deletes one only if its SHA equals `GITHUB_SHA`, npm returns HTTP 404, GitHub Releases returns HTTP 404, and the remote tag SHA is unchanged. Published releases and all pre-existing tags are preserved. The workflow still **fails visibly** when publishing fails; rollback does not conceal the failure or claim a successful release.
