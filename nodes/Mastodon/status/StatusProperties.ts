@@ -99,7 +99,8 @@ export const createFields: INodeProperties[] = [
 		displayName: 'Status Text',
 		name: 'status',
 		type: 'string',
-		required: true,
+		// Media-only statuses are valid; the handler enforces text or media IDs.
+		required: false,
 		default: '',
 		description: 'The text content of the status',
 		displayOptions: {
