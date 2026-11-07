@@ -45,3 +45,40 @@ jobs:
         run: |
           test "$(docker image inspect --format '{{.Config.User}}' mastodon-n8n:ci)" = node
           test "$(docker image inspect --format '{{.Config.User}}' mastodon-n8n:dev-ci)" = node
+
+  release-integrity:
+    name: inspect npm publication state
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Compare latest Git release tag with public npm registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_tag="$(git tag --merged HEAD --sort=-version:refname | grep -Em1 '^v[0-9]+\.[0-9]+\.[0-9]+$' || true)"
+          if [ -z "$latest_tag" ]; then
+            echo "No release tag found on this revision" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          package="$(node -p 'require("./package.json").name')"
+          version="${latest_tag#v}"
+          url="https://registry.npmjs.org/${package}/${version}"
+          status="$(curl --silent --show-error --location --retry 3 --retry-all-errors --max-time 20 -o "$RUNNER_TEMP/npm-version.json" -w '%{http_code}' "$url")"
+          case "$status" in
+            200)
+              jq -e --arg version "$version" '.version == $version' "$RUNNER_TEMP/npm-version.json" >/dev/null
+              echo "Git tag ${latest_tag}: published package ${package}@${version} confirmed on npm" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            404)
+              echo "::warning::Git tag ${latest_tag} is not published on npm. Release reconciliation required."
+              echo "Git tag ${latest_tag}: **not present** on npm (HTTP 404). Investigate before another release." >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              echo "::error::Unexpected npm registry HTTP status ${status} while checking ${package}@${version}"
+              exit 1
+              ;;
+          esac

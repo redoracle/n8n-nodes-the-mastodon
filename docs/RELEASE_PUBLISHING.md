@@ -13,7 +13,9 @@ An npm package maintainer must open **npmjs.com → n8n-nodes-the-mastodon → S
 | Workflow filename | `release.yml` |
 | Environment | Empty (no workflow environment) |
 
-This relationship is configured on **npmjs.com**, not in GitHub workflow YAML. The workflow grants `id-token: write` and intentionally does not expose `NPM_TOKEN` or `NODE_AUTH_TOKEN`. Keep account two-factor authentication enabled. Once OIDC publishing is working, retire the unused GitHub `NPM_TOKEN` secret.
+For trusted publishers created after September 3, 2026, select **Allow npm publish** explicitly. The default may authorize only staged publishing. The trusted-publisher record must complete its first successful publish within two days of creation; recreate it if it expires.
+
+This relationship is configured on **npmjs.com**, not in GitHub workflow YAML. The workflow grants `id-token: write`, disables package-manager caching for the release job, and intentionally does not expose `NPM_TOKEN` or `NODE_AUTH_TOKEN`. Keep account two-factor authentication enabled. Once OIDC publishing is working, retire the unused GitHub `NPM_TOKEN` secret.
 
 ## 2026-11-06 failed release: `v0.0.40`
 
