@@ -24,6 +24,8 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
+      - name: Pin npm CLI for trusted publishing
+        run: npm install --global npm@12.2.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test --runInBand
@@ -33,6 +35,27 @@ jobs:
           npm --version
           node -e "const v=require('child_process').execFileSync('npm',['--version'],{encoding:'utf8'}).trim().split('.').map(Number);if(v[0]<11||(v[0]===11&&(v[1]<5||(v[1]===5&&v[2]<1)))){throw Error('npm >=11.5.1 is required for trusted publishing')}"
           test -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" || { echo "::error::GitHub OIDC environment is unavailable"; exit 1; }
+      # Prevent semantic-release from tagging a version while its npm package is absent.
+      - name: Check npm package exists before release
+        shell: bash
+        run: |
+          set -euo pipefail
+          package="$(node -p 'require("./package.json").name')"
+          status="$(curl --silent --show-error --location --retry 3 --retry-all-errors --max-time 20 -o "$RUNNER_TEMP/npm-package-metadata.json" -w '%{http_code}' "https://registry.npmjs.org/${package}")"
+          case "$status" in
+            200)
+              jq -e --arg package "$package" '.name == $package' "$RUNNER_TEMP/npm-package-metadata.json" >/dev/null
+              echo "npm package ${package} exists"
+              ;;
+            404)
+              echo "::error::npm package ${package} is absent (404). Bootstrap with interactive npm 2FA or staged publishing and configure Trusted Publishing before running semantic-release; see docs/npm-trusted-publishing.md"
+              exit 1
+              ;;
+            *)
+              echo "::error::npm registry returned HTTP ${status} for ${package}; refusing to release"
+              exit 1
+              ;;
+          esac
       # Only this SHA-locked, unpublished 2026-11-06 release tag may be removed.
       - name: Reconcile verified orphaned v0.0.40 tag
         shell: bash
