@@ -15,8 +15,8 @@ importers:
         specifier: ^30.0.0
         version: 30.0.0
       '@types/node':
-        specifier: ^25.9.9
-        version: 25.9.9
+        specifier: ^26.6.6
+        version: 26.6.6
       '@types/request-promise-native':
         specifier: ~1.0.21
         version: 1.0.21
@@ -43,7 +43,7 @@ importers:
         version: 5.0.1
       jest:
         specifier: ^30.5.2
-        version: 30.5.2(@types/node@25.9.9)
+        version: 30.5.2(@types/node@26.6.6)
       n8n:
         specifier: ^2.46.6
         version: 2.47.2(135d0799f69e8b4ab9ea1bc03555b9f9)
@@ -61,7 +61,7 @@ importers:
         version: 25.0.9(typescript@5.9.3)
       ts-jest:
         specifier: ^29.4.15
-        version: 29.4.15(@babel/core@7.29.13)(@jest/transform@30.5.2)(@jest/types@30.5.1)(babel-jest@30.5.2(@babel/core@7.29.13))(jest-util@30.5.1)(jest@30.5.2(@types/node@25.9.9))(typescript@5.9.3)
+        version: 29.4.15(@babel/core@7.29.13)(@jest/transform@30.5.2)(@jest/types@30.5.1)(babel-jest@30.5.2(@babel/core@7.29.13))(jest-util@30.5.1)(jest@30.5.2(@types/node@26.6.6))(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -4451,9 +4451,6 @@ packages:
 
   '@types/node@18.19.130':
     resolution: {integrity: sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==}
-
-  '@types/node@25.9.9':
-    resolution: {integrity: sha512-b4e2xxj/yMeT2hNlD6x7zNFiQK2Dlmkb9CQ6v3/1G2RezKN4YS2lcEv8lzGm1mhs4f2lM4yNAMI/zUDBZBBt7w==}
 
   '@types/node@26.6.6':
     resolution: {integrity: sha512-MzQj+8Kx3XI40OmUAE6Qoh58ZMNstNNMwn2nfd3qWsfe7nDNSqJNzes4njhz6AHwrSHOffSLwXU6yb474Q4aog==}
@@ -13776,7 +13773,7 @@ snapshots:
   '@jest/console@30.5.2':
     dependencies:
       '@jest/types': 30.5.1
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       chalk: 4.1.2
       jest-message-util: 30.5.1
       jest-util: 30.5.1
@@ -13790,7 +13787,7 @@ snapshots:
       '@jest/test-result': 30.5.2
       '@jest/transform': 30.5.2
       '@jest/types': 30.5.1
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       ci-info: 4.4.0
@@ -13798,7 +13795,7 @@ snapshots:
       fast-json-stable-stringify: 2.1.0
       graceful-fs: 4.2.11
       jest-changed-files: 30.5.1
-      jest-config: 30.5.2(@types/node@25.9.9)
+      jest-config: 30.5.2(@types/node@26.6.6)
       jest-haste-map: 30.5.1
       jest-message-util: 30.5.1
       jest-regex-util: 30.5.0
@@ -13824,7 +13821,7 @@ snapshots:
     dependencies:
       '@jest/fake-timers': 30.5.2
       '@jest/types': 30.5.1
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       jest-mock: 30.5.2
 
   '@jest/expect-utils@30.5.2':
@@ -13842,7 +13839,7 @@ snapshots:
     dependencies:
       '@jest/types': 30.5.1
       '@sinonjs/fake-timers': 15.4.0
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       jest-message-util: 30.5.1
       jest-mock: 30.5.2
       jest-util: 30.5.1
@@ -13860,7 +13857,7 @@ snapshots:
 
   '@jest/pattern@30.5.0':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       jest-regex-util: 30.5.0
 
   '@jest/reporters@30.5.2':
@@ -13871,7 +13868,7 @@ snapshots:
       '@jest/transform': 30.5.2
       '@jest/types': 30.5.1
       '@jridgewell/trace-mapping': 0.3.31
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       chalk: 4.1.2
       collect-v8-coverage: 1.0.3
       exit-x: 0.2.2
@@ -13948,7 +13945,7 @@ snapshots:
       '@jest/schemas': 30.5.0
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
@@ -14140,7 +14137,7 @@ snapshots:
       jsonwebtoken: 9.0.3
       lodash: 4.18.1
       mammoth: 1.12.1
-      mysql2: 3.23.1(@types/node@25.9.9)
+      mysql2: 3.23.1(@types/node@26.6.6)
       pdf-parse: 2.4.5
       pg: 8.21.0
       playwright: 1.58.2
@@ -14206,7 +14203,7 @@ snapshots:
       lodash: 4.18.1
       mammoth: 1.12.1
       mongodb: 6.22.0(@aws-sdk/credential-providers@3.808.0)(socks@2.8.10)
-      mysql2: 3.23.1(@types/node@25.9.9)
+      mysql2: 3.23.1(@types/node@26.6.6)
       pdf-parse: 2.4.5
       pg: 8.21.0
       playwright: 1.58.2
@@ -14272,7 +14269,7 @@ snapshots:
       jsonwebtoken: 9.0.3
       lodash: 4.18.1
       mammoth: 1.12.1
-      mysql2: 3.23.1(@types/node@25.9.9)
+      mysql2: 3.23.1(@types/node@26.6.6)
       pdf-parse: 2.4.5
       pg: 8.21.0
       playwright: 1.58.2
@@ -16794,7 +16791,7 @@ snapshots:
       '@n8n/config': 2.45.0
       '@n8n/di': 0.17.0
       '@n8n/json-schema-to-zod': 1.18.0(zod@3.25.76)
-      '@n8n/typeorm': 0.3.20-16(@sentry/node@11.8.0(@babel/core@7.29.13))(mysql2@3.23.1(@types/node@25.9.9))(pg@8.21.0)(sqlite3@5.1.7)
+      '@n8n/typeorm': 0.3.20-16(@sentry/node@11.8.0(@babel/core@7.29.13))(mysql2@3.23.1(@types/node@26.6.6))(pg@8.21.0)(sqlite3@5.1.7)
       '@n8n/typescript-config': 1.12.0
       '@n8n/utils': 1.54.0
       '@oracle/langchain-oracledb': 0.2.0(@langchain/core@1.2.8(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.10.0))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.49.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(ws@8.20.1))(@langchain/textsplitters@1.0.1(@langchain/core@1.2.8(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.10.0))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.49.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(ws@8.20.1)))(oracledb@6.10.0)
@@ -16823,9 +16820,9 @@ snapshots:
       mammoth: 1.12.1
       mime-types: 3.0.2
       mongodb: 6.22.0(@aws-sdk/credential-providers@3.808.0)(socks@2.8.10)
-      mysql2: 3.23.1(@types/node@25.9.9)
+      mysql2: 3.23.1(@types/node@26.6.6)
       n8n-core: 2.47.1(@babel/core@7.29.13)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.46.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(ws@8.20.1)(zod@3.25.76)
-      n8n-nodes-base: 2.47.2(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(@types/node@25.9.9)(asn1.js@5.4.1)(date-fns@2.30.0)(encoding@0.1.14)(openai@6.46.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(promise-ftp-common@1.1.5)(socks@2.8.10)(ws@8.20.1)
+      n8n-nodes-base: 2.47.2(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(@types/node@26.6.6)(asn1.js@5.4.1)(date-fns@2.30.0)(encoding@0.1.14)(openai@6.46.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(promise-ftp-common@1.1.5)(socks@2.8.10)(ws@8.20.1)
       n8n-workflow: 2.47.0(zod@3.25.76)
       openai: 6.46.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76)
       oracledb: 6.10.0
@@ -17100,7 +17097,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@n8n/typeorm@0.3.20-16(@sentry/node@11.8.0(@babel/core@7.29.13))(mysql2@3.23.1(@types/node@25.9.9))(pg@8.21.0)(sqlite3@5.1.7)':
+  '@n8n/typeorm@0.3.20-16(@sentry/node@11.8.0(@babel/core@7.29.13))(mysql2@3.23.1(@types/node@26.6.6))(pg@8.21.0)(sqlite3@5.1.7)':
     dependencies:
       app-root-path: 3.1.0
       async-mutex: 0.5.0
@@ -17117,7 +17114,7 @@ snapshots:
       uuid: 9.0.1
     optionalDependencies:
       '@sentry/node': 11.8.0(@babel/core@7.29.13)
-      mysql2: 3.23.1(@types/node@25.9.9)
+      mysql2: 3.23.1(@types/node@26.6.6)
       pg: 8.21.0
       sqlite3: 5.1.7
     transitivePeerDependencies:
@@ -18595,13 +18592,13 @@ snapshots:
 
   '@slack/logger@4.0.1':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@slack/socket-mode@2.0.7':
     dependencies:
       '@slack/logger': 4.0.1
       '@slack/web-api': 7.19.0
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       '@types/ws': 8.18.2
       eventemitter3: 5.0.4
       ws: 8.20.1
@@ -18617,7 +18614,7 @@ snapshots:
     dependencies:
       '@slack/logger': 4.0.1
       '@slack/types': 2.22.0
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       '@types/retry': 0.12.0
       axios: 1.21.0(debug@4.4.3)
       eventemitter3: 5.0.4
@@ -19255,17 +19252,17 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/bunyan@1.8.11':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/caseless@0.12.5': {}
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/debug@4.1.13':
     dependencies:
@@ -19275,7 +19272,7 @@ snapshots:
 
   '@types/express-serve-static-core@5.1.3':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       '@types/qs': 6.15.1
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.1
@@ -19290,7 +19287,7 @@ snapshots:
 
   '@types/http-proxy@1.17.17':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/istanbul-lib-coverage@2.0.6': {}
 
@@ -19312,7 +19309,7 @@ snapshots:
   '@types/jsonwebtoken@9.0.10':
     dependencies:
       '@types/ms': 2.1.0
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/lodash-es@4.17.12':
     dependencies:
@@ -19332,28 +19329,24 @@ snapshots:
 
   '@types/mysql@2.15.26':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/mysql@2.15.27':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/node-fetch@2.6.13':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       form-data: 4.0.6
 
   '@types/node-int64@0.4.32':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/node@18.19.130':
     dependencies:
       undici-types: 5.26.5
-
-  '@types/node@25.9.9':
-    dependencies:
-      undici-types: 7.24.6
 
   '@types/node@26.6.6':
     dependencies:
@@ -19371,13 +19364,13 @@ snapshots:
 
   '@types/pg@8.15.6':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       pg-protocol: 1.16.1
       pg-types: 2.2.0
 
   '@types/pg@8.6.1':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       pg-protocol: 1.16.1
       pg-types: 2.2.0
 
@@ -19389,7 +19382,7 @@ snapshots:
 
   '@types/readable-stream@4.0.25':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/request-promise-native@1.0.21':
     dependencies:
@@ -19398,7 +19391,7 @@ snapshots:
   '@types/request@2.48.13':
     dependencies:
       '@types/caseless': 0.12.5
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       '@types/tough-cookie': 4.0.5
       form-data: 2.5.6
 
@@ -19406,12 +19399,12 @@ snapshots:
 
   '@types/send@1.2.1':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/serve-static@2.2.0':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/shimmer@1.2.0': {}
 
@@ -19419,11 +19412,11 @@ snapshots:
 
   '@types/tedious@4.0.14':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/thrift@0.10.17':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       '@types/node-int64': 0.4.32
       '@types/q': 1.5.8
 
@@ -19453,7 +19446,7 @@ snapshots:
 
   '@types/ws@8.18.2':
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -19940,7 +19933,7 @@ snapshots:
 
   apache-arrow@21.2.0:
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       flatbuffers: 25.9.23
       json-with-bigint: 3.5.12
       tslib: 2.9.1
@@ -22779,7 +22772,7 @@ snapshots:
       '@jest/expect': 30.5.2
       '@jest/test-result': 30.5.2
       '@jest/types': 30.5.1
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       chalk: 4.1.2
       co: 4.6.0
       dedent: 1.7.2
@@ -22799,7 +22792,7 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  jest-cli@30.5.2(@types/node@25.9.9):
+  jest-cli@30.5.2(@types/node@26.6.6):
     dependencies:
       '@jest/core': 30.5.2
       '@jest/test-result': 30.5.2
@@ -22807,7 +22800,7 @@ snapshots:
       chalk: 4.1.2
       exit-x: 0.2.2
       import-local: 3.2.0
-      jest-config: 30.5.2(@types/node@25.9.9)
+      jest-config: 30.5.2(@types/node@26.6.6)
       jest-util: 30.5.1
       jest-validate: 30.5.1
       yargs: 17.7.3
@@ -22818,7 +22811,7 @@ snapshots:
       - supports-color
       - ts-node
 
-  jest-config@30.5.2(@types/node@25.9.9):
+  jest-config@30.5.2(@types/node@26.6.6):
     dependencies:
       '@babel/core': 7.29.13
       '@jest/get-type': 30.5.0
@@ -22844,7 +22837,7 @@ snapshots:
       slash: 3.0.0
       strip-json-comments: 3.1.1
     optionalDependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
@@ -22874,7 +22867,7 @@ snapshots:
       '@jest/environment': 30.5.2
       '@jest/fake-timers': 30.5.2
       '@jest/types': 30.5.1
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       jest-mock: 30.5.2
       jest-util: 30.5.1
       jest-validate: 30.5.1
@@ -22883,7 +22876,7 @@ snapshots:
     dependencies:
       '@jest/types': 30.5.1
       '@parcel/watcher': 2.6.0
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       anymatch: 3.1.3
       fb-watchman: 2.0.4
       fdir: 6.5.0(picomatch@4.0.7)
@@ -22922,7 +22915,7 @@ snapshots:
     dependencies:
       '@jest/expect-utils': 30.5.2
       '@jest/types': 30.5.1
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       jest-util: 30.5.1
 
   jest-regex-util@30.5.0: {}
@@ -22952,7 +22945,7 @@ snapshots:
       '@jest/test-result': 30.5.2
       '@jest/transform': 30.5.2
       '@jest/types': 30.5.1
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       chalk: 4.1.2
       emittery: 0.13.1
       exit-x: 0.2.2
@@ -22980,7 +22973,7 @@ snapshots:
       '@jest/test-result': 30.5.2
       '@jest/transform': 30.5.2
       '@jest/types': 30.5.1
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       chalk: 4.1.2
       cjs-module-lexer: 2.3.0
       collect-v8-coverage: 1.0.3
@@ -23028,7 +23021,7 @@ snapshots:
   jest-util@30.5.1:
     dependencies:
       '@jest/types': 30.5.1
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       chalk: 4.1.2
       ci-info: 4.4.0
       graceful-fs: 4.2.11
@@ -23047,7 +23040,7 @@ snapshots:
     dependencies:
       '@jest/test-result': 30.5.2
       '@jest/types': 30.5.1
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.13.1
@@ -23056,18 +23049,18 @@ snapshots:
 
   jest-worker@30.5.1:
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       '@ungap/structured-clone': 1.4.0
       jest-util: 30.5.1
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
-  jest@30.5.2(@types/node@25.9.9):
+  jest@30.5.2(@types/node@26.6.6):
     dependencies:
       '@jest/core': 30.5.2
       '@jest/types': 30.5.1
       import-local: 3.2.0
-      jest-cli: 30.5.2(@types/node@25.9.9)
+      jest-cli: 30.5.2(@types/node@26.6.6)
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -24232,9 +24225,9 @@ snapshots:
 
   mute-stdout@2.0.0: {}
 
-  mysql2@3.23.1(@types/node@25.9.9):
+  mysql2@3.23.1(@types/node@26.6.6):
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       aws-ssl-profiles: 1.1.2
       denque: 2.1.0
       generate-function: 2.3.1
@@ -24408,7 +24401,7 @@ snapshots:
 
   n8n-editor-ui@2.47.1: {}
 
-  n8n-nodes-base@2.47.2(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(@types/node@25.9.9)(asn1.js@5.4.1)(date-fns@2.30.0)(encoding@0.1.14)(openai@6.46.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(promise-ftp-common@1.1.5)(socks@2.8.10)(ws@8.20.1):
+  n8n-nodes-base@2.47.2(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(@types/node@26.6.6)(asn1.js@5.4.1)(date-fns@2.30.0)(encoding@0.1.14)(openai@6.46.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(promise-ftp-common@1.1.5)(socks@2.8.10)(ws@8.20.1):
     dependencies:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-sdk/credential-providers': 3.808.0
@@ -24470,7 +24463,7 @@ snapshots:
       mqtt: 5.16.0
       mqtt-packet: 9.0.0
       mssql: 12.7.0
-      mysql2: 3.23.1(@types/node@25.9.9)
+      mysql2: 3.23.1(@types/node@26.6.6)
       n8n-workflow: 2.47.0(zod@3.25.76)
       node-html-markdown: 1.2.0
       node-ssh: 13.2.0
@@ -24526,7 +24519,7 @@ snapshots:
       - utf-8-validate
       - ws
 
-  n8n-nodes-base@2.47.2(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(@types/node@25.9.9)(asn1.js@5.4.1)(date-fns@2.30.0)(encoding@0.1.14)(openai@6.49.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(promise-ftp-common@1.1.5)(socks@2.8.10)(ws@8.20.1):
+  n8n-nodes-base@2.47.2(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(@types/node@26.6.6)(asn1.js@5.4.1)(date-fns@2.30.0)(encoding@0.1.14)(openai@6.49.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(promise-ftp-common@1.1.5)(socks@2.8.10)(ws@8.20.1):
     dependencies:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-sdk/credential-providers': 3.808.0
@@ -24588,7 +24581,7 @@ snapshots:
       mqtt: 5.16.0
       mqtt-packet: 9.0.0
       mssql: 12.7.0
-      mysql2: 3.23.1(@types/node@25.9.9)
+      mysql2: 3.23.1(@types/node@26.6.6)
       n8n-workflow: 2.47.0(zod@3.25.76)
       node-html-markdown: 1.2.0
       node-ssh: 13.2.0
@@ -24828,7 +24821,7 @@ snapshots:
       multer: 2.5.0
       n8n-core: 2.47.1(@babel/core@7.29.13)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.49.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(ws@8.20.1)(zod@3.25.76)
       n8n-editor-ui: 2.47.1
-      n8n-nodes-base: 2.47.2(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(@types/node@25.9.9)(asn1.js@5.4.1)(date-fns@2.30.0)(encoding@0.1.14)(openai@6.49.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(promise-ftp-common@1.1.5)(socks@2.8.10)(ws@8.20.1)
+      n8n-nodes-base: 2.47.2(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.221.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(@types/node@26.6.6)(asn1.js@5.4.1)(date-fns@2.30.0)(encoding@0.1.14)(openai@6.49.0(@aws-sdk/credential-provider-node@3.972.94)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.20.1)(zod@3.25.76))(promise-ftp-common@1.1.5)(socks@2.8.10)(ws@8.20.1)
       n8n-workflow: 2.47.0(zod@3.25.76)
       nanoid: 3.3.18
       nodemailer: 10.0.14
@@ -25893,7 +25886,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.2
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       long: 5.3.2
 
   proxy-addr@2.0.8:
@@ -26956,7 +26949,7 @@ snapshots:
       '@azure/identity': 4.14.1
       '@azure/keyvault-keys': 4.10.2
       '@js-joda/core': 6.3.2
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       bl: 6.1.6
       iconv-lite: 0.7.3
       js-md4: 0.3.2
@@ -27147,12 +27140,12 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-  ts-jest@29.4.15(@babel/core@7.29.13)(@jest/transform@30.5.2)(@jest/types@30.5.1)(babel-jest@30.5.2(@babel/core@7.29.13))(jest-util@30.5.1)(jest@30.5.2(@types/node@25.9.9))(typescript@5.9.3):
+  ts-jest@29.4.15(@babel/core@7.29.13)(@jest/transform@30.5.2)(@jest/types@30.5.1)(babel-jest@30.5.2(@babel/core@7.29.13))(jest-util@30.5.1)(jest@30.5.2(@types/node@26.6.6))(typescript@5.9.3):
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       handlebars: 4.7.10
-      jest: 30.5.2(@types/node@25.9.9)
+      jest: 30.5.2(@types/node@26.6.6)
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
@@ -27173,7 +27166,7 @@ snapshots:
 
   ts-type@3.0.19(ts-toolbelt@9.6.0):
     dependencies:
-      '@types/node': 25.9.9
+      '@types/node': 26.6.6
       ts-toolbelt: 9.6.0
       tslib: 2.9.1
       typedarray-dts: 1.0.0
