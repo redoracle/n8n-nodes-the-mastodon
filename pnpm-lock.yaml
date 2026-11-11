@@ -33,8 +33,8 @@ importers:
         specifier: ^9.39.5
         version: 9.39.5
       eslint-plugin-n8n-nodes-base:
-        specifier: ^1.16.7
-        version: 1.16.7(eslint@9.39.5)(typescript@5.9.3)
+        specifier: ^2.0.0
+        version: 2.0.0(eslint@9.39.5)(typescript@5.9.3)
       globals:
         specifier: ^16.5.0
         version: 16.5.0
@@ -6251,9 +6251,14 @@ packages:
     resolution: {integrity: sha512-/veY75JbMK4j1yjvuUxuVsiS/hr/4iHs9FTT6cgTexxdE0Ly/glccBAkloH/DofkjRbZU3bnoj38mOmhkZ0lHw==}
     engines: {node: '>=12'}
 
-  eslint-plugin-n8n-nodes-base@1.16.7:
-    resolution: {integrity: sha512-lKo+stn4t2jXX/ZdmJv2ClUQnRZLwSOyqfqsYgD6I/wYwy9bqA6mna4CEzdQNFVg5f3/RODpd/JQMiITARY92g==}
+  eslint-plugin-local@1.0.0:
+    resolution: {integrity: sha512-bcwcQnKL/Iw5Vi/F2lG1he5oKD2OGjhsLmrcctkWrWq5TujgiaYb0cj3pZgr3XI54inNVnneOFdAx1daLoYLJQ==}
+
+  eslint-plugin-n8n-nodes-base@2.0.0:
+    resolution: {integrity: sha512-S9ot1KzqSEN6bYyHjVE+8MrzxvnAxZRL2zEcM+ubtht2wv5OO2rQURwJ1f6vetOgMjOTPVv+B9Z5deHfe8CADw==}
     engines: {node: '>=20.15', pnpm: '>=9.6'}
+    peerDependencies:
+      eslint: '>=8.40'
 
   eslint-scope@8.4.0:
     resolution: {integrity: sha512-sNXOfKCn74rt8RICKMvJS7XKV/Xk9kA7DyJr8mJik3S7Cwgy3qlkkmyS2uQB3jiJg6VNdZd/pDBJu0nvG2NlTg==}
@@ -11479,7 +11484,7 @@ snapshots:
       '@aws-sdk/types': 3.975.0
       '@smithy/core': 3.39.0
       '@smithy/types': 4.20.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/client-bedrock-agent-runtime@3.1163.0':
     dependencies:
@@ -11611,7 +11616,7 @@ snapshots:
       '@smithy/fetch-http-handler': 5.8.1
       '@smithy/node-http-handler': 4.14.2
       '@smithy/types': 4.20.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/client-s3@3.808.0':
     dependencies:
@@ -11868,7 +11873,7 @@ snapshots:
       '@smithy/signature-v4': 5.7.5
       '@smithy/types': 4.20.0
       bowser: 2.15.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/credential-provider-cognito-identity@3.808.0':
     dependencies:
@@ -12204,7 +12209,7 @@ snapshots:
       buffer: 5.6.0
       events: 3.3.0
       stream-browserify: 3.0.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/middleware-bucket-endpoint@3.808.0':
     dependencies:
@@ -12317,7 +12322,7 @@ snapshots:
       '@aws-sdk/types': 3.975.0
       '@smithy/core': 3.39.0
       '@smithy/types': 4.20.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/middleware-ssec@3.804.0':
     dependencies:
@@ -12491,7 +12496,7 @@ snapshots:
       '@aws-sdk/types': 3.975.0
       '@smithy/signature-v4': 5.7.5
       '@smithy/types': 4.20.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/signature-v4@3.374.0':
     dependencies:
@@ -12543,7 +12548,7 @@ snapshots:
   '@aws-sdk/types@3.975.0':
     dependencies:
       '@smithy/types': 4.20.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws-sdk/util-arn-parser@3.804.0':
     dependencies:
@@ -12623,7 +12628,7 @@ snapshots:
   '@aws-sdk/xml-builder@3.972.42':
     dependencies:
       '@smithy/types': 4.20.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@aws/lambda-invoke-store@0.2.4': {}
 
@@ -21206,17 +21211,20 @@ snapshots:
 
   escape-string-regexp@5.0.0: {}
 
-  eslint-plugin-n8n-nodes-base@1.16.7(eslint@9.39.5)(typescript@5.9.3):
+  eslint-plugin-local@1.0.0: {}
+
+  eslint-plugin-n8n-nodes-base@2.0.0(eslint@9.39.5)(typescript@5.9.3):
     dependencies:
       '@typescript-eslint/utils': 8.72.1(eslint@9.39.5)(typescript@5.9.3)
       camel-case: 4.1.2
+      eslint: 9.39.5
+      eslint-plugin-local: 1.0.0
       indefinite: 2.5.2
       pascal-case: 3.1.2
       pluralize: 8.0.0
       sentence-case: 3.0.4
       title-case: 3.0.3
     transitivePeerDependencies:
-      - eslint
       - supports-color
       - typescript
 

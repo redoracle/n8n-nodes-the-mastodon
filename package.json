@@ -66,7 +66,7 @@
     "@typescript-eslint/parser": "^8.72.1",
     "conventional-changelog-conventionalcommits": "9.3.1",
     "eslint": "^9.39.5",
-    "eslint-plugin-n8n-nodes-base": "^1.16.7",
+    "eslint-plugin-n8n-nodes-base": "^2.0.0",
     "globals": "^16.5.0",
     "gulp": "^5.0.1",
     "jest": "^30.5.2",
