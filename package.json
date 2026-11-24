@@ -72,7 +72,7 @@
     "jest": "^30.5.2",
     "n8n": "^2.46.6",
     "n8n-core": "^1.122.55",
-    "n8n-workflow": "^1.120.35",
+    "n8n-workflow": "^3.3.0",
     "prettier": "^3.9.10",
     "semantic-release": "^25.0.9",
     "ts-jest": "^29.4.15",
